@@ -1,0 +1,10 @@
+class Core{
+private:
+vector <int> r; //regitsers
+vector <string> program;
+int pc ;
+public:
+};
+Core(){
+pc =0;
+r(32,0);
