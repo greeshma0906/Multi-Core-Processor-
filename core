@@ -2,7 +2,7 @@ class Core{
 private:
 vector <int> r; //regitsers
 vector <string> program;
-int pc ;
+int pc;
 public:
 };
 Core(){
