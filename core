@@ -30,17 +30,42 @@ class Core
          }
 
         string opcode = parts[0];
-        if (opcode == "ADD") {
+        if (opcode == "add") {
             int rd = stoi(parts[1].substr(1));
             int rs1 = stoi(parts[2].substr(1));
             int rs2 = stoi(parts[3].substr(1));
             registers[rd] = registers[rs1] + registers[rs2];
-        } else if (opcode == "LD") {
+        } else if (opcode == "ld") {
             int rd = stoi(parts[1].substr(1));
             int location = stoi(parts[2]);
             registers[rd] = memory[location];
         }
-        
+        else if(opcode=="li")
+        {
+            int rd=stoi(parts[1].substr(1));
+            registers[rd]=stoi(parts[2]);
+        }
+       else if(opcode=="addi")
+       {
+          int rd = stoi(parts[1].substr(1));
+          int rs1 = stoi(parts[2].substr(1));
+          registers[rd]=registers[rs1]+stoi(parts[3]);
+       }
+       else if(opcode=="lw")
+       {
+         int rd = stoi(parts[1].substr(1));
+        string ostr=parts[2].substr(0,parts[2].find('('));
+        string find=parts[2].substr(parts[2].find('x')+1);
+        int offset=stoi(ostr);
+        string st="";
+        for(int i=0;i<find.length()-1;i++)
+          {
+              st+=find[i];
+          }
+         int addr=registers[stoi(st)];
+
+        registers[rd] = memory[addr+offset];
+       }
         
         pc += 1;
     }
@@ -72,6 +97,6 @@ public:
 };
 int main() {
     Processor sim;
-    //should be written..
+    
 
 }
