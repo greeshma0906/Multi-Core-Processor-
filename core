@@ -1,10 +1,73 @@
-class Core{
-private:
-vector <int> r; //regitsers
-vector <string> program;
-int pc;
-public:
+#include <iostream>
+#include <vector>
+#include<string>
+#include<algorithm>
+#include<sstream>
+using namespace std;
+class Core
+{
+    public:
+      int registers[32];
+       int pc;
+       vector<string> program;
+  public:
+    Core()
+    {
+        pc=0;
+        int registers[32]={0};
+    }
+    void execute(vector<int> &memory)
+    {
+        string instruction = program[pc];
+
+         stringstream ss(instruction);
+        vector<string> parts;
+
+        string part;
+            while (getline(ss, part, ' ')) {
+             parts.push_back(part);
+
+         }
+
+        string opcode = parts[0];
+        if (opcode == "ADD") {
+            int rd = stoi(parts[1].substr(1));
+            int rs1 = stoi(parts[2].substr(1));
+            int rs2 = stoi(parts[3].substr(1));
+            registers[rd] = registers[rs1] + registers[rs2];
+        } else if (opcode == "LD") {
+            int rd = stoi(parts[1].substr(1));
+            int location = stoi(parts[2]);
+            registers[rd] = memory[location];
+        }
+        
+        
+        pc += 1;
+    }
 };
-Core(){
-pc =0;
-r(32,0);
+class Processor {
+public:
+    vector<int> memory;
+    int clock;
+    vector<Core> cores;
+
+public:
+    Processor() : memory(4096, 0), clock(0), cores(2) {}
+
+    void run() {
+        int max_pc = max(cores[0].program.size(), cores[1].program.size());
+        while (clock < max_pc) {
+            for (int i = 0; i < 2; ++i) {
+                if (clock < cores[i].program.size()) {
+                    cores[i].execute(memory);
+                }
+            }
+            clock += 1;
+        }
+    }
+};
+int main() {
+    Processor sim;
+    //should be written...
+
+}
