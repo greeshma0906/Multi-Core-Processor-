@@ -3,6 +3,7 @@
 #include<string>
 #include<algorithm>
 #include<sstream>
+#include<fstream>
 using namespace std;
 class Core
 {
@@ -97,6 +98,17 @@ public:
 };
 int main() {
     Processor sim;
-    
+    ifstream input("bubblesort.asm");
+    if (!input.is_open()) {
+        cerr << "Failed to open bubblesort.asm" << endl;
+        return 1;
+    }
+    string line;
+    vector<string> asmLines;
+    while (getline(inputFile, line)) {
+        asmLines.push_back(line);
+    }
+
+    inputFile.close();
 
 }
