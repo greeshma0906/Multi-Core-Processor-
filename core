@@ -15,7 +15,7 @@ class Core
     Core()
     {
         pc=0;
-        int registers[32]={0};
+        this-> registers[32]={0};
     }
     void execute(vector<int> &memory)
     {
@@ -67,7 +67,51 @@ class Core
 
         registers[rd] = memory[addr+offset];
        }
-        
+       else if(opcode=="sw")
+       {
+           int rs=stoi(parts[1].substr(1));
+           string ostr=parts[2].substr(0,parts[2].find('('));
+        string find=parts[2].substr(parts[2].find('x')+1);
+        int offset=stoi(ostr);
+        string st="";
+        for(int i=0;i<find.length()-1;i++)
+          {
+              st+=find[i];
+          }
+         int addr=registers[stoi(st)];
+         memory[addr+offset]=registers[rs];
+       }
+         else if(opcode=="slt")
+         {
+              int rd = stoi(parts[1].substr(1));
+              int rs1 = stoi(parts[2].substr(1));
+            int rs2 = stoi(parts[3].substr(1));
+            if(registers[rs1]<registers[rs2])
+            {
+                registers[rd]=1;
+            }
+            else
+            { 
+                registers[rd]=0;
+            }
+         }
+         else if(opcode=="bne")
+         {
+            int rs1 = stoi(parts[1].substr(1));
+            int rs2 = stoi(parts[2].substr(1));
+           string label = parts[3]; 
+           if(registers[rs1]!=registers[rs2])
+           {
+            auto it = find(program.begin(), program.end(), label);
+           if(it!=program.end())
+           {
+             pc=distance(program.begin(),it);
+           }
+             pc-=1;
+           }
+
+         }
+
         pc += 1;
     }
 };
@@ -82,12 +126,16 @@ public:
     {
         memory = vector<int>(4096, 0);
        clock = 0;
-       cores = vector<Core>(2);
+       cores = vector<Core>(1);
+    }
+    void send(vector<string> & program,int coreval)
+    {
+       cores[coreval].program=program;
     }
     void run() {
-        int max_pc = max(cores[0].program.size(), cores[1].program.size());
+        int max_pc = cores[0].program.size();
         while (clock < max_pc) {
-            for (int i = 0; i < 2; ++i) {
+            for (int i = 0; i < 1; ++i) {
                 if (clock < cores[i].program.size()) {
                     cores[i].execute(memory);
                 }
@@ -96,19 +144,70 @@ public:
         }
     }
 };
+
 int main() {
-    Processor sim;
-    ifstream input("bubblesort.asm");
+   Processor sim;
+    ifstream input("assembly_code.asm");
     if (!input.is_open()) {
-        cerr << "Failed to open bubblesort.asm" << endl;
+        cerr << "Failed to open assembly_code.asm" << endl;
         return 1;
     }
+
     string line;
     vector<string> asmLines;
-    while (getline(inputFile, line)) {
-        asmLines.push_back(line);
+    vector<int> values;
+
+    bool dataSection = false;
+
+    // Read the assembly file line by line
+    while (getline(input, line)) {
+        // Check if the line is not empty
+        if (!line.empty()) {
+            // Check if it's the start of the data section
+            if (line == ".data") {
+                dataSection = true;
+            } else if (line == ".text") {
+                // If we encounter the text section, stop reading the data section
+                dataSection = false;
+            } else if (dataSection) {
+                // If we're in the data section
+                // Check if the line contains an array declaration
+                if (line.find(".word") != string::npos) {
+                    // Extract array values
+                    istringstream iss(line.substr(line.find(":") + 1));
+                    int value;
+                    while (iss >> value) {
+                        values.push_back(value);
+                    }
+                }
+            } else {
+                // If we're in the text section, store the instruction line
+                asmLines.push_back(line);
+            }
+        }
     }
 
-    inputFile.close();
+    input.close();
 
+    // Store array_values into memory starting from memory[0]
+    for (size_t i = 0; i < values.size(); ++i) {
+        sim.memory[i] = values[i];
+    }
+   
+
+   
+    input.close();
+
+    // Store array_values into memory starting from memory[0]
+    for (size_t i = 0; i < values.size(); ++i) {
+        sim.memory[i] = values[i];
+    }
+
+    sim.send(asmLines, 0);
+    sim.run();
+
+    for (int i=0;i<10;i++) {
+        cout << sim.memory[i] << " ";
+    }
+   return 0;
 }
