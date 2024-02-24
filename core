@@ -196,7 +196,7 @@ int main() {
                         values.push_back(value);
                     }
                 }
-                else if(!dataSection && line.back()==':')
+                else if(!dataSection && line.back()==':' && line!= "main:")
                 {
                     asmLines.push_back(line.substr(0,line.size()-1));
                 
