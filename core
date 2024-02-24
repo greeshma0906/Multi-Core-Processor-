@@ -205,12 +205,22 @@ int main() {
                     }
                 }
             } else {
+                if(line.find("outerloop:")){
+                    asmLines.push_back("outerloop");
+                }
+                else if(line.find("innerloop:")){
+                    asmLines.push_back("innerloop");
+                }
+                    else if(line.find("leave:")){
+                        asmLines.push_back("leave");
+                    }
                 // If we're in the text section, store the instruction line
-                asmLines.push_back(line);
+                else{
+                    asmLines.push_back(line);
             }
         }
     }
-
+    }
     input.close();
 
     // Store array_values into memory starting from memory[0]
