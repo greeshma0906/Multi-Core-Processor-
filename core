@@ -1,23 +1,22 @@
 #include <iostream>
 #include <vector>
-#include<string>
-#include<algorithm>
-#include<sstream>
-#include<fstream>
-#include<unordered_map>
-#include<bits/stdc++.h>
+#include <string>
+#include <sstream>
+#include <fstream>
+#include <unordered_map>
+#include <algorithm>
+
 using namespace std;
+
 class Core {
 public:
     unordered_map<string, int> registers; 
-    //unordered_map<string, int> registers;// Map register names to indices
     int pc;
     vector<string> program;
 
 public:
     Core() {
         // Initialize register names and indices
-
         for (int i = 0; i < 32; ++i) {
             registers["x" + to_string(i)] = 0;
         }
@@ -36,109 +35,103 @@ public:
         }
 
         string opcode = parts[0];
-        // if (opcode == "add") {
-        //     string rd = parts[1];
-        //     string rs1 = parts[2];
-        //     string rs2 = parts[3];
-            
-        //     // Convert register names to indices and perform addition
-        //     int rdIndex = registers[rd];
-        //     int rs1Index = registers[rs1];
-        //     int rs2Index = registers[rs2];
-            
-        //     // Perform addition
-        //     memory[rdIndex] = memory[rs1Index] + memory[rs2Index];
-        // } 
-        //  if (opcode == "ld") {
-        //     int rd = stoi(parts[1].substr(1));
-        //     int location = stoi(parts[2]);
-        //     registers[rd] = memory[location];
-        // }
-        if(opcode=="outerloop:"||opcode=="innerloop:"||opcode=="swap:"||opcode=="leave:")
-        {
-            
-        }
 
-        else if(opcode=="li")
-        {
-            string rd=parts[1];
-            registers[rd]=stoi(parts[2]);
-        }
-       else if(opcode=="addi")
-       {
-          string rd = parts[1];
-          string rs1 = parts[2];
-          registers[rd]=registers[rs1]+stoi(parts[3]);
-       }
-       else if(opcode=="lw")
-       {
-          string rd = parts[1]; // Destination register
-          string address = parts[2]; // Memory address
-           size_t openBracketPos = address.find('(');
-          size_t closeBracketPos = address.find(')');
-          if (openBracketPos != string::npos && closeBracketPos != string::npos) {
-        // Extracting the register name from the address string
-        string rs = address.substr(openBracketPos + 1, closeBracketPos - openBracketPos - 1);
-        // Extracting the offset from the address string
-        string offsetStr = address.substr(0, openBracketPos);
-        int offset = stoi(offsetStr);
-        // Calculating the effective address by adding the offset to the value in the register
-        int effectiveAddress = registers[rs] + offset;
-        // Loading the value from memory at the effective address into the destination register
-        registers[rd] = memory[effectiveAddress];
-          } 
-       }
-       else if(opcode=="sw")
-       {
-           string rs = parts[1]; // Source register
+        if (opcode == "lw") {
+            string rd = parts[1]; // Destination register
             string address = parts[2]; // Memory address
-          size_t openBracketPos = address.find('(');
-          size_t closeBracketPos = address.find(')');
-        if (openBracketPos != string::npos && closeBracketPos != string::npos) {
-        // Extracting the destination register name from the address string
-        string rd = address.substr(openBracketPos + 1, closeBracketPos - openBracketPos - 1);
-        // Extracting the offset from the address string
-        string offsetStr = address.substr(0, openBracketPos);
-        int offset = stoi(offsetStr);
-        // Calculating the effective address by adding the offset to the value in the register
-        int effectiveAddress = registers[rd] + offset;
-        // Storing the value from the source register into memory at the effective address
-        memory[effectiveAddress] = registers[rs];
-          }
-       }
-         else if(opcode=="slt")
-         {
-             string rd = parts[1]; // Destination register
-             string rs1 = parts[2]; // Source register 1
-             string rs2 = parts[3]; // Source register 2
 
-    // Set the destination register to 1 if source register 1 < source register 2, otherwise set it to 0
-            registers[rd] = (registers[rs1] < registers[rs2]) ? 1 : 0;
-         }
-         else if(opcode=="bne")
-         {
-            
-             string rs1 = parts[1]; // Source register 1
-             string rs2 = parts[2]; // Source register 2
+            // Find the position of the opening and closing parentheses
+            size_t openBracketPos = address.find('(');
+            size_t closeBracketPos = address.find(')');
+
+            if (openBracketPos != string::npos && closeBracketPos != string::npos) {
+                // Extract the register name from the address string
+                string rs = address.substr(openBracketPos + 1, closeBracketPos - openBracketPos - 1);
+                // Extract the offset from the address string
+                string offsetStr = address.substr(0, openBracketPos);
+                
+                // Convert the offset to an integer
+                int offset;
+                try {
+                    offset = stoi(offsetStr);
+                } catch (const std::invalid_argument& e) {
+                    cerr << "Invalid offset value: " << offsetStr << endl;
+                    // Handle the error or return from the function
+                    return; // or throw an exception
+                }
+                
+                // Calculating the effective address by adding the offset to the value in the register
+                int effectiveAddress = registers[rs] + offset;
+                // Loading the value from memory at the effective address into the destination register
+                registers[rd] = memory[effectiveAddress];
+            } else {
+                cerr << "Invalid memory address format: " << address << endl;
+                // Handle the error or return from the function
+                return; // or throw an exception
+            }
+        } else if (opcode == "sw") {
+            string rs = parts[1]; // Source register
+            string address = parts[2]; // Memory address
+
+            // Find the position of the opening and closing parentheses
+            size_t openBracketPos = address.find('(');
+            size_t closeBracketPos = address.find(')');
+
+            if (openBracketPos != string::npos && closeBracketPos != string::npos) {
+                // Extract the destination register name from the address string
+                string rd = address.substr(openBracketPos + 1, closeBracketPos - openBracketPos - 1);
+                // Extract the offset from the address string
+                string offsetStr = address.substr(0, openBracketPos);
+                
+                // Convert the offset to an integer
+                int offset;
+                try {
+                    offset = stoi(offsetStr);
+                } catch (const std::invalid_argument& e) {
+                    cerr << "Invalid offset value: " << offsetStr << endl;
+                    // Handle the error or return from the function
+                    return; // or throw an exception
+                }
+                
+                // Calculating the effective address by adding the offset to the value in the register
+                int effectiveAddress = registers[rd] + offset;
+                // Storing the value from the source register into memory at the effective address
+                memory[effectiveAddress] = registers[rs];
+            } else {
+                cerr << "Invalid memory address format: " << address << endl;
+                // Handle the error or return from the function
+                return; // or throw an exception
+            }
+        } else if (opcode == "li") {
+            string rd = parts[1]; // Destination register
+            registers[rd] = stoi(parts[2]); // Load immediate value into register
+        } else if (opcode == "addi") {
+            string rd = parts[1]; // Destination register
+            string rs1 = parts[2]; // Source register
+            registers[rd] = registers[rs1] + stoi(parts[3]); // Add immediate value to source register and store in destination register
+        } else if (opcode == "slt") {
+            string rd = parts[1]; // Destination register
+            string rs1 = parts[2]; // Source register 1
+            string rs2 = parts[3]; // Source register 2
+            registers[rd] = (registers[rs1] < registers[rs2]) ? 1 : 0; // Set destination register to 1 if source register 1 < source register 2, otherwise set it to 0
+        } else if (opcode == "bne") {
+            string rs1 = parts[1]; // Source register 1
+            string rs2 = parts[2]; // Source register 2
             string label = parts[3]; // Label to branch to if rs1 != rs2
-
-    // Check if the values in source registers rs1 and rs2 are not equal
-           if (registers[rs1] != registers[rs2]) {
-        // Find the label in the program vector
-        auto it = find(program.begin(), program.end(), label);
-        if (it != program.end()) {
-            // Set the program counter (pc) to the distance between the beginning of the program vector and the label position
-            pc = distance(program.begin(), it);
-        } else {
-            // Handle invalid label
-            cerr << "Label not found: " << label << endl;
+            if (registers[rs1] != registers[rs2]) {
+                auto it = find(program.begin(), program.end(), label);
+                if (it != program.end()) {
+                    pc = distance(program.begin(), it);
+                } else {
+                    cerr << "Label not found: " << label << endl;
+                }
+            }
         }
-    }
-         }
 
         pc += 1;
     }
 };
+
 class Processor {
 public:
     vector<int> memory;
@@ -146,16 +139,16 @@ public:
     vector<Core> cores;
 
 public:
-    Processor()
-    {
+    Processor() {
         memory = vector<int>(4096, 0);
-       clock = 0;
-       cores = vector<Core>(1);
+        clock = 0;
+        cores = vector<Core>(1);
     }
-    void send(vector<string> & program,int coreval)
-    {
-       cores[coreval].program=program;
+
+    void send(vector<string> &program, int coreval) {
+        cores[coreval].program = program;
     }
+
     void run() {
         int max_pc = cores[0].program.size();
         while (clock < max_pc) {
@@ -170,7 +163,7 @@ public:
 };
 
 int main() {
-   Processor sim;
+    Processor sim;
     ifstream input("bubblesort.asm");
     if (!input.is_open()) {
         cerr << "Failed to open bubblesort.asm" << endl;
@@ -180,7 +173,6 @@ int main() {
     string line;
     vector<string> asmLines;
     vector<int> values;
-
     bool dataSection = false;
 
     // Read the assembly file line by line
@@ -191,48 +183,40 @@ int main() {
             if (line == ".data") {
                 dataSection = true;
             } else if (line == ".text") {
-                // If we encounter the text section, stop reading the data section
                 dataSection = false;
-            } else if (dataSection) {
-                // If we're in the data section
-                // Check if the line contains an array declaration
-                if (line.find(".word") != string::npos) {
+            } 
+
+            else {
+                if (dataSection && line.find(".word") != string::npos) {
                     // Extract array values
-                    istringstream iss(line.substr(line.find(":") + 1));
+                    string valuesStr = line.substr(line.find(".word") + 5); // Skip ".word" and any leading whitespace
+                    stringstream ss(valuesStr);
                     int value;
-                    while (iss >> value) {
+                    while (ss >> value) {
                         values.push_back(value);
                     }
                 }
-            } else {
-                if(line.find("outerloop:")){
-                    asmLines.push_back("outerloop");
-                }
-                else if(line.find("innerloop:")){
-                    asmLines.push_back("innerloop");
-                }
-                    else if(line.find("leave:")){
-                        asmLines.push_back("leave");
-                    }
-                // If we're in the text section, store the instruction line
-                else{
+                else if(!dataSection && line.back()==':')
+                {
+                    asmLines.push_back(line.substr(0,line.size()-1));
+                
+                } else if (!dataSection && line.find("main") == string::npos && line.find(".globl main") == string::npos) {
+                    // If we're in the text section and the line does not contain "main" or ".globl main", store it
                     asmLines.push_back(line);
+                }
             }
         }
     }
+    for(int i=0;i<asmLines.size();i++){
+        cout<<asmLines[i]<<endl;
     }
+   for(int i=0;i<values.size();i++)
+   {
+    cout<<values[i]<<" ";
+   }
     input.close();
 
-    // Store array_values into memory starting from memory[0]
-    for (size_t i = 0; i < values.size(); ++i) {
-        sim.memory[i] = values[i];
-    }
-   
-
-   
-    input.close();
-
-    // Store array_values into memory starting from memory[0]
+    // Store array values into memory starting from memory[0]
     for (size_t i = 0; i < values.size(); ++i) {
         sim.memory[i] = values[i];
     }
@@ -240,8 +224,9 @@ int main() {
     sim.send(asmLines, 0);
     sim.run();
 
-    for (int i=0;i<10;i++) {
+    for (int i = 0; i < 10; i++) {
         cout << sim.memory[i] << " ";
     }
-   return 0;
+
+    return 0;
 }
