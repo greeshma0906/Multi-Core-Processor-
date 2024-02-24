@@ -21,7 +21,7 @@ public:
         for (int i = 0; i < 32; ++i) {
             registers["x" + to_string(i)] = 0;
         }
-        pc = 1;
+        pc = 0;
     }
 
     void execute(vector<int> &memory) {
@@ -202,9 +202,9 @@ public:
 
 int main() {
     Processor sim;
-    ifstream input("bubblesort.asm");
+    ifstream input("bubblesort1.asm");
     if (!input.is_open()) {
-        cerr << "Failed to open bubblesort.asm" << endl;
+        cerr << "Failed to open bubblesort1.asm" << endl;
         return 1;
     }
 
@@ -216,10 +216,11 @@ int main() {
 
     while (getline(input, line)) {
         if (!line.empty()) {
-            if (line == ".data" || line == ".text" || line == "main:") {
-               // temp.push_back(line);
-                continue;
-            } 
+            if (line.find(".data") != string::npos || 
+            line.find(".text") != string::npos || 
+            line.find("main:") != string::npos) {
+            continue; // Skip lines with .data, .text, or main:
+        } 
             else if (line.find(".word") != string::npos) {
                 size_t pos = line.find(".word");
                 if (pos != string::npos) {
@@ -249,7 +250,7 @@ int main() {
             }
         }
     }
-    // for (int i = 1; i < asmLines.size(); i++) {
+    // for (int i=0; i<asmLines.size(); i++) {
     //     cout << asmLines[i] << endl;
     // }
 
@@ -264,7 +265,7 @@ int main() {
     }
 sim.send(asmLines);
 sim.run();
-for (int i = 0; i <10; i++) {
+for (int i = 0; i <3; i++) {
         cout << sim.memory[i] << " ";
     }
 
