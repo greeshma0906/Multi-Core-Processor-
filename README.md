@@ -15,7 +15,7 @@
 
  Date: 16-02-2024
  Members: Greeshma , Snehitha
- Wrote the code for instructions li,lw,sw,add in execute function.
+ Wrote the code for instructions li,lw,sw,add in execute function and committed the code into github
 
   Date: 17-02-2024
   Members: Greeshma , Snehitha
