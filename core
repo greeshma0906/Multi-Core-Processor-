@@ -202,9 +202,9 @@ public:
 
 int main() {
     Processor sim;
-    ifstream input("bubblesort1.asm");
+    ifstream input("bubblesort.asm");
     if (!input.is_open()) {
-        cerr << "Failed to open bubblesort1.asm" << endl;
+        cerr << "Failed to open bubblesort.asm" << endl;
         return 1;
     }
 
