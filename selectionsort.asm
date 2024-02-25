@@ -12,7 +12,7 @@ loop1:
 bge x2 x12 exit
 addi x3 x2 0  
 addi x20 x19 1
-addi x21 x19 0 
+addi x21 x19 0
 addi x4 x2 1
 loop2:
 bge x4 x12 vi
@@ -40,5 +40,5 @@ sw x30 0(x19)
 sw x31 0(x21) 
 addi x19 x19 1
 addi x2 x2 1
-j loop1
+j loop1 
 exit:
