@@ -27,8 +27,13 @@
 
   Date 20-02-2024
   Members: Greeshma , Snehitha
-  
+  corrected the assembly code passed both the files , but both the files gave the wrong output. 
+  So tried fixing bubble sort 
 
+  Date 20-02-2024
+  Members: Greeshma , Snehitha
+  
+  
 
 
 
