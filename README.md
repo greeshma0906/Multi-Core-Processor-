@@ -25,15 +25,30 @@
   Members: Greeshma , Snehitha
   Found that the assembly code for selection sort is incorrect , struggled a lot to correct it.
 
-  Date 20-02-2024
+  Date: 20-02-2024
   Members: Greeshma , Snehitha
   corrected the assembly code passed both the files , but both the files gave the wrong output. 
   So tried fixing bubble sort 
 
-  Date 20-02-2024
+  Date: 21-02-2024
   Members: Greeshma , Snehitha
+  Finally fixed the bubble sort 
+  it gave the right ouput but the selection sort didn.t work properly.modified the code for selection sort, it worked
   
-  
+  Date: 23-02-2024
+  Members: Greeshma , Snehitha
+  both the codes worked individually.When we tried to combine the code they didn't work we understood that both the files are accessing the same memory locations 
+  so we tried to fix the assembly code.
+
+  Date: 24-02-2024
+  Members: Greeshma , Snehitha
+  So we gave first 6 values in the memory to selection sort and next 3 to the bubble sort.
+
+   Date: 25-02-2024
+  Members: Greeshma , Snehitha
+  Now after doing it both worked properly ...
+
+ 
 
 
 
