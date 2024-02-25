@@ -200,7 +200,7 @@ public:
 int main()
 {
     Processor sim;
-    ifstream bubble_input("temp.asm");
+    ifstream bubble_input("bubblesort.asm");
     if (!bubble_input.is_open()) {
         cerr << "Failed to open bubblesort.asm" << endl;
         return 1;
@@ -250,9 +250,9 @@ int main()
     cout << endl;
     bubble_input.close();
 
-    ifstream selection_input("ss3.asm");
+    ifstream selection_input("selectionsort.asm");
     if (!selection_input.is_open()) {
-        cerr << "Failed to open selectionsort1.asm" << endl;
+        cerr << "Failed to open" << endl;
         return 1;
     }
 
