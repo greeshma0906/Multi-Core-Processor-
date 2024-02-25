@@ -6,7 +6,7 @@
 
  Date: 13-02-2024
  Members: Greeshma , Snehitha
- Looked at the code explained in the lab and tried to convert it into c++ and jotted down the pseudo code which has to be written.
+ Looked at the code explained in the lab and tried to convert it into c++ and noted down the pseudo code which has to be written.
  Started with core class
 
  Date: 15-02-2024
@@ -46,7 +46,7 @@
 
    Date: 25-02-2024
   Members: Greeshma , Snehitha
-  Now after doing it both worked properly ...
+  Now after doing it and fixing some bugs present in code both worked properly ...
 
  
 
