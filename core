@@ -10,7 +10,6 @@ using namespace std;
 class Core {
 public:
     unordered_map<string, int> registers; 
-    //unordered_map<string, int> registers;// Map register names to indices
     int pc;
     vector<string> program;
 
@@ -25,15 +24,17 @@ public:
     }
 
     void execute(vector<int> &memory) {
-        //string instruction = program[pc];
-        while(pc<program.size())
-        {
-          string instruction = program[pc];
-           //cout<<program[pc]<<endl;
-          if(instruction=="exit")
-          {
+      while (pc < program.size()) {
+        string instruction = program[pc];
+        if (instruction == "exit") {
+            //Print register values after sorting
+            cout << "Register Values after sorting:" << endl;
+            for (auto it = registers.begin(); it != registers.end(); ++it) {
+                cout << it->first << " = " << it->second <<" ";
+            }
+            cout<<endl;
             return;
-          }
+        }
            stringstream ss(instruction);
         vector<string> parts;
         string part;
@@ -49,14 +50,9 @@ public:
             string rs1 = parts[2];
             string rs2 = parts[3];
             
-            // Perform addition
+            // Perform subtraction
            registers[rd]=registers[rs1]-registers[rs2];
         } 
-        //  if (opcode == "ld") {
-        //     int rd = stoi(parts[1].substr(1));
-        //     int location = stoi(parts[2]);
-        //     registers[rd] = memory[location];
-        // }
         else if(opcode=="blt")
         {
                 string rs1 = parts[1]; // Source register 1
@@ -69,7 +65,7 @@ public:
         } 
         }
         }
-        else if(opcode=="outerloop"||opcode=="innerloop"||opcode=="swap"||opcode=="leave")
+        else if(opcode=="vi"||opcode=="swap"||opcode=="min_ind"||opcode=="outerloop"||opcode=="innerloop"||opcode=="swap"||opcode=="leave"|| opcode =="loop1"|| opcode =="loop"|| opcode =="loop2"|| opcode=="noswap")
         {
             
         }
@@ -79,6 +75,18 @@ public:
                 string rs2 = parts[2];
                 string label = parts[3];
                 if (registers[rs1] > registers[rs2]) {
+                    auto it = find(program.begin(), program.end(), label);
+                    if (it != program.end()) {
+                        pc = distance(program.begin(), it) - 1;
+                    }
+                }
+        }
+           else if(opcode=="bge")
+        {
+            string rs1 = parts[1];
+                string rs2 = parts[2];
+                string label = parts[3];
+                if (registers[rs1] >= registers[rs2]) {
                     auto it = find(program.begin(), program.end(), label);
                     if (it != program.end()) {
                         pc = distance(program.begin(), it) - 1;
@@ -95,6 +103,12 @@ public:
           string rd = parts[1];
           string rs1 = parts[2];
           registers[rd]=registers[rs1]+stoi(parts[3]);
+       }
+        else if(opcode=="subi")
+       {
+          string rd = parts[1];
+          string rs1 = parts[2];
+          registers[rd]=registers[rs1]-stoi(parts[3]);
        }
        else if(opcode=="lw")
        {
@@ -149,26 +163,6 @@ public:
                 pc = distance(program.begin(), it)-1;
             }
          }
-    //      else if(opcode=="bne")
-    //      {
-            
-    //          string rs1 = parts[1]; // Source register 1
-    //          string rs2 = parts[2]; // Source register 2
-    //         string label = parts[3]; // Label to branch to if rs1 != rs2
-
-    // // Check if the values in source registers rs1 and rs2 are not equal
-    //        if (registers[rs1] != registers[rs2]) {
-    //     // Find the label in the program vector
-    //     auto it = find(program.begin(), program.end(), label);
-    //     if (it != program.end()) {
-    //         // Set the program counter (pc) to the distance between the beginning of the program vector and the label position
-    //         pc = distance(program.begin(), it);
-    //     } else {
-    //         // Handle invalid label
-    //         cerr << "Label not found: " << label << endl;
-    //     }
-    // }
-    //      }
           
           //cout<<program[pc]<<endl;
           pc+=1;
@@ -179,53 +173,56 @@ public:
 class Processor {
 public:
     vector<int> memory;
-    int clock;
+   // int clock;
     vector<Core> cores;
 
 public:
     Processor()
     {
         memory = vector<int>(4096, 0);
-       clock = 0;
-       cores = vector<Core>(1);
+       //clock = 0;
+       cores = vector<Core>(2);
     }
-    void send(vector<string> & program)
+    void send(vector<string> & program,int coreval)
     {
-       cores[0].program=program;
+       cores[coreval].program=program;
     }
     void run() {
-        cores[0].execute(memory);
+        for(int i=0;i<2;i++)
+        {
+          cores[i].execute(memory);
+
+        }
         return;
     }
 };
 
-
-int main() {
+int main()
+{
     Processor sim;
-    ifstream input("bubblesort.asm");
-    if (!input.is_open()) {
+    ifstream bubble_input("temp.asm");
+    if (!bubble_input.is_open()) {
         cerr << "Failed to open bubblesort.asm" << endl;
         return 1;
     }
 
-    string line;
-    vector<string> asmLines;
+    string bubble_line;
+    vector<string> bubble_asmLines;
     //vector<string> temp;
-    vector<int> values;
-    bool dataSection = false;
+    vector<int> bubble_values;
+    bool dataSection1 = false;
 
-    while (getline(input, line)) {
-        if (!line.empty()) {
-            if (line.find(".data") != string::npos || 
-            line.find(".text") != string::npos || 
-            line.find("main:") != string::npos) {
-            continue; // Skip lines with .data, .text, or main:
-        } 
-            else if (line.find(".word") != string::npos) {
-                size_t pos = line.find(".word");
+    while (getline(bubble_input, bubble_line)) {
+        if (!bubble_line.empty()) {
+            if (bubble_line == ".data" || bubble_line == ".text" || bubble_line == "main:") {
+               // temp.push_back(line);
+                continue;
+            } 
+            else if (bubble_line.find(".word") != string::npos) {
+                size_t pos = bubble_line.find(".word");
                 if (pos != string::npos) {
                     // Extract the substring after ".word"
-                    string valuesStr = line.substr(pos + 6); // 6 is the length of ".word" plus a space
+                    string valuesStr = bubble_line.substr(pos + 6); // 6 is the length of ".word" plus a space
 
                     // Create a string stream to parse the values
                     istringstream iss(valuesStr);
@@ -233,42 +230,105 @@ int main() {
 
                     // Read each value and store it in the vector
                     while (iss >> value) {
-                        values.push_back(value);
+                        bubble_values.push_back(value);
                     }
                 }
             } else {
                 // Process other lines
-                size_t pos = line.find(":");
+                size_t pos = bubble_line.find(":");
                 if (pos != string::npos) {
                     // If a colon is found, extract the word before the colon
-                    string word = line.substr(0, pos);
-                    asmLines.push_back(word);
+                    string word = bubble_line.substr(0, pos);
+                    bubble_asmLines.push_back(word);
                 } else {
                     // If no colon is found, simply add the line to asmLines
-                    asmLines.push_back(line);
+                    bubble_asmLines.push_back(bubble_line);
                 }
             }
         }
     }
-    // for (int i=0; i<asmLines.size(); i++) {
-    //     cout << asmLines[i] << endl;
-    // }
-
-    // for (int i = 0; i < values.size(); i++) {
-    //     cout << values[i] << " ";
-    // }
     cout << endl;
-    input.close();
-    for(int i=0;i<values.size();i++)
-    {
-       sim.memory[i]=values[i];
+    bubble_input.close();
+
+    ifstream selection_input("ss3.asm");
+    if (!selection_input.is_open()) {
+        cerr << "Failed to open selectionsort1.asm" << endl;
+        return 1;
     }
-sim.send(asmLines);
-sim.run();
-for (int i = 0; i <10; i++) {
+
+    string selection_line;
+    vector<string> selection_asmLines;
+    //vector<string> temp;
+    vector<int> selection_values;
+    bool dataSection2 = false;
+
+    while (getline(selection_input,selection_line)) {
+        if (!selection_line.empty()) {
+            if (selection_line == ".data" || selection_line == ".text" || selection_line == "main:") {
+               // temp.push_back(line);
+                continue;
+            } 
+            else if (selection_line.find(".word") != string::npos) {
+                size_t pos = selection_line.find(".word");
+                if (pos != string::npos) {
+                    // Extract the substring after ".word"
+                    string valuesStr = selection_line.substr(pos + 6); // 6 is the length of ".word" plus a space
+
+                    // Create a string stream to parse the values
+                    istringstream iss(valuesStr);
+                    int value;
+
+                    // Read each value and store it in the vector
+                    while (iss >> value) {
+                        selection_values.push_back(value);
+                    }
+                }
+            } else {
+                // Process other lines
+                size_t pos = selection_line.find(":");
+                if (pos != string::npos) {
+                    // If a colon is found, extract the word before the colon
+                    string word =selection_line.substr(0, pos);
+                    selection_asmLines.push_back(word);
+                } else {
+                    // If no colon is found, simply add the line to asmLines
+                    selection_asmLines.push_back(selection_line);
+                }
+            }
+        }
+    }
+    selection_input.close();
+
+    for(int i=0;i<selection_values.size();i++)
+    {
+       sim.memory[i]=selection_values[i];
+    }
+    for(int i = 0; i < bubble_values.size(); i++) {
+    sim.memory[i + selection_values.size()] = bubble_values[i];
+}
+     sim.send(selection_asmLines, 0); // Load bubble sort program into core 0
+     sim.send(bubble_asmLines, 1);
+     sim.run();
+     cout<<"memory values:"<<" ";
+     for(int i=0;i<9;i++)
+     {
+        cout<<sim.memory[i]<<" ";
+     }
+     cout<<endl;
+     cout << "selection Sort Result: ";
+    for (int i = 0; i < selection_values.size(); i++) {
         cout << sim.memory[i] << " ";
     }
+    cout << endl;
 
-    return 0;
-    
+    // Print selection sort result
+    cout << "Bubble Sort Result: ";
+    for (int i = 0; i < bubble_values.size(); i++) {
+        cout << sim.memory[i + selection_values.size()] << " ";
+    }
+    cout << endl;
+
+return 0;
+
 }
+    
