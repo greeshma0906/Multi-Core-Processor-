@@ -1,35 +1,28 @@
 .data 
-arr: .word 41 44 59 52 98 3 8 19 57 25 
+arr: .word 5 1 3 
 .text
 main:
-li x2 0
-li x3 10
-addi x4 x3 -1
-li x5 0
-li x11 0
+li x2 6
+li x3 9
+li x4 7
+li x5 8
 loop:
-lw x8 0(x5)
-lw x9 1(x5)
-bgt x8 x9 swap
-addi x5 x5 1
-sub x11 x3 x2
-addi x11 x11 -1
-blt x5 x11 loop
+lw x6 0(x2)
+lw x7 1(x2)
+bgt x6 x7 swap
 addi x2 x2 1
-addi x12 x3 -1
-blt x2 x12 loop2
-exit
+blt x2 x5 loop
+j loop1
 swap:
-sw x8 1(x5)
-sw x9 0(x5)
-addi x5 x5 1
-sub x11 x3 x2
-addi x11 x11 -1
-blt x5 x11 loop
+sw x6 1(x2)
+sw x7 0(x2)
 addi x2 x2 1
-addi x12 x3 -1
-blt x2 x12 loop2
+blt x2 x5 loop
+j loop1
+loop1:
+addi x2 x2 1
+blt x2 x4 loop1
 exit
-loop2:
-li x5 0
+loop1
+li x2 6
 j loop
