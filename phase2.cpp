@@ -14,7 +14,8 @@ public:
     vector<string> program;
     int flag;
     string pp[500][1000];
-    int bflag;
+   // int bflag;
+
 public:
     Core() {
         // Initialize register names and indices
@@ -24,423 +25,616 @@ public:
         }
         pc = 0;
     }
-    void fill(int x, int y, int If, int id, int ex, int mem, int wb) {
-    try {
-        while (If != 0) {
-            pp[x][y] = "stall"; // if If is not equal to 0, then consider it as stall
+   void fill(int x,int y,int iF, int id, int ex, int mem, int wb){
+            while(iF!=0){
+                if(pp[x][y]=="stall"){
+                    y++;
+                }
+                else{
+                    pp[x][y]="stall";
+                    y++;
+                    iF--;
+                }
+                //another way....
+//                 else {
+//     pipeline[x][y] = "IF";  // Fill the cell with the "IF" stage label
+//     y++;  // Move to the next cell
+//     iF--;  // Decrement the cycle count for the "IF" stage
+// }
+
+            }
+            while(pp[x][y]=="stall"){
+                y++;
+            }
+
+            pp[x][y]="IF";
             y++;
-            If--;
+            while(id!=0){
+                if(pp[x][y]=="stall"){
+                    y++;
+                }
+                else{
+                    pp[x][y]="stall";
+                    y++;
+                    id--;
+                }
+            }
+            while(pp[x][y]=="stall"){
+                y++;
+            }
+            pp[x][y]="ID";
+            y++;
+            while(ex!=0){
+                if(pp[x][y]=="stall"){
+                    y++;
+                }
+                else{
+                    pp[x][y]="stall";
+                    y++;
+                    ex--;
+                }
+            }
+            while(pp[x][y]=="stall"){
+                y++;
+            }
+            pp[x][y]="EX";
+            y++;
+            while(mem!=0){
+                if(pp[x][y]=="stall"){
+                    y++;
+                }
+                else{
+                    pp[x][y]="stall";
+                    y++;
+                    mem--;
+                }
+            }
+            while(pp[x][y]=="stall"){
+                y++;
+            }
+            pp[x][y]="MEM";
+            y++;
+            while(wb!=0){
+                if(pp[x][y]=="stall"){
+                    y++;
+                }
+                else{
+                    pp[x][y]="stall";
+                    y++;
+                    wb--;
+                }
+            }
+            while(pp[x][y]=="stall"){
+                y++;
+            }
+            pp[x][y]="WB";
         }
 
-        pp[x][y] = "IF"; // if If is equal to 0, then consider it as IF
-        y++;
-        while (id != 0) {
-            pp[x][y] = "stall"; // if id is not equal to 0, then consider it as stall
-            y++;
-            id--;
+        string hazard(string ins){
+            if(ins.substr(0,4)=="addi"){
+                return ins.substr(4,2);
+            }
+            if(ins.substr(0,3)=="add" && (ins.substr(3,1)!="i")){
+                return ins.substr(3,2);
+            }
+            if(ins.substr(0,3)=="sub"){
+                return ins.substr(3,2);
+            }
+            if(ins.substr(0,3)=="mul"){
+                return ins.substr(3,2);
+            }
+            if(ins.substr(0,3)=="div"){
+                return ins.substr(3,2);
+            }
+            if(ins.substr(0,3)=="slt"){
+                return ins.substr(3,2);
+            }
+            if(ins.substr(0,2)=="lw"){
+                return ins.substr(2,2);
+            }
+            if(ins.substr(0,2)=="sw"){
+                return ins.substr(2,2);
+            }
+            return "nulll";
+            //if ..... other functions
         }
 
-        pp[x][y] = "ID"; // if id is to 0, then consider it as ID
-        y++;
-        while (ex != 0) {
-            pp[x][y] = "stall"; // if ex is not equal to 0, then consider it as stall
-            y++;
-            ex--;
+        bool branchhazard(string ins){
+            bool flag=false;
+             if(ins.substr(0,3)=="beq"||ins.substr(0,3)=="bne"||(ins.substr(0,1)=="j"&&ins.substr(1,1)!="r")){
+                flag=true;
+            }
+            return flag;
         }
-        pp[x][y] = "EX"; // if ex is to 0, then consider it as EX
-        y++;
-        while (mem != 0) {
-            pp[x][y] = "stall"; // if mem is not equal to 0, then consider it as stall
-            y++;
-            mem--;
-        }
-        pp[x][y] = "MEM"; // if mem is to 0, then consider it as MEM
-        y++;
-        while (wb != 0) {
-            pp[x][y] = "stall"; // if wb is not equal to 0, then consider it as stall
-            y++;
-            wb--;
-        }
-        pp[x][y] = "WB"; // if wb is to 0, then consider it as WB
-        while (pp[x][y].find("stall") != std::string::npos) {
-            pp[x + 1][y] = "stall"; // if a cell is stall, then continue the whole column as stall
-            x++;
-        }
-    } catch (const std::exception& e) {
-        // for first instruction
-        pp[x][y] = "IF";
-        y++;
-        pp[x][y] = "ID";
-        y++;
-        pp[x][y] = "EX";
-        y++;
-        pp[x][y] = "MEM";
-        y++;
-        pp[x][y] = "WB";
-    }
-}
+        void stalls_hazard(int ins_row){
+            int IF,ID,EX,MEM;
+            int clk_len=0;
+            for(int j=1;j<10000;j++){
+                if(pipeline[ins_row][j]=="WB")
+                  clk_len=j;
+            }
+            for(int j=1;j<clk_len;j++){
+              if(pipeline[ins_row][j]=="IF")
+              IF=j;
+               if(pipeline[ins_row][j]=="ID")
+              ID=j;
+               if(pipeline[ins_row][j]=="EX")
+              EX=j;
+               if(pipeline[ins_row][j]=="MEM")
+              MEM=j;
+            }
+            for(int j=IF+1;j<ID;j++){
+                if(pipeline[ins_row][j]=="stall"){
 
-    std::string hazard(std::string ins) {
-    if (ins.substr(0, 3).find("add") != std::string::npos && ins.substr(3, 1).find("i") == std::string::npos) {
-        return ins.substr(3, 2); // return destination register
-    }
-    if (ins.substr(0, 3).find("sub") != std::string::npos && ins.substr(3, 1).find("i") == std::string::npos) {
-        return ins.substr(3, 2); // return destination register
-    }
-    if (ins.substr(0, 4).find("addi") != std::string::npos) {
-        return ins.substr(4, 2); // return destination register
-    }
-    if (ins.substr(0, 4).find("subi") != std::string::npos) {
-        return ins.substr(4, 2); // return destination register
-    }
-    if (ins.substr(0, 2).find("lw") != std::string::npos) {
-        return ins.substr(2, 2); // return destination register
-    }
-    if (ins.substr(0, 2).find("sw") != std::string::npos) {
-        return ins.substr(2, 2); // return destination register
-    }
-    if (ins.substr(0, 3).find("slt") != std::string::npos) {
-        return ins.substr(3, 2); // return destination register
-    }
-    if (ins.substr(0, 3).find("sgt") != std::string::npos) {
-        return ins.substr(3, 2); // return destination register
-    }
-    if (ins.substr(0, 2).find("li") != std::string::npos) {
-        return ins.substr(2, 2); // return destination register
-    }
+                  pipeline[ins_row+1][j]="stall";
 
-    return "null";
-}
-bool branchhazard(std::string ins) {
-    bool flag = false;
-    if (ins.substr(0, 3) == "bne" || ins.substr(0, 3) == "jal") {
-        flag = true; // true if it is branch instruction
-    }
-    return flag;
-}
 
-void hazard1(int row) {
-    int IF = 0, ID = 0, EX = 0, MEM = 0;
-    int clk = 0;
-    for (int j = 1; j < 1000; j++) {
-        if (!pp[row][j].empty()) {
-            if (pp[row][j].find("WB") != std::string::npos) {
-                clk = j; // index at which WB is seen
+                }
             }
-        }
-    }
-    for (int j = 1; j < clk; j++) {
-        if (!pp[row][j].empty()) {
-            if (pp[row][j].find("IF") != std::string::npos) {
-                IF = j; // index at which IF is seen
+            for(int j=ID+1;j<EX;j++){
+                if(pipeline[ins_row][j]=="stall"){
+                  pipeline[ins_row+1][j]="stall";
+                }
             }
-            if (pp[row][j].find("ID") != std::string::npos) {
-                ID = j; // index at which ID is seen
+            for(int j=EX+1;j<MEM;j++){
+                if(pipeline[ins_row][j]=="stall"){
+                  //fill(ins_row+1,i,0,0,0,1,0);
+
+                  pipeline[ins_row+1][j]="stall";
+                }
             }
-            if (pp[row][j].find("EX") != std::string::npos) {
-                EX = j; // index at which EX is seen
+            for(int j=MEM+1;j<clk_len;j++){
+                if(pipeline[ins_row][j]=="stall"){
+                  //fill(ins_row+1,i,0,0,0,0,1);
+                  pipeline[ins_row+1][j]="stall";
+                }
             }
-            if (pp[row][j].find("MEM") != std::string::npos) {
-                MEM = j; // index at which MEM is seen
-            }
+
         }
-    }
-    for (int j = IF + 1; j < ID; j++) {
-        if (pp[row][j].find("stall") != std::string::npos) {
-            pp[row + 1][j] = "stall"; // if a cell is stall, then continue the whole column as stall
-        }
-    }
-    for (int j = ID + 1; j < EX; j++) {
-        if (pp[row][j].find("stall") != std::string::npos) {
-            pp[row + 1][j] = "stall"; // if a cell is stall, then continue the whole column as stall
-        }
-    }
-    for (int j = EX + 1; j < MEM; j++) {
-        if (pp[row][j].find("stall") != std::string::npos) {
-            pp[row + 1][j] = "stall"; // if a cell is stall, then continue the whole column as stall
-        }
-    }
-    for (int j = MEM + 1; j < clk; j++) {
-        if (pp[row][j].find("stall") != std::string::npos) {
-            pp[row + 1][j] = "stall"; // if a cell is stall, then continue the whole column as stall
-        }
-    }
-}
-      void pipeline(int row, int flag, vector<string> &program)
-      {
-        int clk=1;
-        int j=0;
-        pp[row][0]=program[pc];
-        for(int i=0;i<row;i++)
-        {
-            j=clk;
-            if(pp[i][0]!="null")
-            {
-                if (pp[i][0].substr(0, 4).find("addi") != std::string::npos)
-                {
-                    if(i!=0 && pp[i][0].substr(6,8).find(hazard(pp[i-1][0])) )
-                    {
-                        if(flag==0)
-                        {
-                            hazard1(i-1);
-                             if (branchhazard(pp[i - 1][0]) && bflag == 1) {// if branch instruction
-                                fill(i, j, 1, 0, 2, 0, 0);
-                            } else {
-                                fill(i, j, 0, 0, 2, 0, 0);
-                            }
+         void fillPipeline(int numb_rows,int flagForwdg){
+            int clock1=1;
+            int j=0;
+            for(int i=0; i<numb_rows; i++){
+                j=clock1;
+
+                if(pipeline[i][0].substr(0,4)=="addi"){
+                    if(i!=0 && pipeline[i][0].substr(6,2) == hazard(pipeline[i-1][0])){
+                         if(flagForwdg==0){//no forwarding
+                            stalls_hazard(i-1);
+                            if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
+                            fill(i,j,1,0,2,0,0);
+                           }
+                            else{
+                            fill(i,j,0,0,2,0,0); 
+                            }     
                         }
-                         else {// forwarding
-                            hazard1(i - 1);
-                            if (branchhazard(pp[i - 1][0]) && bflag == 1) {// if branch instruction
-                                fill(i, j, 1, 0, 0, 0, 0);
-                            } else {
-                                fill(i, j, 0, 0, 0, 0, 0);
+                        else{//with forwarding
+                            stalls_hazard(i-1);
+                            if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
+                            fill(i,j,1,0,0,0,0);
+                            }
+                            else{
+                            fill(i,j,0,0,0,0,0);
                             }
                         }
                     }
-                    else if (i == 0) {
-                        fill(i, j, 0, 0, 0, 0, 0);
+                    else if(i==0){
+                        fill(i,j,0,0,0,0,0);
+                    }
+                    else{   //i!=0 and no hazard in previous instruction
+                         stalls_hazard(i-1);
+                        if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
+                            fill(i,j,1,0,0,0,0);
+                        }
+                        else{
+                            fill(i,j,0,0,0,0,0);
+                        }
+                       
+                    }
+                }
+                if(pipeline[i][0].substr(0,3)=="add" && pipeline[i][0].substr(3,1)!="i"){
+                    if(pipeline[i][0].substr(5,2) == hazard(pipeline[i-1][0]) || pipeline[i][0].substr(7,2) == hazard(pipeline[i-1][0])){
+                        if(flagForwdg==0){//no forwarding
+                         stalls_hazard(i-1);
+                            if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
+                            fill(i,j,1,0,2,0,0);
+                            }
+                            else{
+                              fill(i,j,0,0,2,0,0);
+                            }
+                           
+                            
+                        }
+                        else{//with forwarding
+                         stalls_hazard(i-1);
+                             if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
+                                  fill(i,j,1,0,0,0,0);
+                             }
+                           
+                            else{
+                                 fill(i,j,0,0,0,0,0);
+                            }
+                           
+                        }
+                       
                     }
                     else{
-                        hazard1(i-1);
-                        if (branchhazard(pp[i - 1][0]) && bflag == 1) {// if branch instruction
-                            fill(i, j, 1, 0, 0, 0, 0);
-                        } else {
-                            fill(i, j, 0, 0, 0, 0, 0);
+                        stalls_hazard(i-1);
+                        if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
+                             fill(i,j,1,0,0,0,0);
+                         }
+                            
+                        else{
+                            fill(i,j,0,0,0,0,0);
                         }
-                    }
-                }
-                if (pp[i][0].substr(0, 3).find("sub") && !pp[i][0].substr(3, 4).find("i")) {
-                    // if current instruction is sub
-                    if (pp[i][0].substr(5, 7).find(hazard(pp[i - 1][0]))
-                            || pp[i][0].substr(7, 9).find(hazard(pp[i - 1][0]))) {
-                        // if the source register is destination register for previous instruction
-                        if (flag == 0) {// non-forwarding
-                            hazard1(i - 1);
-                            if (branchhazard(pp[i - 1][0]) && bflag == 1) {// if branch instruction
-                                fill(i, j, 1, 0, 2, 0, 0);
-                            } else {
-                                fill(i, j, 0, 0, 2, 0, 0);
-                            }
-
-                        } else {// forwarding
-                            hazard1(i - 1);
-                            if (branchhazard(pp[i - 1][0]) && bflag == 1) {// if branch instruction
-                                fill(i, j, 1, 0, 0, 0, 0);
-                            } else {
-                                fill(i, j, 0, 0, 0, 0, 0);
-                            }
-                        }
-                    } else {
-                        hazard1(i - 1);
-                        if (branchhazard(pp[i - 1][0]) && bflag == 1) {// if branch instruction
-                            fill(i, j, 1, 0, 0, 0, 0);
-                        } else {
-                            fill(i, j, 0, 0, 0, 0, 0);
-                        }
-                    }
-                }
-                if (pp[i][0].substr(0, 3).find("slt")) {
-                    // if current instruction is slt
-                    if (pp[i][0].substr(5, 7).find(hazard(pp[i - 1][0]))
-                            || pp[i][0].substr(7, 9).find(hazard(pp[i - 1][0]))) {
-                        // if the source register is destination register for previous instruction
-                        if (flag == 0) {// non-forwarding
-                            hazard1(i - 1);
-                            if (branchhazard(pp[i - 1][0]) && bflag == 1) {// if branch instruction
-                                fill(i, j, 1, 0, 2, 0, 0);
-                            } else {
-                                fill(i, j, 0, 0, 2, 0, 0);
-                            }
-                        } else {// forwarding
-                            hazard1(i - 1);
-                            if (branchhazard(pp[i - 1][0]) && bflag == 1) {// if branch instruction
-                                fill(i, j, 1, 0, 0, 0, 0);
-                            } else {
-                                fill(i, j, 0, 0, 0, 0, 0);
-                            }
-                        }
-                    } else {
-                        hazard1(i - 1);
-                        if (branchhazard(pp[i - 1][0]) && bflag == 1) {// if branch instruction
-                            fill(i, j, 1, 0, 0, 0, 0);
-                        } else {
-                            fill(i, j, 0, 0, 0, 0, 0);
-                        }
-
-                    }
-                }
-                if (pp[i][0].substr(0, 3).find("sgt")) {
-                    // if current instruction is sgt
-                    if (pp[i][0].substr(5, 7).find(hazard(pp[i - 1][0]))
-                            || pp[i][0].substr(7, 9).find(hazard(pp[i - 1][0]))) {
-                        // if the source register is destination register for previous instruction
-                        if (flag == 0) {// non-forwarding
-                            hazard1(i - 1);
-                            if (branchhazard(pp[i - 1][0]) && bflag == 1) {// if branch instruction
-                                fill(i, j, 1, 0, 2, 0, 0);
-                            } else {
-                                fill(i, j, 0, 0, 2, 0, 0);
-                            }
-                        } else {// forwarding
-                            hazard1(i - 1);
-                            if (branchhazard(pp[i - 1][0]) && bflag == 1) {// if branch instruction
-                                fill(i, j, 1, 0, 0, 0, 0);
-                            } else {
-                                fill(i, j, 0, 0, 0, 0, 0);
-                            }
-                        }
-                    } else {
-                        hazard1(i - 1);
-                        if (branchhazard(pp[i - 1][0]) && bflag == 1) {// if branch instruction
-                            fill(i, j, 1, 0, 0, 0, 0);
-                        } else {
-                            fill(i, j, 0, 0, 0, 0, 0);
-                        }
-
-                    }
-                }
-                if (pp[i][0].substr(0, 3).find("bne")) {
-                    // if current instruction is bne
-                    int pc = 0;
-                    bflag = 0;
-                    for (int j1 = 0; j1 < arr1.length(); j1++) {
-                        if (pp[i][0].find(arr1[j]))
-                            pc = j;
-                    }
-                    if (pp[i + 1][0] != "null") {
-                        if (!pp[i + 1][0].find(arr1[pc + 1]))
-                            bflag = 1;
-                        else
-                            bflag = 0;
-                    }
-
-                    if (pp[i][0].substr(3, 5).find(hazard(pp[i - 1][0]))
-                            || pp[i][0].substr(5, 7).find(hazard(pp[i - 1][0]))) {
-                        // if the source register is destination register for previous instruction
-                        if (flag == 0) {// non-forwarding
-                            hazard1(i - 1);
-                            if (branchhazard(pp[i - 1][0]) && bflag == 1) {// if branch instruction
-                                fill(i, j, 1, 0, 2, 0, 0);
-                            }
-
-                            else {
-                                fill(i, j, 0, 0, 2, 0, 0);
-                            }
-                        } else {// forwarding
-                            hazard1(i - 1);
-                            if (branchhazard(pp[i - 1][0]) && bflag == 1) {// if branch instruction
-                                fill(i, j, 1, 0, 0, 0, 0);
-                            } else {
-                                fill(i, j, 0, 0, 0, 0, 0);
-                            }
-                        }
-
-                    } else {
-                        hazard1(i - 1);
-                        if (branchhazard(pp[i - 1][0]) && bflag == 1) {// if branch instruction
-                            fill(i, j, 1, 0, 0, 0, 0);
-                        }
-
-                        else {
-                            fill(i, j, 0, 0, 0, 0, 0);
-                        }
-
-                    }
-
-                }
-                if (pp[i][0].substr(0, 2).find("lw")) {
-                    // if current instruction is lw
-                    if (i != 0 && pp[i][0].substr(pp[i][0].length() - 3,
-                            pp[i][0].length() - 1).contains(hazard(pp[i - 1][0]))) {
-                        // if the source register is destination register for previous instruction
-                        if (flag == 0) {// non-forwarding
-                            hazard1(i - 1);
-                            if (branchhazard(pp[i - 1][0]) && bflag == 1) {// if branch instruction
-                                fill(i, j, 1, 0, 2, 0, 0);
-                            } else {
-                                fill(i, j, 0, 0, 2, 0, 0);
-                            }
-                        } else {// forwarding
-                            hazard1(i - 1);
-                            if (branchhazard(pp[i - 1][0]) && bflag == 1) {// if branch instruction
-                                fill(i, j, 1, 0, 0, 0, 0);
-                            } else {
-                                fill(i, j, 0, 0, 0, 0, 0);
-                            }
-                        }
-                    } else {
-                        hazard1(i - 1);
-                        if (branchhazard(pp[i - 1][0]) && bflag == 1) {// if branch instruction
-                            fill(i, j, 1, 0, 0, 0, 0);
-                        } else {
-                            fill(i, j, 0, 0, 0, 0, 0);
-                        }
-                    }
-                }
-                if (pp[i][0].substr(0, 2).find("sw")) {
-                    // if current instruction is sw
-                    if (i != 0 && pp[i][0].substr(pp[i][0].length() - 3,
-                            pp[i][0].length() - 1).find(hazard(pp[i - 1][0]))) {
-                        // if the source register is destination register for previous instruction
-                        if (flag == 0) {// non-forwarding
-                            hazard1(i - 1);
-                            if (branchhazard(pp[i - 1][0]) && flag == 1) {// if branch instruction
-                                fill(i, j, 1, 0, 2, 0, 0);
-                            } else {
-                                fill(i, j, 0, 0, 2, 0, 0);
-                            }
-                        } else {// forwarding
-                            hazard1(i - 1);
-                            if (branchhazard(pp[i - 1][0]) && bflag == 1) {// if branch instruction
-                                fill(i, j, 1, 0, 0, 0, 0);
-                            } else {
-                                fill(i, j, 0, 0, 0, 0, 0);
-                            }
-                        }
-                    } else {
-                        hazard1(i - 1);
-                        if (branchhazard(pp[i - 1][0]) && bflag == 1) {// if branch instruction
-                            fill(i, j, 1, 0, 0, 0, 0);
-                        } else {
-                            fill(i, j, 0, 0, 0, 0, 0);
-                        }
-                    }
-                }
-                if (pp[i][0].substr(0, 2).find("li")) {
-                    // if current instruction is li
-                    if (i != 0) {
-                        if (flag == 0) {// non-forwarding
-                            hazard1(i - 1);
-                            if (branchhazard(pp[i - 1][0]) && bflag == 1) {// if branch instruction
-                                fill(i, j, 0, 0, 0, 0, 0);
-                            } else {
-                                fill(i, j, 0, 0, 0, 0, 0);
-                            }
-                        } else {// forwarding
-                            hazard1(i - 1);
-                            if (branchhazard(pp[i - 1][0]) && bflag == 1) {// if branch instruction
-                                fill(i, j, 0, 0, 0, 0, 0);
-                            } else {
-                                fill(i, j, 0, 0, 0, 0, 0);
-                            }
-                        }
-                    } else {
-                        fill(i, j, 0, 0, 0, 0, 0);
+                       
                     }
                 }
 
-            }
+                if(pipeline[i][0].substr(0,3)=="sub"){
+                    if(pipeline[i][0].substr(5,2) == hazard(pipeline[i-1][0]) || pipeline[i][0].substr(7,2) == hazard(pipeline[i-1][0])){
+                        if(flagForwdg==0){//no forwarding
+                         stalls_hazard(i-1);
+                             if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
+                                 fill(i,j,1,0,2,0,0);
+                             }
+                            
+                            else{
+                                fill(i,j,0,0,2,0,0);
+                            }
+                            
+                            //stalls_hazard(i-1);
+                        }
+                        else{//with forwarding
+                             stalls_hazard(i-1);
+                             if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
+                                 fill(i,j,1,0,0,0,0);
+                             }
+                            
+                            else{
+                                 fill(i,j,0,0,0,0,0);
+                            }
+                           
+                        }
+                      
+                    }
+                    else{
+                        stalls_hazard(i-1);
+                       if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
+                           fill(i,j,1,0,0,0,0);
+                       }
+                            
+                        else{
+                        fill(i,j,0,0,0,0,0);
+                        }
+                    }
+                }
 
+                if(pipeline[i][0].substr(0,3)=="mul"){
+                    if(pipeline[i][0].substr(5,2) == hazard(pipeline[i-1][0]) || pipeline[i][0].substr(7,2) == hazard(pipeline[i-1][0])){
+                        if(flagForwdg==0){//no forwarding
+                         stalls_hazard(i-1);
+                           if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
+                                fill(i,j,1,0,2,0,0);
+                           }
+                           
+                            else{
+                                fill(i,j,0,0,2,0,0);
+                            }
+                        }
+                        else{//with forwarding
+                            stalls_hazard(i-1);
+                           if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
+                                fill(i,j,1,0,0,0,0);
+                           }
+                           
+                            else{
+                              fill(i,j,0,0,0,0,0);
+                            }  
+                        } 
+                    }
+                    else{
+                         stalls_hazard(i-1);
+                        if(branchhazard(pipeline[i-1][0]) && branch_flag==1){  
+                              fill(i,j,1,0,0,0,0);
+                        }
+                           
+                        else{
+                          fill(i,j,0,0,0,0,0);
+                        }
+                        
+                    }
+                }
+
+                if(pipeline[i][0].substr(0,3)=="div"){
+                    if(pipeline[i][0].substr(5,2) == hazard(pipeline[i-1][0]) || pipeline[i][0].substr(7,2) == hazard(pipeline[i-1][0])){
+                        if(flagForwdg==0){//no forwarding
+                         stalls_hazard(i-1);
+                            if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
+                                fill(i,j,1,0,2,0,0);
+                            }
+                            
+                            else{
+                                fill(i,j,0,0,2,0,0);
+                            }
+                        }
+                        else{//with forwarding
+                            stalls_hazard(i-1);
+                           if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
+                                fill(i,j,1,0,0,0,0);
+                           }
+                           
+                            else{
+                            fill(i,j,0,0,0,0,0);
+                            }
+                        }   
+                    }
+                    else{
+                        stalls_hazard(i-1);
+                        if(branchhazard(pipeline[i-1][0]) && branch_flag==1){  
+                             fill(i,j,1,0,0,0,0);
+                        }         
+                        else{
+                             fill(i,j,0,0,0,0,0);
+                        }
+                       
+                    }
+                }
+
+                if(pipeline[i][0].substr(0,3)=="slt"){
+                   if(pipeline[i][0].substr(5,2) == hazard(pipeline[i-1][0]) || pipeline[i][0].substr(7,2) == hazard(pipeline[i-1][0])){
+                        if(flagForwdg==0){//no forwarding
+                         stalls_hazard(i-1);
+                            if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
+                                 fill(i,j,1,0,2,0,0);
+                            }
+                            
+                            else{
+                                fill(i,j,0,0,2,0,0);
+                            }
+                        }
+                        else{//with forwarding
+                            stalls_hazard(i-1);
+                            if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
+                                fill(i,j,1,0,0,0,0);
+                           }  
+                            else{
+                            fill(i,j,0,0,0,0,0);
+                            }
+                        }
+                       
+                    }
+                    else{
+                         stalls_hazard(i-1);
+                        if(branchhazard(pipeline[i-1][0]) && branch_flag==1){   
+                             fill(i,j,1,0,0,0,0);
+                        }
+                            
+                        else{
+                             fill(i,j,0,0,0,0,0);
+                        }
+                       
+                    }
+                }
+                if(pipeline[i][0].substr(0,3)=="beq"){
+                     int pc;
+                     branch_flag=0;
+                     for(int j=0;j<Input_ins.size();j++){
+                        if(pipeline[i][0]==Input_ins[j]){
+                        pc=j;
+                        }
+                                                    
+                     }
+                     if(pipeline[i+1][0]!=Input_ins[pc+1])
+                     branch_flag=1;
+                     else
+                     branch_flag=0;
+                    if(pipeline[i][0].substr(3,2) == hazard(pipeline[i-1][0]) || pipeline[i][0].substr(5,2) == hazard(pipeline[i-1][0])){
+                        if(flagForwdg==0){//no forwarding
+                         stalls_hazard(i-1);
+                            if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
+                                 fill(i,j,1,0,2,0,0);
+                            }
+                            
+                            else{
+                            fill(i,j,0,0,2,0,0);
+                            //stalls_hazard(i-1);
+                            }
+                        }
+                        else{//with forwarding
+                            stalls_hazard(i-1);
+                           if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
+                                fill(i,j,1,0,0,0,0);
+                           }
+                           
+                            else{
+                            fill(i,j,0,0,0,0,0);
+                            }
+                        }
+                       
+                    }
+                    else{
+                         stalls_hazard(i-1);
+                        if(branchhazard(pipeline[i-1][0]) && branch_flag==1){  
+                              fill(i,j,1,0,0,0,0);
+                        }
+                           
+                        else{
+                          fill(i,j,0,0,0,0,0);
+                        }
+                        
+                    }
+                    
+
+                }
+                 if(pipeline[i][0].substr(0,3)=="bne"){
+                    int pc;
+                     branch_flag=0;
+                     for(int j=0;j<Input_ins.size();j++){
+                        if(pipeline[i][0]==Input_ins[j])
+                            pc=j;
+                     }
+                     if(pipeline[i+1][0]!=Input_ins[pc+1])
+                     branch_flag=1;
+                     else
+                     branch_flag=0;
+                     if(pipeline[i][0].substr(3,2) == hazard(pipeline[i-1][0]) || pipeline[i][0].substr(5,2) == hazard(pipeline[i-1][0])){
+                        if(flagForwdg==0){//no forwarding
+                         stalls_hazard(i-1);
+                            if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
+                                 fill(i,j,1,0,2,0,0);
+                            }
+                            
+                            else{
+                            fill(i,j,0,0,2,0,0);
+                            }
+                        }
+                        else{//with forwarding
+                            stalls_hazard(i-1);
+                            if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
+                                fill(i,j,1,0,0,0,0);
+                           }
+                            else{
+                            fill(i,j,0,0,0,0,0);
+                            }
+                        }
+                       
+                    }
+                    else{
+                         stalls_hazard(i-1);
+                        if(branchhazard(pipeline[i-1][0]) && branch_flag==1){  
+                            fill(i,j,1,0,0,0,0);
+                        }
+                           
+                        else{
+                            fill(i,j,0,0,0,0,0);
+                        }
+                        
+                    }
+                     
+
+                }
+                 if(pipeline[i][0].substr(0,1)=="j" && pipeline[i][0].substr(1,1)!="r"){
+                    int pc;
+                     branch_flag=0;
+                     for(int j=0;j<Input_ins.size();j++){
+                        if(pipeline[i][0]==Input_ins[j])
+                            pc=j;
+                     }
+                     if(pipeline[i+1][0]!=Input_ins[pc+1])
+                     branch_flag=1;
+                     else
+                     branch_flag=0;
+                     
+                    stalls_hazard(i-1);
+                    if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
+                        fill(i,j,1,0,0,0,0);
+                    }
+                    else{
+                        fill(i,j,0,0,0,0,0);
+                    }
+                }
+                  if(pipeline[i][0].substr(0,2)=="lw"){
+                    if(i!=0 && pipeline[i][0].substr(pipeline[i][0].length()-3,2) == hazard(pipeline[i-1][0])){
+                        if(flagForwdg==0){//no forwarding
+                            stalls_hazard(i-1);
+                            if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
+                                fill(i,j,1,0,2,0,0);
+                            }
+                            else{
+                                fill(i,j,0,0,2,0,0);
+                            }
+                        }
+                        else{//with forwarding
+                            stalls_hazard(i-1);
+                            if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
+                                fill(i,j,1,0,0,0,0);
+                            }
+                            else{
+                                fill(i,j,0,0,0,0,0);
+                            }  
+                        }
+                    }
+                    else{
+                        stalls_hazard(i-1);
+                        if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
+                            fill(i,j,1,0,0,0,0);
+                        }
+                        else{
+                            fill(i,j,0,0,0,0,0);
+                        }
+                    }
+                }
+
+                if(pipeline[i][0].substr(0,2)=="sw"){
+                    if(i!=0 && pipeline[i][0].substr(pipeline[i][0].length()-3,2) == hazard(pipeline[i-1][0])){
+                        if(flagForwdg==0){//no forwarding
+                            stalls_hazard(i-1);
+                            if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
+                                fill(i,j,1,0,2,0,0);
+                            }
+                            else{
+                                fill(i,j,0,0,2,0,0);
+                            }
+                        }
+                        else{//with forwarding
+                            stalls_hazard(i-1);
+                            if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
+                                fill(i,j,1,0,0,0,0);
+                            }
+                            else{
+                                fill(i,j,0,0,0,0,0);
+                            }  
+                        }
+                    }
+                    else{
+                        stalls_hazard(i-1);
+                        if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
+                            fill(i,j,1,0,0,0,0);
+                        }
+                        else{
+                            fill(i,j,0,0,0,0,0);
+                        }
+                    }
+                }
+
+
+                if(pipeline[i][0].substr(0,2)=="la"){   //data and structural hazards not possible in la
+                        stalls_hazard(i-1);
+                        if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
+                            fill(i,j,1,0,0,0,0);
+                        }
+                        else{
+                            fill(i,j,0,0,0,0,0);
+                        }
+                }
+
+                if(pipeline[i][0].substr(0,2)=="jr"){   //data and structural hazards not possible in jr
+                    stalls_hazard(i-1);
+                    if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
+                        fill(i,j,1,0,0,0,0);
+                    }
+                    else{
+                        fill(i,j,0,0,0,0,0);
+                    }
+                }
+
+                for(int q=1; q<10000; q++){
+                    if(pipeline[i][q]=="IF"){
+                            clock1=q+1;
+                    }
+                }
             }
         }
-          
-      }
+
 
     void execute(vector<int> &memory) {
+        int pipeRow = 0;
       while (pc < program.size()) {
-        pipeline(pc,flag,program);
         string instruction = program[pc];
+        //  pp[pipeRow][0]=instruction;
+        //         pipeRow++;
+
         if (instruction == "exit") {
             //Print register values after sorting
             cout << "Register Values after sorting:" << endl;
@@ -599,10 +793,12 @@ void hazard1(int row) {
             }
          }
           
-          //cout<<program[pc]<<endl;
+          pp[pipeRow][0]=instruction;
+            pipeRow++;
           pc+=1;
         }
-       
+        fillPipeline(pipeRow, flag);
+       // cout<<pc<<endl;
     }
 };
 class Processor {
