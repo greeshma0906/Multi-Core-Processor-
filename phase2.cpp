@@ -12,8 +12,10 @@ public:
     unordered_map<string, int> registers; 
     int pc;
     vector<string> program;
-    int flag;
+   // int flag;
     string pp[500][1000];
+     int branch_flag;
+     int pipeRow;
    // int bflag;
 
 public:
@@ -111,73 +113,34 @@ public:
         }
 
         string hazard(string ins){
-    if(ins.substr(0,4)=="addi"){
-        return ins.substr(4,2);
-    }
-    if(ins.substr(0,3)=="add" && (ins.substr(3,1)!="i")){
-        return ins.substr(3,2);
-    }
-    if(ins.substr(0,3)=="sub"){
-        return ins.substr(3,2);
-    }
-    if(ins.substr(0,3)=="mul"){
-        return ins.substr(3,2);
-    }
-    if(ins.substr(0,3)=="div"){
-        return ins.substr(3,2);
-    }
-    if(ins.substr(0,3)=="slt"){
-        return ins.substr(3,2);
-    }
-    if(ins.substr(0,2)=="lw"){
-        return ins.substr(2,2);
-    }
-    if(ins.substr(0,2)=="sw"){
-        return ins.substr(2,2);
-    }
-    if(ins.substr(0,3)=="blt"){
-        return ins.substr(3,2);
-    }
-    if(ins.substr(0,3)=="bgt"){
-        return ins.substr(3,2);
-    }
-    if(ins.substr(0,2)=="mv"){
-        return ins.substr(2,2);
-    }
-    if(ins.substr(0,3)=="bge"){
-        return ins.substr(3,2);
-    }
-    if(ins.substr(0,2)=="li"){
-        return ins.substr(2,2);
-    }
-    if(ins.substr(0,4)=="subi"){
-        return ins.substr(4,2);
-    }
-   
-    if(ins.substr(0,1) == "j") {
-        stringstream ss(ins);
-        string token;
-        // Split the instruction string by spaces
-        while (getline(ss, token, ' ')) {
-            // Check if the first token is "j"
-            if (token == "j") {
-                // Get the next token after "j"
-                if (getline(ss, token, ' ')) {
-                    return token; // Return the next token
-                } else {
-                    // If there's no next token, return an empty string
-                    return "";
-                }
+            if(ins.substr(0,4)=="addi"){
+                return ins.substr(4,2);
             }
+            if(ins.substr(0,3)=="add" && (ins.substr(3,1)!="i")){
+                return ins.substr(3,2);
+            }
+            if(ins.substr(0,3)=="sub"){
+                return ins.substr(3,2);
+            }
+            if(ins.substr(0,3)=="mul"){
+                return ins.substr(3,2);
+            }
+            if(ins.substr(0,3)=="div"){
+                return ins.substr(3,2);
+            }
+            if(ins.substr(0,3)=="slt"){
+                return ins.substr(3,2);
+            }
+            if(ins.substr(0,2)=="lw"){
+                return ins.substr(2,2);
+            }
+            if(ins.substr(0,2)=="sw"){
+                return ins.substr(2,2);
+            }
+            return "nulll";
+            //if ..... other functions
         }
-    // Handle other instructions here
-}
-    if(ins.substr(0,3)=="bne"){
-        return ins.substr(3,2);
-    }
-    return "null";
-    //if ..... other functions
-}
+
         bool branchhazard(string ins){
             bool flag=false;
              if(ins.substr(0,3)=="beq"||ins.substr(0,3)=="bne"||(ins.substr(0,1)=="j"&&ins.substr(1,1)!="r")){
@@ -189,41 +152,43 @@ public:
             int IF,ID,EX,MEM;
             int clk_len=0;
             for(int j=1;j<10000;j++){
-                if(pipeline[ins_row][j]=="WB")
+                if(pp[ins_row][j]=="WB")
                   clk_len=j;
             }
             for(int j=1;j<clk_len;j++){
-              if(pipeline[ins_row][j]=="IF")
+              if(pp[ins_row][j]=="IF")
               IF=j;
-               if(pipeline[ins_row][j]=="ID")
+               if(pp[ins_row][j]=="ID")
               ID=j;
-               if(pipeline[ins_row][j]=="EX")
+               if(pp[ins_row][j]=="EX")
               EX=j;
-               if(pipeline[ins_row][j]=="MEM")
+               if(pp[ins_row][j]=="MEM")
               MEM=j;
             }
             for(int j=IF+1;j<ID;j++){
-                if(pipeline[ins_row][j]=="stall"){
+                if(pp[ins_row][j]=="stall"){
 
-                  pipeline[ins_row+1][j]="stall";
+                  pp[ins_row+1][j]="stall";
+
+
                 }
             }
             for(int j=ID+1;j<EX;j++){
-                if(pipeline[ins_row][j]=="stall"){
-                  pipeline[ins_row+1][j]="stall";
+                if(pp[ins_row][j]=="stall"){
+                  pp[ins_row+1][j]="stall";
                 }
             }
             for(int j=EX+1;j<MEM;j++){
-                if(pipeline[ins_row][j]=="stall"){
+                if(pp[ins_row][j]=="stall"){
                   //fill(ins_row+1,i,0,0,0,1,0);
 
-                  pipeline[ins_row+1][j]="stall";
+                  pp[ins_row+1][j]="stall";
                 }
             }
             for(int j=MEM+1;j<clk_len;j++){
-                if(pipeline[ins_row][j]=="stall"){
+                if(pp[ins_row][j]=="stall"){
                   //fill(ins_row+1,i,0,0,0,0,1);
-                  pipeline[ins_row+1][j]="stall";
+                  pp[ins_row+1][j]="stall";
                 }
             }
 
@@ -234,11 +199,11 @@ public:
             for(int i=0; i<numb_rows; i++){
                 j=clock1;
 
-                if(pipeline[i][0].substr(0,4)=="addi"){
-                    if(i!=0 && pipeline[i][0].substr(6,2) == hazard(pipeline[i-1][0])){
+                if(pp[i][0].substr(0,4)=="addi"){
+                    if(i!=0 && pp[i][0].substr(6,2) == hazard(pp[i-1][0])){
                          if(flagForwdg==0){//no forwarding
                             stalls_hazard(i-1);
-                            if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
+                            if(branchhazard(pp[i-1][0]) && branch_flag==1){
                             fill(i,j,1,0,2,0,0);
                            }
                             else{
@@ -247,7 +212,7 @@ public:
                         }
                         else{//with forwarding
                             stalls_hazard(i-1);
-                            if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
+                            if(branchhazard(pp[i-1][0]) && branch_flag==1){
                             fill(i,j,1,0,0,0,0);
                             }
                             else{
@@ -260,7 +225,7 @@ public:
                     }
                     else{   //i!=0 and no hazard in previous instruction
                          stalls_hazard(i-1);
-                        if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
+                        if(branchhazard(pp[i-1][0]) && branch_flag==1){
                             fill(i,j,1,0,0,0,0);
                         }
                         else{
@@ -269,11 +234,11 @@ public:
                        
                     }
                 }
-                if(pipeline[i][0].substr(0,3)=="add" && pipeline[i][0].substr(3,1)!="i"){
-                    if(pipeline[i][0].substr(5,2) == hazard(pipeline[i-1][0]) || pipeline[i][0].substr(7,2) == hazard(pipeline[i-1][0])){
+                if(pp[i][0].substr(0,3)=="add" && pp[i][0].substr(3,1)!="i"){
+                    if(pp[i][0].substr(5,2) == hazard(pp[i-1][0]) || pp[i][0].substr(7,2) == hazard(pp[i-1][0])){
                         if(flagForwdg==0){//no forwarding
                          stalls_hazard(i-1);
-                            if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
+                            if(branchhazard(pp[i-1][0]) && branch_flag==1){
                             fill(i,j,1,0,2,0,0);
                             }
                             else{
@@ -284,7 +249,7 @@ public:
                         }
                         else{//with forwarding
                          stalls_hazard(i-1);
-                             if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
+                             if(branchhazard(pp[i-1][0]) && branch_flag==1){
                                   fill(i,j,1,0,0,0,0);
                              }
                            
@@ -297,7 +262,7 @@ public:
                     }
                     else{
                         stalls_hazard(i-1);
-                        if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
+                        if(branchhazard(pp[i-1][0]) && branch_flag==1){
                              fill(i,j,1,0,0,0,0);
                          }
                             
@@ -308,11 +273,11 @@ public:
                     }
                 }
 
-                if(pipeline[i][0].substr(0,3)=="sub"){
-                    if(pipeline[i][0].substr(5,2) == hazard(pipeline[i-1][0]) || pipeline[i][0].substr(7,2) == hazard(pipeline[i-1][0])){
+                if(pp[i][0].substr(0,3)=="sub"){
+                    if(pp[i][0].substr(5,2) == hazard(pp[i-1][0]) || pp[i][0].substr(7,2) == hazard(pp[i-1][0])){
                         if(flagForwdg==0){//no forwarding
                          stalls_hazard(i-1);
-                             if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
+                             if(branchhazard(pp[i-1][0]) && branch_flag==1){
                                  fill(i,j,1,0,2,0,0);
                              }
                             
@@ -324,7 +289,7 @@ public:
                         }
                         else{//with forwarding
                              stalls_hazard(i-1);
-                             if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
+                             if(branchhazard(pp[i-1][0]) && branch_flag==1){
                                  fill(i,j,1,0,0,0,0);
                              }
                             
@@ -337,7 +302,7 @@ public:
                     }
                     else{
                         stalls_hazard(i-1);
-                       if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
+                       if(branchhazard(pp[i-1][0]) && branch_flag==1){
                            fill(i,j,1,0,0,0,0);
                        }
                             
@@ -347,11 +312,11 @@ public:
                     }
                 }
 
-                if(pipeline[i][0].substr(0,3)=="mul"){
-                    if(pipeline[i][0].substr(5,2) == hazard(pipeline[i-1][0]) || pipeline[i][0].substr(7,2) == hazard(pipeline[i-1][0])){
+                if(pp[i][0].substr(0,3)=="mul"){
+                    if(pp[i][0].substr(5,2) == hazard(pp[i-1][0]) || pp[i][0].substr(7,2) == hazard(pp[i-1][0])){
                         if(flagForwdg==0){//no forwarding
                          stalls_hazard(i-1);
-                           if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
+                           if(branchhazard(pp[i-1][0]) && branch_flag==1){
                                 fill(i,j,1,0,2,0,0);
                            }
                            
@@ -361,7 +326,7 @@ public:
                         }
                         else{//with forwarding
                             stalls_hazard(i-1);
-                           if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
+                           if(branchhazard(pp[i-1][0]) && branch_flag==1){
                                 fill(i,j,1,0,0,0,0);
                            }
                            
@@ -372,7 +337,7 @@ public:
                     }
                     else{
                          stalls_hazard(i-1);
-                        if(branchhazard(pipeline[i-1][0]) && branch_flag==1){  
+                        if(branchhazard(pp[i-1][0]) && branch_flag==1){  
                               fill(i,j,1,0,0,0,0);
                         }
                            
@@ -383,11 +348,11 @@ public:
                     }
                 }
 
-                if(pipeline[i][0].substr(0,3)=="div"){
-                    if(pipeline[i][0].substr(5,2) == hazard(pipeline[i-1][0]) || pipeline[i][0].substr(7,2) == hazard(pipeline[i-1][0])){
+                if(pp[i][0].substr(0,3)=="div"){
+                    if(pp[i][0].substr(5,2) == hazard(pp[i-1][0]) || pp[i][0].substr(7,2) == hazard(pp[i-1][0])){
                         if(flagForwdg==0){//no forwarding
                          stalls_hazard(i-1);
-                            if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
+                            if(branchhazard(pp[i-1][0]) && branch_flag==1){
                                 fill(i,j,1,0,2,0,0);
                             }
                             
@@ -397,7 +362,7 @@ public:
                         }
                         else{//with forwarding
                             stalls_hazard(i-1);
-                           if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
+                           if(branchhazard(pp[i-1][0]) && branch_flag==1){
                                 fill(i,j,1,0,0,0,0);
                            }
                            
@@ -408,7 +373,7 @@ public:
                     }
                     else{
                         stalls_hazard(i-1);
-                        if(branchhazard(pipeline[i-1][0]) && branch_flag==1){  
+                        if(branchhazard(pp[i-1][0]) && branch_flag==1){  
                              fill(i,j,1,0,0,0,0);
                         }         
                         else{
@@ -418,11 +383,11 @@ public:
                     }
                 }
 
-                if(pipeline[i][0].substr(0,3)=="slt"){
-                   if(pipeline[i][0].substr(5,2) == hazard(pipeline[i-1][0]) || pipeline[i][0].substr(7,2) == hazard(pipeline[i-1][0])){
+                if(pp[i][0].substr(0,3)=="slt"){
+                   if(pp[i][0].substr(5,2) == hazard(pp[i-1][0]) || pp[i][0].substr(7,2) == hazard(pp[i-1][0])){
                         if(flagForwdg==0){//no forwarding
                          stalls_hazard(i-1);
-                            if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
+                            if(branchhazard(pp[i-1][0]) && branch_flag==1){
                                  fill(i,j,1,0,2,0,0);
                             }
                             
@@ -432,7 +397,7 @@ public:
                         }
                         else{//with forwarding
                             stalls_hazard(i-1);
-                            if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
+                            if(branchhazard(pp[i-1][0]) && branch_flag==1){
                                 fill(i,j,1,0,0,0,0);
                            }  
                             else{
@@ -443,7 +408,7 @@ public:
                     }
                     else{
                          stalls_hazard(i-1);
-                        if(branchhazard(pipeline[i-1][0]) && branch_flag==1){   
+                        if(branchhazard(pp[i-1][0]) && branch_flag==1){   
                              fill(i,j,1,0,0,0,0);
                         }
                             
@@ -453,23 +418,23 @@ public:
                        
                     }
                 }
-                if(pipeline[i][0].substr(0,3)=="beq"){
+                if(pp[i][0].substr(0,3)=="beq"){
                      int pc;
                      branch_flag=0;
-                     for(int j=0;j<Input_ins.size();j++){
-                        if(pipeline[i][0]==Input_ins[j]){
+                     for(int j=0;j<program.size();j++){
+                        if(pp[i][0]==program[j]){
                         pc=j;
                         }
                                                     
                      }
-                     if(pipeline[i+1][0]!=Input_ins[pc+1])
+                     if(pp[i+1][0]!=program[pc+1])
                      branch_flag=1;
                      else
                      branch_flag=0;
-                    if(pipeline[i][0].substr(3,2) == hazard(pipeline[i-1][0]) || pipeline[i][0].substr(5,2) == hazard(pipeline[i-1][0])){
+                    if(pp[i][0].substr(3,2) == hazard(pp[i-1][0]) || pp[i][0].substr(5,2) == hazard(pp[i-1][0])){
                         if(flagForwdg==0){//no forwarding
                          stalls_hazard(i-1);
-                            if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
+                            if(branchhazard(pp[i-1][0]) && branch_flag==1){
                                  fill(i,j,1,0,2,0,0);
                             }
                             
@@ -480,7 +445,7 @@ public:
                         }
                         else{//with forwarding
                             stalls_hazard(i-1);
-                           if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
+                           if(branchhazard(pp[i-1][0]) && branch_flag==1){
                                 fill(i,j,1,0,0,0,0);
                            }
                            
@@ -492,7 +457,7 @@ public:
                     }
                     else{
                          stalls_hazard(i-1);
-                        if(branchhazard(pipeline[i-1][0]) && branch_flag==1){  
+                        if(branchhazard(pp[i-1][0]) && branch_flag==1){  
                               fill(i,j,1,0,0,0,0);
                         }
                            
@@ -504,21 +469,21 @@ public:
                     
 
                 }
-                 if(pipeline[i][0].substr(0,3)=="bne"){
+                 if(pp[i][0].substr(0,3)=="bne"){
                     int pc;
                      branch_flag=0;
-                     for(int j=0;j<Input_ins.size();j++){
-                        if(pipeline[i][0]==Input_ins[j])
+                     for(int j=0;j<program.size();j++){
+                        if(pp[i][0]==program[j])
                             pc=j;
                      }
-                     if(pipeline[i+1][0]!=Input_ins[pc+1])
+                     if(pp[i+1][0]!=program[pc+1])
                      branch_flag=1;
                      else
                      branch_flag=0;
-                     if(pipeline[i][0].substr(3,2) == hazard(pipeline[i-1][0]) || pipeline[i][0].substr(5,2) == hazard(pipeline[i-1][0])){
+                     if(pp[i][0].substr(3,2) == hazard(pp[i-1][0]) || pp[i][0].substr(5,2) == hazard(pp[i-1][0])){
                         if(flagForwdg==0){//no forwarding
                          stalls_hazard(i-1);
-                            if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
+                            if(branchhazard(pp[i-1][0]) && branch_flag==1){
                                  fill(i,j,1,0,2,0,0);
                             }
                             
@@ -528,7 +493,7 @@ public:
                         }
                         else{//with forwarding
                             stalls_hazard(i-1);
-                            if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
+                            if(branchhazard(pp[i-1][0]) && branch_flag==1){
                                 fill(i,j,1,0,0,0,0);
                            }
                             else{
@@ -539,7 +504,7 @@ public:
                     }
                     else{
                          stalls_hazard(i-1);
-                        if(branchhazard(pipeline[i-1][0]) && branch_flag==1){  
+                        if(branchhazard(pp[i-1][0]) && branch_flag==1){  
                             fill(i,j,1,0,0,0,0);
                         }
                            
@@ -551,31 +516,31 @@ public:
                      
 
                 }
-                 if(pipeline[i][0].substr(0,1)=="j" && pipeline[i][0].substr(1,1)!="r"){
+                 if(pp[i][0].substr(0,1)=="j" && pp[i][0].substr(1,1)!="r"){
                     int pc;
                      branch_flag=0;
-                     for(int j=0;j<Input_ins.size();j++){
-                        if(pipeline[i][0]==Input_ins[j])
+                     for(int j=0;j<program.size();j++){
+                        if(pp[i][0]==program[j])
                             pc=j;
                      }
-                     if(pipeline[i+1][0]!=Input_ins[pc+1])
+                     if(pp[i+1][0]!=program[pc+1])
                      branch_flag=1;
                      else
                      branch_flag=0;
                      
                     stalls_hazard(i-1);
-                    if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
+                    if(branchhazard(pp[i-1][0]) && branch_flag==1){
                         fill(i,j,1,0,0,0,0);
                     }
                     else{
                         fill(i,j,0,0,0,0,0);
                     }
                 }
-                  if(pipeline[i][0].substr(0,2)=="lw"){
-                    if(i!=0 && pipeline[i][0].substr(pipeline[i][0].length()-3,2) == hazard(pipeline[i-1][0])){
+                  if(pp[i][0].substr(0,2)=="lw"){
+                    if(i!=0 && pp[i][0].substr(pp[i][0].length()-3,2) == hazard(pp[i-1][0])){
                         if(flagForwdg==0){//no forwarding
                             stalls_hazard(i-1);
-                            if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
+                            if(branchhazard(pp[i-1][0]) && branch_flag==1){
                                 fill(i,j,1,0,2,0,0);
                             }
                             else{
@@ -584,7 +549,7 @@ public:
                         }
                         else{//with forwarding
                             stalls_hazard(i-1);
-                            if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
+                            if(branchhazard(pp[i-1][0]) && branch_flag==1){
                                 fill(i,j,1,0,0,0,0);
                             }
                             else{
@@ -594,7 +559,7 @@ public:
                     }
                     else{
                         stalls_hazard(i-1);
-                        if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
+                        if(branchhazard(pp[i-1][0]) && branch_flag==1){
                             fill(i,j,1,0,0,0,0);
                         }
                         else{
@@ -603,11 +568,11 @@ public:
                     }
                 }
 
-                if(pipeline[i][0].substr(0,2)=="sw"){
-                    if(i!=0 && pipeline[i][0].substr(pipeline[i][0].length()-3,2) == hazard(pipeline[i-1][0])){
+                if(pp[i][0].substr(0,2)=="sw"){
+                    if(i!=0 && pp[i][0].substr(pp[i][0].length()-3,2) == hazard(pp[i-1][0])){
                         if(flagForwdg==0){//no forwarding
                             stalls_hazard(i-1);
-                            if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
+                            if(branchhazard(pp[i-1][0]) && branch_flag==1){
                                 fill(i,j,1,0,2,0,0);
                             }
                             else{
@@ -616,7 +581,7 @@ public:
                         }
                         else{//with forwarding
                             stalls_hazard(i-1);
-                            if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
+                            if(branchhazard(pp[i-1][0]) && branch_flag==1){
                                 fill(i,j,1,0,0,0,0);
                             }
                             else{
@@ -626,7 +591,7 @@ public:
                     }
                     else{
                         stalls_hazard(i-1);
-                        if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
+                        if(branchhazard(pp[i-1][0]) && branch_flag==1){
                             fill(i,j,1,0,0,0,0);
                         }
                         else{
@@ -636,9 +601,9 @@ public:
                 }
 
 
-                if(pipeline[i][0].substr(0,2)=="la"){   //data and structural hazards not possible in la
+                if(pp[i][0].substr(0,2)=="la"){   //data and structural hazards not possible in la
                         stalls_hazard(i-1);
-                        if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
+                        if(branchhazard(pp[i-1][0]) && branch_flag==1){
                             fill(i,j,1,0,0,0,0);
                         }
                         else{
@@ -646,9 +611,9 @@ public:
                         }
                 }
 
-                if(pipeline[i][0].substr(0,2)=="jr"){   //data and structural hazards not possible in jr
+                if(pp[i][0].substr(0,2)=="jr"){   //data and structural hazards not possible in jr
                     stalls_hazard(i-1);
-                    if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
+                    if(branchhazard(pp[i-1][0]) && branch_flag==1){
                         fill(i,j,1,0,0,0,0);
                     }
                     else{
@@ -657,15 +622,16 @@ public:
                 }
 
                 for(int q=1; q<10000; q++){
-                    if(pipeline[i][q]=="IF"){
+                    if(pp[i][q]=="IF"){
                             clock1=q+1;
                     }
                 }
             }
+            return;
         }
 
 
-    void execute(vector<int> &memory) {
+    void execute(vector<int> &memory,int flag) {
         int pipeRow = 0;
       while (pc < program.size()) {
         string instruction = program[pc];
@@ -778,34 +744,34 @@ public:
         // Calculating the effective address by adding the offset to the value in the register
         int effectiveAddress = registers[rs] + offset;
         // Loading the value from memory at the effective address into the destination register
-        registers[rd] = memory[effectiveAddress];
+          registers[rd] = memory[effectiveAddress];
           } 
-       }
-       else if(opcode=="sw")
-       {
+         }
+         else if(opcode=="sw")
+         {
            string rs = parts[1]; // Source register
             string address = parts[2]; // Memory address
           size_t openBracketPos = address.find('(');
           size_t closeBracketPos = address.find(')');
-        if (openBracketPos != string::npos && closeBracketPos != string::npos) {
-        // Extracting the destination register name from the address string
-        string rd = address.substr(openBracketPos + 1, closeBracketPos - openBracketPos - 1);
-        // Extracting the offset from the address string
-        string offsetStr = address.substr(0, openBracketPos);
-        int offset = stoi(offsetStr);
-        // Calculating the effective address by adding the offset to the value in the register
-        int effectiveAddress = registers[rd] + offset;
-        // Storing the value from the source register into memory at the effective address
-        memory[effectiveAddress] = registers[rs];
-          }
-       }
+         if (openBracketPos != string::npos && closeBracketPos != string::npos) {
+         // Extracting the destination register name from the address string
+         string rd = address.substr(openBracketPos + 1, closeBracketPos - openBracketPos - 1);
+         // Extracting the offset from the address string
+          string offsetStr = address.substr(0, openBracketPos);
+         int offset = stoi(offsetStr);
+         // Calculating the effective address by adding the offset to the value in the register
+         int effectiveAddress = registers[rd] + offset;
+         // Storing the value from the source register into memory at the effective address
+         memory[effectiveAddress] = registers[rs];
+           }
+         }
          else if(opcode=="slt")
          {
              string rd = parts[1]; // Destination register
              string rs1 = parts[2]; // Source register 1
              string rs2 = parts[3]; // Source register 2
 
-    // Set the destination register to 1 if source register 1 < source register 2, otherwise set it to 0
+         // Set the destination register to 1 if source register 1 < source register 2, otherwise set it to 0
             registers[rd] = (registers[rs1] < registers[rs2]) ? 1 : 0;
          }
          else if(opcode=="j")
@@ -831,12 +797,49 @@ public:
          }
           
           pp[pipeRow][0]=instruction;
+          // fillPipeline(pipeRow, flag);
             pipeRow++;
           pc+=1;
+        
         }
-        fillPipeline(pipeRow, flag);
-       // cout<<pc<<endl;
+       // pipeRow=0;
+       fillPipeline(pipeRow, flag);
+       int cnt=0;
+            for(int j=1;j<10000;j++){
+                if(pp[pipeRow-1][j] == "WB"){
+                    cout << "Total number of clock cycles: " << j << endl<<endl;
+                    cnt=j;
+                }
+            }
+
+            string stallInstruction[5000];
+            int count=0;
+            int k=0;
+            for(int i=0; i<pipeRow ;i++){
+                for(int j=1;j<10000;j++){
+                    if(pp[i][j]=="stall"){
+                        count++;
+                        stallInstruction[k] = pp[i][0];
+                    }
+                }
+                k++;
+            }
+ 
+            cout << "Total number of stalls: " << count <<endl<<endl;
+            float ipc=(float)pipeRow/cnt;
+            cout<<"IPC(Instructions per cycle is) :"<<ipc<<endl<<endl;
+
     }
+   // void printval()
+    // {
+    //      for (int l = 0; l <pipeRow; l++) {
+    //             for (int l1 = 0; l1 < l + 6; l1++) {
+    //                 cout<<(pp[l][l1] + " "); // printing pipeline 2d array
+    //             }
+    //            cout<<endl;
+    //         }
+    //        cout<<endl;
+    // }
 };
 class Processor {
 public:
@@ -855,11 +858,11 @@ public:
     {
        cores[coreval].program=program;
     }
-    void run() {
+    void run(int flag) {
         for(int i=0;i<2;i++)
         {
-          cores[i].execute(memory);
-
+          cores[i].execute(memory,flag);
+         // cores[i].printval();
         }
         return;
     }
@@ -976,7 +979,9 @@ int main()
 }
      sim.send(selection_asmLines, 0); // Load bubble sort program into core 0
      sim.send(bubble_asmLines, 1);
-     sim.run();
+     int flag;
+     cin>>flag;
+     sim.run(flag);
      cout<<"memory values:"<<" ";
      for(int i=0;i<9;i++)
      {
