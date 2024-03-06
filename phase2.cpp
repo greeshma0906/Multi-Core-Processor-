@@ -237,21 +237,21 @@ public:
                 }
                 if(pipeline[i][0].substr(0, 3) == "bgt") {
     // Extracting the registers involved in the bgt instruction
-    string reg1 = pipeline[i][0].substr(3, 2);
-    string reg2 = pipeline[i][0].substr(6, 2);
+    string reg1 = pp[i][0].substr(3, 2);
+    string reg2 = pp[i][0].substr(6, 2);
 
     // Check for hazards with the previous instruction
-    if(i != 0 && (reg1 == hazard(pipeline[i-1][0]) || reg2 == hazard(pipeline[i-1][0]))) {
+    if(i != 0 && (reg1 == hazard(pp[i-1][0]) || reg2 == hazard(pp[i-1][0]))) {
         if(flagForwdg == 0) { // No forwarding
             stalls_hazard(i-1);
-            if(branchhazard(pipeline[i-1][0]) && branch_flag == 1) {
+            if(branchhazard(pp[i-1][0]) && branch_flag == 1) {
                 fill(i, j, 1, 0, 2, 0, 0);
             } else {
                 fill(i, j, 0, 0, 2, 0, 0);
             }
         } else { // With forwarding
             stalls_hazard(i-1);
-            if(branchhazard(pipeline[i-1][0]) && branch_flag == 1) {
+            if(branchhazard(pp[i-1][0]) && branch_flag == 1) {
                 fill(i, j, 1, 0, 0, 0, 0);
             } else {
                 fill(i, j, 0, 0, 0, 0, 0);
@@ -259,7 +259,7 @@ public:
         }
     } else {
         stalls_hazard(i-1);
-        if(branchhazard(pipeline[i-1][0]) && branch_flag == 1) {
+        if(branchhazard(pp[i-1][0]) && branch_flag == 1) {
             fill(i, j, 1, 0, 0, 0, 0);
         } else {
             fill(i, j, 0, 0, 0, 0, 0);
@@ -268,17 +268,17 @@ public:
 }
 if(pipeline[i][0].substr(0, 2) == "li") {
     // Check for hazards with the previous instruction
-    if(i != 0 && hazard(pipeline[i-1][0]) != "nulll") {
+    if(i != 0 && hazard(pp[i-1][0]) != "nulll") {
         if(flagForwdg == 0) { // No forwarding
             stalls_hazard(i-1);
-            if(branchhazard(pipeline[i-1][0]) && branch_flag == 1) {
+            if(branchhazard(pp[i-1][0]) && branch_flag == 1) {
                 fill(i, j, 1, 0, 2, 0, 0);
             } else {
                 fill(i, j, 0, 0, 2, 0, 0);
             }
         } else { // With forwarding
             stalls_hazard(i-1);
-            if(branchhazard(pipeline[i-1][0]) && branch_flag == 1) {
+            if(branchhazard(pp[i-1][0]) && branch_flag == 1) {
                 fill(i, j, 1, 0, 0, 0, 0);
             } else {
                 fill(i, j, 0, 0, 0, 0, 0);
@@ -286,29 +286,29 @@ if(pipeline[i][0].substr(0, 2) == "li") {
         }
     } else {
         stalls_hazard(i-1);
-        if(branchhazard(pipeline[i-1][0]) && branch_flag == 1) {
+        if(branchhazard(pp[i-1][0]) && branch_flag == 1) {
             fill(i, j, 1, 0, 0, 0, 0);
         } else {
             fill(i, j, 0, 0, 0, 0, 0);
         }
     }
 }
-if(pipeline[i][0].substr(0, 4) == "subi") {
+if(pp[i][0].substr(0, 4) == "subi") {
     // Extracting the registers involved in the subi instruction
-    string reg1 = pipeline[i][0].substr(4, 2);
+    string reg1 = pp[i][0].substr(4, 2);
 
     // Check for hazards with the previous instruction
-    if(i != 0 && reg1 == hazard(pipeline[i-1][0])) {
+    if(i != 0 && reg1 == hazard(pp[i-1][0])) {
         if(flagForwdg == 0) { // No forwarding
             stalls_hazard(i-1);
-            if(branchhazard(pipeline[i-1][0]) && branch_flag == 1) {
+            if(branchhazard(pp[i-1][0]) && branch_flag == 1) {
                 fill(i, j, 1, 0, 2, 0, 0);
             } else {
                 fill(i, j, 0, 0, 2, 0, 0);
             }
         } else { // With forwarding
             stalls_hazard(i-1);
-            if(branchhazard(pipeline[i-1][0]) && branch_flag == 1) {
+            if(branchhazard(pp[i-1][0]) && branch_flag == 1) {
                 fill(i, j, 1, 0, 0, 0, 0);
             } else {
                 fill(i, j, 0, 0, 0, 0, 0);
@@ -316,7 +316,7 @@ if(pipeline[i][0].substr(0, 4) == "subi") {
         }
     } else {
         stalls_hazard(i-1);
-        if(branchhazard(pipeline[i-1][0]) && branch_flag == 1) {
+        if(branchhazard(pp[i-1][0]) && branch_flag == 1) {
             fill(i, j, 1, 0, 0, 0, 0);
         } else {
             fill(i, j, 0, 0, 0, 0, 0);
