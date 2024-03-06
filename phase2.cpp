@@ -690,23 +690,23 @@ if(pp[i][0].substr(0, 4) == "subi") {
                     }
                 }
 
-if(pipeline[i][0].substr(0, 3) == "blt") {
+if(pp[i][0].substr(0, 3) == "blt") {
     // Extracting the registers involved in the blt instruction
-    string reg1 = pipeline[i][0].substr(3, 2);
-    string reg2 = pipeline[i][0].substr(6, 2);
+    string reg1 = pp[i][0].substr(3, 2);
+    string reg2 = pp[i][0].substr(6, 2);
 
     // Check for hazards with the previous instruction
-    if(i != 0 && (reg1 == hazard(pipeline[i-1][0]) || reg2 == hazard(pipeline[i-1][0]))) {
+    if(i != 0 && (reg1 == hazard(pp[i-1][0]) || reg2 == hazard(pp[i-1][0]))) {
         if(flagForwdg == 0) { // No forwarding
             stalls_hazard(i-1);
-            if(branchhazard(pipeline[i-1][0]) && branch_flag == 1) {
+            if(branchhazard(pp[i-1][0]) && branch_flag == 1) {
                 fill(i, j, 1, 0, 2, 0, 0);
             } else {
                 fill(i, j, 0, 0, 2, 0, 0);
             }
         } else { // With forwarding
             stalls_hazard(i-1);
-            if(branchhazard(pipeline[i-1][0]) && branch_flag == 1) {
+            if(branchhazard(pp[i-1][0]) && branch_flag == 1) {
                 fill(i, j, 1, 0, 0, 0, 0);
             } else {
                 fill(i, j, 0, 0, 0, 0, 0);
@@ -714,30 +714,30 @@ if(pipeline[i][0].substr(0, 3) == "blt") {
         }
     } else {
         stalls_hazard(i-1);
-        if(branchhazard(pipeline[i-1][0]) && branch_flag == 1) {
+        if(branchhazard(pp[i-1][0]) && branch_flag == 1) {
             fill(i, j, 1, 0, 0, 0, 0);
         } else {
             fill(i, j, 0, 0, 0, 0, 0);
         }
     }
 }
-if(pipeline[i][0].substr(0, 2) == "mv") {
+if(pp[i][0].substr(0, 2) == "mv") {
     // Extracting the registers involved in the mv instruction
-    string reg1 = pipeline[i][0].substr(2, 2);
-    string reg2 = pipeline[i][0].substr(5, 2);
+    string reg1 = pp[i][0].substr(2, 2);
+    string reg2 = pp[i][0].substr(5, 2);
 
     // Check for hazards with the previous instruction
-    if(i != 0 && (reg1 == hazard(pipeline[i-1][0]) || reg2 == hazard(pipeline[i-1][0]))) {
+    if(i != 0 && (reg1 == hazard(pp[i-1][0]) || reg2 == hazard(pp[i-1][0]))) {
         if(flagForwdg == 0) { // No forwarding
             stalls_hazard(i-1);
-            if(branchhazard(pipeline[i-1][0]) && branch_flag == 1) {
+            if(branchhazard(pp[i-1][0]) && branch_flag == 1) {
                 fill(i, j, 1, 0, 2, 0, 0);
             } else {
                 fill(i, j, 0, 0, 2, 0, 0);
             }
         } else { // With forwarding
             stalls_hazard(i-1);
-            if(branchhazard(pipeline[i-1][0]) && branch_flag == 1) {
+            if(branchhazard(pp[i-1][0]) && branch_flag == 1) {
                 fill(i, j, 1, 0, 0, 0, 0);
             } else {
                 fill(i, j, 0, 0, 0, 0, 0);
@@ -745,7 +745,7 @@ if(pipeline[i][0].substr(0, 2) == "mv") {
         }
     } else {
         stalls_hazard(i-1);
-        if(branchhazard(pipeline[i-1][0]) && branch_flag == 1) {
+        if(branchhazard(pp[i-1][0]) && branch_flag == 1) {
             fill(i, j, 1, 0, 0, 0, 0);
         } else {
             fill(i, j, 0, 0, 0, 0, 0);
