@@ -111,34 +111,73 @@ public:
         }
 
         string hazard(string ins){
-            if(ins.substr(0,4)=="addi"){
-                return ins.substr(4,2);
+    if(ins.substr(0,4)=="addi"){
+        return ins.substr(4,2);
+    }
+    if(ins.substr(0,3)=="add" && (ins.substr(3,1)!="i")){
+        return ins.substr(3,2);
+    }
+    if(ins.substr(0,3)=="sub"){
+        return ins.substr(3,2);
+    }
+    if(ins.substr(0,3)=="mul"){
+        return ins.substr(3,2);
+    }
+    if(ins.substr(0,3)=="div"){
+        return ins.substr(3,2);
+    }
+    if(ins.substr(0,3)=="slt"){
+        return ins.substr(3,2);
+    }
+    if(ins.substr(0,2)=="lw"){
+        return ins.substr(2,2);
+    }
+    if(ins.substr(0,2)=="sw"){
+        return ins.substr(2,2);
+    }
+    if(ins.substr(0,3)=="blt"){
+        return ins.substr(3,2);
+    }
+    if(ins.substr(0,3)=="bgt"){
+        return ins.substr(3,2);
+    }
+    if(ins.substr(0,2)=="mv"){
+        return ins.substr(2,2);
+    }
+    if(ins.substr(0,3)=="bge"){
+        return ins.substr(3,2);
+    }
+    if(ins.substr(0,2)=="li"){
+        return ins.substr(2,2);
+    }
+    if(ins.substr(0,4)=="subi"){
+        return ins.substr(4,2);
+    }
+   
+    if(ins.substr(0,1) == "j") {
+        stringstream ss(ins);
+        string token;
+        // Split the instruction string by spaces
+        while (getline(ss, token, ' ')) {
+            // Check if the first token is "j"
+            if (token == "j") {
+                // Get the next token after "j"
+                if (getline(ss, token, ' ')) {
+                    return token; // Return the next token
+                } else {
+                    // If there's no next token, return an empty string
+                    return "";
+                }
             }
-            if(ins.substr(0,3)=="add" && (ins.substr(3,1)!="i")){
-                return ins.substr(3,2);
-            }
-            if(ins.substr(0,3)=="sub"){
-                return ins.substr(3,2);
-            }
-            if(ins.substr(0,3)=="mul"){
-                return ins.substr(3,2);
-            }
-            if(ins.substr(0,3)=="div"){
-                return ins.substr(3,2);
-            }
-            if(ins.substr(0,3)=="slt"){
-                return ins.substr(3,2);
-            }
-            if(ins.substr(0,2)=="lw"){
-                return ins.substr(2,2);
-            }
-            if(ins.substr(0,2)=="sw"){
-                return ins.substr(2,2);
-            }
-            return "nulll";
-            //if ..... other functions
         }
-
+    // Handle other instructions here
+}
+    if(ins.substr(0,3)=="bne"){
+        return ins.substr(3,2);
+    }
+    return "null";
+    //if ..... other functions
+}
         bool branchhazard(string ins){
             bool flag=false;
              if(ins.substr(0,3)=="beq"||ins.substr(0,3)=="bne"||(ins.substr(0,1)=="j"&&ins.substr(1,1)!="r")){
@@ -167,8 +206,6 @@ public:
                 if(pipeline[ins_row][j]=="stall"){
 
                   pipeline[ins_row+1][j]="stall";
-
-
                 }
             }
             for(int j=ID+1;j<EX;j++){
