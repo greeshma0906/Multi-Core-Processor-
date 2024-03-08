@@ -1189,7 +1189,7 @@ public:
           int pipeRow=cores[i].execute(memory,flag);
       
           cores[i].fillPipeline(pipeRow,flag);
-            cores[i].printval(181,flag);
+            cores[i].printval(pipeRow,flag);
         }
         return;
     }
