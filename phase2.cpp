@@ -1,12 +1,4 @@
-// #include <iostream>
-// #include <vector>
-// #include<string>
-// #include<algorithm>
-// #include<sstream>
-// #include<fstream>
-// #include<unordered_map>
 #include<bits/stdc++.h>
-//using namespace std;
 class Core {
 public:
     std::unordered_map<std:: string, int> registers; 
@@ -1183,14 +1175,16 @@ public:
     {
        cores[coreval].program=program;
     }
-    void run(int flag) {
-        for(int i=0;i<2;i++)
-        {
-          int pipeRow=cores[i].execute(memory,flag);
-      
-          cores[i].fillPipeline(pipeRow,flag);
-            cores[i].printval(pipeRow,flag);
-        }
+    void run(int flag1,int flag2) {
+        int pipeRow;
+          pipeRow=cores[0].execute(memory,flag1);
+          cores[0].fillPipeline(pipeRow,flag1);
+          std::cout<<"BUBBLE SORT: "<<std::endl;
+            cores[0].printval(pipeRow,flag1);
+        pipeRow=cores[1].execute(memory,flag2);
+          cores[1].fillPipeline(pipeRow,flag2);
+          std::cout<<"SELECTION SORT: "<<std::endl;
+            cores[1].printval(pipeRow,flag2);
         return;
     }
 };
@@ -1310,10 +1304,13 @@ int main()
 }
      sim.send(selection_asmLines, 1); // Load bubble sort program into core 0
      sim.send(bubble_asmLines, 0);
-     int flag;
-     std:: cout<<"enter 1 for forwarding 0 for non forwarding"<<" ";
-     std::cin>>flag;
-     sim.run(flag);
+     int flag1;
+     int flag2;
+     std:: cout<<"enter 1 for forwarding 0 for non forwarding for bubble sort"<<" ";
+     std::cin>>flag1;
+      std:: cout<<"enter 1 for forwarding 0 for non forwarding for selection sort"<<" ";
+      std::cin>>flag2;
+     sim.run(flag1,flag2);
      std:: cout<<"memory values:"<<" ";
      for(int i=0;i<9;i++)
      {
