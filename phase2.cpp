@@ -99,6 +99,98 @@ public:
             }
             pp[x][y]="WB";
         }
+       void fillarith(int x, int y, int iF, int id, int ex, int mem, int wb, int latency_val) {
+    while (iF != 0) {
+        if (pp[x][y] == "stall") {
+            y++;
+        } else {
+            pp[x][y] = "stall";
+            y++;
+            iF--;
+        }
+    }
+
+    while (pp[x][y] == "stall") {
+        y++;
+    }
+
+    pp[x][y] = "IF";
+    y++;
+
+    while (id != 0) {
+        if (pp[x][y] == "stall") {
+            y++;
+        } else {
+            pp[x][y] = "stall";
+            y++;
+            id--;
+        }
+    }
+
+    while (pp[x][y] == "stall") {
+        y++;
+    }
+
+    pp[x][y] = "ID";
+    y++;
+
+    while (ex != 0) {
+        if (pp[x][y] == "stall") {
+            y++;
+        } else {
+            pp[x][y] = "stall";
+            y++;
+            ex--;
+        }
+    }
+
+    while (pp[x][y] == "stall") {
+        y++;
+    }
+
+    pp[x][y] = "EX";
+    y++;
+
+    // Add latency for the EX stage based on the instruction type
+    for (int i = 0; i < latency_val; ++i) {
+        pp[x][y] = "stall";
+        y++;
+    }
+
+    while (mem != 0) {
+        if (pp[x][y] == "stall") {
+            y++;
+        } else {
+            pp[x][y] = "stall";
+            y++;
+            mem--;
+        }
+    }
+
+    while (pp[x][y] == "stall") {
+        y++;
+    }
+
+    pp[x][y] = "MEM";
+    y++;
+
+    while (wb != 0) {
+        if (pp[x][y] == "stall") {
+            y++;
+        } else {
+            pp[x][y] = "stall";
+            y++;
+            wb--;
+        }
+    }
+
+    while (pp[x][y] == "stall") {
+        y++;
+    }
+
+    pp[x][y] = "WB";
+}
+
 
        std::string hazard(std::string ins){
             
@@ -193,7 +285,8 @@ public:
             
 
         }
-         void fillPipeline(int numb_rows,int flagForwdg){
+        
+         void fillPipeline(int numb_rows,int flagForwdg,std::map<std::string, int> latencies){
            // cout<<numb_rows<<endl;
             int clock1=1;
             int j=0;
@@ -351,15 +444,16 @@ if(pp[i][0].substr(0, 4) == "subi") {
 }
 
                 if(pp[i][0].substr(0,3)=="add" && pp[i][0].substr(3,1)!="i"){
-                   // cout<<"add"<<endl;
+                 
+                     int latency_val=latencies["add"];
                     if(pp[i][0].substr(5,2) == hazard(pp[i-1][0]) || pp[i][0].substr(7,2) == hazard(pp[i-1][0])){
                         if(flagForwdg==0){//no forwarding
                          stalls_hazard(i-1);
                             if(branchhazard(pp[i-1][0]) && branch_flag==1){
-                            fill(i,j,1,0,2,0,0);
+                            fillarith(i,j,1,0,2,0,0,latency_val);
                             }
                             else{
-                              fill(i,j,0,0,2,0,0);
+                              fillarith(i,j,0,0,2,0,0,latency_val);
                             }
                            
                             
@@ -367,11 +461,11 @@ if(pp[i][0].substr(0, 4) == "subi") {
                         else{//with forwarding
                          stalls_hazard(i-1);
                              if(branchhazard(pp[i-1][0]) && branch_flag==1){
-                                  fill(i,j,1,0,0,0,0);
+                                  fillarith(i,j,1,0,0,0,0,latency_val);
                              }
                            
                             else{
-                                 fill(i,j,0,0,0,0,0);
+                                 fillarith(i,j,0,0,0,0,0,latency_val);
                             }
                            
                         }
@@ -380,27 +474,28 @@ if(pp[i][0].substr(0, 4) == "subi") {
                     else{
                         stalls_hazard(i-1);
                         if(branchhazard(pp[i-1][0]) && branch_flag==1){
-                             fill(i,j,1,0,0,0,0);
+                             fillarith(i,j,1,0,0,0,0,latency_val);
                          }
                             
                         else{
-                            fill(i,j,0,0,0,0,0);
+                            fillarith(i,j,0,0,0,0,0,latency_val);
                         }
                        
                     }
                 }
 
                 if(pp[i][0].substr(0,3)=="sub"){
+                      int latency_val=latencies["sub"];
                    // cout<<"sub"<<endl;
                     if(pp[i][0].substr(5,2) == hazard(pp[i-1][0]) || pp[i][0].substr(7,2) == hazard(pp[i-1][0])){
                         if(flagForwdg==0){//no forwarding
                          stalls_hazard(i-1);
                              if(branchhazard(pp[i-1][0]) && branch_flag==1){
-                                 fill(i,j,1,0,2,0,0);
+                                 fillarith(i,j,1,0,2,0,0,latency_val);
                              }
                             
                             else{
-                                fill(i,j,0,0,2,0,0);
+                                fillarith(i,j,0,0,2,0,0,latency_val);
                             }
                             
                             //stalls_hazard(i-1);
@@ -408,11 +503,11 @@ if(pp[i][0].substr(0, 4) == "subi") {
                         else{//with forwarding
                              stalls_hazard(i-1);
                              if(branchhazard(pp[i-1][0]) && branch_flag==1){
-                                 fill(i,j,1,0,0,0,0);
+                                 fillarith(i,j,1,0,0,0,0,latency_val);
                              }
                             
                             else{
-                                 fill(i,j,0,0,0,0,0);
+                                 fillarith(i,j,0,0,0,0,0,latency_val);
                             }
                            
                         }
@@ -431,71 +526,73 @@ if(pp[i][0].substr(0, 4) == "subi") {
                 }
 
                 if(pp[i][0].substr(0,3)=="mul"){
+                      int latency_val=latencies["mul"];
                     if(pp[i][0].substr(5,2) == hazard(pp[i-1][0]) || pp[i][0].substr(7,2) == hazard(pp[i-1][0])){
                         if(flagForwdg==0){//no forwarding
                          stalls_hazard(i-1);
                            if(branchhazard(pp[i-1][0]) && branch_flag==1){
-                                fill(i,j,1,0,2,0,0);
+                                fillarith(i,j,1,0,2,0,0,latency_val);
                            }
                            
                             else{
-                                fill(i,j,0,0,2,0,0);
+                                fillarith(i,j,0,0,2,0,0,latency_val);
                             }
                         }
                         else{//with forwarding
                             stalls_hazard(i-1);
                            if(branchhazard(pp[i-1][0]) && branch_flag==1){
-                                fill(i,j,1,0,0,0,0);
+                                fillarith(i,j,1,0,0,0,0,latency_val);
                            }
                            
                             else{
-                              fill(i,j,0,0,0,0,0);
+                              fillarith(i,j,0,0,0,0,0,latency_val);
                             }  
                         } 
                     }
                     else{
                          stalls_hazard(i-1);
                         if(branchhazard(pp[i-1][0]) && branch_flag==1){  
-                              fill(i,j,1,0,0,0,0);
+                              fillarith(i,j,1,0,0,0,0,latency_val);
                         }
                            
                         else{
-                          fill(i,j,0,0,0,0,0);
+                          fillarith(i,j,0,0,0,0,0,latency_val);
                         }
                         
                     }
                 }
 
                 if(pp[i][0].substr(0,3)=="div"){
+                    int latency_val=latencies["div"];
                     if(pp[i][0].substr(5,2) == hazard(pp[i-1][0]) || pp[i][0].substr(7,2) == hazard(pp[i-1][0])){
                         if(flagForwdg==0){//no forwarding
                          stalls_hazard(i-1);
                             if(branchhazard(pp[i-1][0]) && branch_flag==1){
-                                fill(i,j,1,0,2,0,0);
+                                fillarith(i,j,1,0,2,0,0,latency_val);
                             }
                             
                             else{
-                                fill(i,j,0,0,2,0,0);
+                                fillarith(i,j,0,0,2,0,0,latency_val);
                             }
                         }
                         else{//with forwarding
                             stalls_hazard(i-1);
                            if(branchhazard(pp[i-1][0]) && branch_flag==1){
-                                fill(i,j,1,0,0,0,0);
+                                fillarith(i,j,1,0,0,0,0,latency_val);
                            }
                            
                             else{
-                            fill(i,j,0,0,0,0,0);
+                            fillarith(i,j,0,0,0,0,0,latency_val);
                             }
                         }   
                     }
                     else{
                         stalls_hazard(i-1);
                         if(branchhazard(pp[i-1][0]) && branch_flag==1){  
-                             fill(i,j,1,0,0,0,0);
+                             fillarith(i,j,1,0,0,0,0,latency_val);
                         }         
                         else{
-                             fill(i,j,0,0,0,0,0);
+                             fillarith(i,j,0,0,0,0,0,latency_val);
                         }
                        
                     }
@@ -911,6 +1008,50 @@ if(pp[i][0].substr(0, 2) == "mv") {
             pipeRow++;
           pc+=1;
         } 
+        if (opcode == "add") {
+            std::string rd = parts[1];
+            std::string rs1 = parts[2];
+            std::string rs2 = parts[3];
+            
+            // Perform subtraction
+           registers[rd]=registers[rs1]+registers[rs2];
+            
+          pp[pipeRow][0]=instruction;
+            pipeRow++;
+          pc+=1;
+        } 
+       else if (opcode == "mul") {
+    std::string rd = parts[1];
+    std::string rs1 = parts[2];
+    std::string rs2 = parts[3];
+            
+    // Perform multiplication
+    registers[rd] = registers[rs1] * registers[rs2];
+            
+    pp[pipeRow][0] = instruction;
+    pipeRow++;
+    pc += 1;
+}
+
+else if (opcode == "div") {
+    std::string rd = parts[1];
+    std::string rs1 = parts[2];
+    std::string rs2 = parts[3];
+            
+    // Perform division
+    if (registers[rs2] != 0) {
+        registers[rd] = registers[rs1] / registers[rs2];
+    } else {
+        // Handle division by zero
+        std::cout << "Error: Division by zero" << std::endl;
+        // Optionally, set rd to a default value or handle the error in a different way
+    }
+            
+    pp[pipeRow][0] = instruction;
+    pipeRow++;
+    pc += 1;
+}
+
         else if(opcode=="blt")
         {
                 std::string rs1 = parts[1]; // Source register 1
@@ -1175,14 +1316,14 @@ public:
     {
        cores[coreval].program=program;
     }
-    void run(int flag1,int flag2) {
+    void run(int flag1,int flag2, std::map<std::string, int> latencies) {
         int pipeRow;
           pipeRow=cores[0].execute(memory,flag1);
-          cores[0].fillPipeline(pipeRow,flag1);
+          cores[0].fillPipeline(pipeRow,flag1,latencies);
           std::cout<<"BUBBLE SORT: "<<std::endl;
             cores[0].printval(pipeRow,flag1);
         pipeRow=cores[1].execute(memory,flag2);
-          cores[1].fillPipeline(pipeRow,flag2);
+          cores[1].fillPipeline(pipeRow,flag2,latencies);
           std::cout<<"SELECTION SORT: "<<std::endl;
             cores[1].printval(pipeRow,flag2);
         return;
@@ -1310,7 +1451,28 @@ int main()
      std::cin>>flag1;
       std:: cout<<"enter 1 for forwarding 0 for non forwarding for selection sort"<<" ";
       std::cin>>flag2;
-     sim.run(flag1,flag2);
+      std::map<std::string, int> latencies;
+    std::cout << "Enter latencies for arithmetic operations:" << std::endl;
+    std::cout << "ADD: ";
+    int addLatency;
+    std::cin >> addLatency;
+    latencies["add"] = addLatency;
+
+    std::cout << "SUB: ";
+    int subLatency;
+    std::cin >> subLatency;
+    latencies["sub"] = subLatency;
+
+    std::cout << "MUL: ";
+    int mulLatency;
+    std::cin >> mulLatency;
+    latencies["mul"] = mulLatency;
+
+    std::cout << "DIV: ";
+    int divLatency;
+    std::cin >> divLatency;
+    latencies["div"] = divLatency;
+     sim.run(flag1,flag2,latencies);
      std:: cout<<"memory values:"<<" ";
      for(int i=0;i<9;i++)
      {
