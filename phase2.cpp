@@ -1211,7 +1211,11 @@ int main()
     bool dataSection1 = false;
 
     while (getline(bubble_input, bubble_line)) {
-        if (!bubble_line.empty()) {
+        if(bubble_line.empty())
+        {
+            continue;
+        }
+       else if (!bubble_line.empty()) {
             if (bubble_line == ".data" || bubble_line == ".text" || bubble_line == "main:") {
                // temp.push_back(line);
                 continue;
@@ -1265,7 +1269,11 @@ int main()
     bool dataSection2 = false;
 
     while (getline(selection_input,selection_line)) {
-        if (!selection_line.empty()) {
+        if(selection_line.empty())
+        {
+            continue;
+        }
+        else if (!selection_line.empty()) {
             if (selection_line == ".data" || selection_line == ".text" || selection_line == "main:") {
                // temp.push_back(line);
                 continue;
