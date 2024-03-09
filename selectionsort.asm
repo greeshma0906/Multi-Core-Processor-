@@ -1,13 +1,12 @@
-.data 
 arr: .word 4 2 3 1 5 6
 .text
-li x19 0
-li x18 0
-li x7 0
-li x2 0 
-li x3 0 
-li x12 6
-li x11 0
+addi x19 x0 0
+addi x18 x0 0
+addi x7 x0 0
+addi x2 x0 0 
+addi x3 x0 0 
+addi x12 x0 6
+addi x11 x0 0
 loop1:
 bge x2 x12 exit
 addi x3 x2 0  
