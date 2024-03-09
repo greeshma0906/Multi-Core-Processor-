@@ -1,3 +1,4 @@
+.data
 arr: .word 5 1 3 
 .text
 main:
