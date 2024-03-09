@@ -977,11 +977,11 @@ if(pp[i][0].substr(0, 2) == "mv") {
         if (instruction == "exit") {
             //Print register values after sorting
         
-            std::cout << "Register Values after sorting:" <<std:: endl;
+            std::cout << "Register Values after sorting:" <<std:: endl<<std::endl;
             for (auto it = registers.begin(); it != registers.end(); ++it) {
                 std::cout << it->first << " = " << it->second <<" ";
             }
-            std::cout<<std::endl;
+            std::cout<<std::endl<<std::endl;
             pp[pipeRow][0]="exit";
            // cout<<pp[181][0]<<" ";
             return pipeRow;
@@ -1292,8 +1292,9 @@ else if (opcode == "div") {
             }
  
             std::cout<< "Total number of stalls: " << count << std:: endl<<std:: endl;
+            std::cout<<"Instructions: "<< pipeRow <<std::endl<<std::endl;
             float ipc=(float)pipeRow/cnt;
-           std:: cout<<"IPC(Instructions per cycle is) :"<<ipc<< std:: endl<<std:: endl;
+           std:: cout<<"IPC(Instructions per cycle is) : "<<ipc<< std:: endl<<std:: endl;
            return;
 
     }
@@ -1320,11 +1321,11 @@ public:
         int pipeRow;
           pipeRow=cores[0].execute(memory,flag1);
           cores[0].fillPipeline(pipeRow,flag1,latencies);
-          std::cout<<"BUBBLE SORT: "<<std::endl;
+          std::cout<<"BUBBLE SORT: "<<std::endl<<std::endl;
             cores[0].printval(pipeRow,flag1);
         pipeRow=cores[1].execute(memory,flag2);
           cores[1].fillPipeline(pipeRow,flag2,latencies);
-          std::cout<<"SELECTION SORT: "<<std::endl;
+          std::cout<<"SELECTION SORT: "<<std::endl<<std::endl;
             cores[1].printval(pipeRow,flag2);
         return;
     }
@@ -1447,9 +1448,9 @@ int main()
      sim.send(bubble_asmLines, 0);
      int flag1;
      int flag2;
-     std:: cout<<"enter 1 for forwarding 0 for non forwarding for bubble sort"<<" ";
+     std:: cout<<"Enter 1 for FORWARDING and 0 for NON FORWARDING for BUBBLE SORT: "<<" "<<std::endl;
      std::cin>>flag1;
-      std:: cout<<"enter 1 for forwarding 0 for non forwarding for selection sort"<<" ";
+      std:: cout<<"Enter 1 for FORWARDING 0 for NON FORWARDING for SELECTION SORT: "<<" "<<std::endl;
       std::cin>>flag2;
       std::map<std::string, int> latencies;
     std::cout << "Enter latencies for arithmetic operations:" << std::endl;
@@ -1473,24 +1474,24 @@ int main()
     std::cin >> divLatency;
     latencies["div"] = divLatency;
      sim.run(flag1,flag2,latencies);
-     std:: cout<<"memory values:"<<" ";
+     std:: cout<<"MEMORY VALUES: "<<" ";
      for(int i=0;i<9;i++)
      {
         std:: cout<<sim.memory[i]<<" ";
      }
      std:: cout<<std:: endl;
-     std:: cout << "selection Sort Result: ";
+     std:: cout << "Selection Sort Result: "<<std::endl<<std::endl;
     for (int i = 0; i < selection_values.size(); i++) {
         std:: cout << sim.memory[i] << " ";
     }
-    std:: cout << std:: endl;
+    std:: cout << std:: endl<<std::endl;
 
     // Print selection sort result
-    std:: cout << "Bubble Sort Result: ";
+    std:: cout << "Bubble Sort Result: "<<std::endl<<std::endl;
     for (int i = 0; i < bubble_values.size(); i++) {
         std:: cout << sim.memory[i + selection_values.size()] << " ";
     }
-    std:: cout << std:: endl;
+    std:: cout << std:: endl<<std::endl;
 
 return 0;
 
