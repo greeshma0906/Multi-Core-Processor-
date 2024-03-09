@@ -1,3 +1,4 @@
+.data
 arr: .word 4 2 3 1 5 6
 .text
 addi x19 x0 0
