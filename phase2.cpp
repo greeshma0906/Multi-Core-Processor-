@@ -1308,8 +1308,8 @@ int main()
     for(int i = 0; i < bubble_values.size(); i++) {
     sim.memory[i + selection_values.size()] = bubble_values[i];
 }
-     sim.send(selection_asmLines, 0); // Load bubble sort program into core 0
-     sim.send(bubble_asmLines, 1);
+     sim.send(selection_asmLines, 1); // Load bubble sort program into core 0
+     sim.send(bubble_asmLines, 0);
      int flag;
      cout<<"enter 1 for forwarding 0 for non forwarding"<<" ";
      cin>>flag;
