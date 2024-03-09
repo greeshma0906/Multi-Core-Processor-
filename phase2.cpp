@@ -6,14 +6,14 @@
 #include<fstream>
 #include<unordered_map>
 #include<bits/stdc++.h>
-using namespace std;
+//using namespace std;
 class Core {
 public:
-    unordered_map<string, int> registers; 
+    std::unordered_map<std:: string, int> registers; 
     int pc;
-    vector<string> program;
+    std::vector<std::string> program;
    // int flag;
-    string pp[500][10000];
+    std::string pp[500][10000];
      int branch_flag;
      int pipeRow;
    // int bflag;
@@ -23,7 +23,7 @@ public:
         // Initialize register names and indices
 
         for (int i = 0; i < 32; ++i) {
-            registers["x" + to_string(i)] = 0;
+            registers["x" + std::to_string(i)] = 0;
         }
         pc = 0;
         branch_flag=0;
@@ -108,7 +108,7 @@ public:
             pp[x][y]="WB";
         }
 
-        string hazard(string ins){
+       std::string hazard(std::string ins){
             
             if(ins.substr(0,4)=="addi"){
                 return ins.substr(5,2);
@@ -139,7 +139,7 @@ public:
             //if ..... other functions
         }
 
-        bool branchhazard(string ins){
+        bool branchhazard(std::string ins){
             bool flag=false;
              if(ins.substr(0,3)=="beq"||ins.substr(0,3)=="bne"||(ins.substr(0,1)=="j"&&ins.substr(1,1)!="r")){
                 flag=true;
@@ -202,14 +202,14 @@ public:
 
         }
          void fillPipeline(int numb_rows,int flagForwdg){
-            cout<<numb_rows<<endl;
+           // cout<<numb_rows<<endl;
             int clock1=1;
             int j=0;
             for(int i=0; i<numb_rows+1; i++){
                 j=clock1;
                  
                 if(pp[i][0].substr(0,4)=="addi"){
-                    cout<<"addi"<<" ";
+             //       cout<<"addi"<<" ";
                     if(i!=0 && pp[i][0].substr(5,2) == hazard(pp[i-1][0])){
                          if(flagForwdg==0){//no forwarding
                             stalls_hazard(i-1);
@@ -251,9 +251,9 @@ public:
                 }
                 if(pp[i][0].substr(0, 3) == "bgt") {
     // Extracting the registers involved in the bgt instruction
-    cout<<"bgt"<<endl;
-    string reg1 = pp[i][0].substr(3, 2);
-    string reg2 = pp[i][0].substr(6, 2);
+   // cout<<"bgt"<<endl;
+   std:: string reg1 = pp[i][0].substr(3, 2);
+    std::string reg2 = pp[i][0].substr(6, 2);
 
     // Check for hazards with the previous instruction
     if(i != 0 && (reg1 == hazard(pp[i-1][0]) || reg2 == hazard(pp[i-1][0]))) {
@@ -327,9 +327,9 @@ public:
 //     }
 // }
 if(pp[i][0].substr(0, 4) == "subi") {
-    cout<<"subi"<<endl;
+    //cout<<"subi"<<endl;
     // Extracting the registers involved in the subi instruction
-    string reg1 = pp[i][0].substr(4, 2);
+    std::string reg1 = pp[i][0].substr(4, 2);
 
     // Check for hazards with the previous instruction
     if(i != 0 && reg1 == hazard(pp[i-1][0])) {
@@ -359,7 +359,7 @@ if(pp[i][0].substr(0, 4) == "subi") {
 }
 
                 if(pp[i][0].substr(0,3)=="add" && pp[i][0].substr(3,1)!="i"){
-                    cout<<"add"<<endl;
+                   // cout<<"add"<<endl;
                     if(pp[i][0].substr(5,2) == hazard(pp[i-1][0]) || pp[i][0].substr(7,2) == hazard(pp[i-1][0])){
                         if(flagForwdg==0){//no forwarding
                          stalls_hazard(i-1);
@@ -399,7 +399,7 @@ if(pp[i][0].substr(0, 4) == "subi") {
                 }
 
                 if(pp[i][0].substr(0,3)=="sub"){
-                    cout<<"sub"<<endl;
+                   // cout<<"sub"<<endl;
                     if(pp[i][0].substr(5,2) == hazard(pp[i-1][0]) || pp[i][0].substr(7,2) == hazard(pp[i-1][0])){
                         if(flagForwdg==0){//no forwarding
                          stalls_hazard(i-1);
@@ -510,7 +510,7 @@ if(pp[i][0].substr(0, 4) == "subi") {
                 }
 
                 if(pp[i][0].substr(0,3)=="slt"){
-                    cout<<"slt"<<" ";
+                   // cout<<"slt"<<" ";
                    if(pp[i][0].substr(5,2) == hazard(pp[i-1][0]) || pp[i][0].substr(7,2) == hazard(pp[i-1][0])){
                         if(flagForwdg==0){//no forwarding
                          stalls_hazard(i-1);
@@ -546,7 +546,7 @@ if(pp[i][0].substr(0, 4) == "subi") {
                     }
                 }
                 if(pp[i][0].substr(0,3)=="beq"){
-                    cout<<"beq"<<endl;
+                  //  cout<<"beq"<<endl;
                      int pc;
                      branch_flag=0;
                      for(int j=0;j<program.size();j++){
@@ -598,7 +598,7 @@ if(pp[i][0].substr(0, 4) == "subi") {
 
                 }
                  if(pp[i][0].substr(0,3)=="bne"){
-                    cout<<"bne"<<endl;
+                   // cout<<"bne"<<endl;
                     int pc;
                      branch_flag=0;
                      for(int j=0;j<program.size();j++){
@@ -646,7 +646,7 @@ if(pp[i][0].substr(0, 4) == "subi") {
 
                 }
                  if(pp[i][0].substr(0,1)=="j" && pp[i][0].substr(1,1)!="r"){
-                    cout<<"j"<<endl;
+                 //   cout<<"j"<<endl;
                     int pc;
                      branch_flag=0;
                      for(int j=0;j<program.size();j++){
@@ -667,7 +667,7 @@ if(pp[i][0].substr(0, 4) == "subi") {
                     }
                 }
      if (pp[i][0].substr(0, 3) == "bge") {
-        cout<<"bge"<<endl;
+       // cout<<"bge"<<endl;
     int pc;
     branch_flag = 0;
     for (int j = 0; j < program.size(); j++) {
@@ -712,7 +712,7 @@ if(pp[i][0].substr(0, 4) == "subi") {
 }
 
                   if(pp[i][0].substr(0,2)=="lw"){
-                    cout<<"lw"<<endl;
+                 //   cout<<"lw"<<endl;
                     if(i!=0 && pp[i][0].substr(pp[i][0].length()-3,2) == hazard(pp[i-1][0])){
                         if(flagForwdg==0){//no forwarding
                             stalls_hazard(i-1);
@@ -745,7 +745,7 @@ if(pp[i][0].substr(0, 4) == "subi") {
                 }
 
                 if(pp[i][0].substr(0,2)=="sw"){
-                    cout<<"sw"<<endl;
+                   // cout<<"sw"<<endl;
                     if(i!=0 && pp[i][0].substr(pp[i][0].length()-3,2) == hazard(pp[i-1][0])){
                         if(flagForwdg==0){//no forwarding
                             stalls_hazard(i-1);
@@ -779,9 +779,9 @@ if(pp[i][0].substr(0, 4) == "subi") {
 
 if(pp[i][0].substr(0, 3) == "blt") {
     // Extracting the registers involved in the blt instruction
-    cout<<"blt"<<endl;
-    string reg1 = pp[i][0].substr(3, 2);
-    string reg2 = pp[i][0].substr(6, 2);
+   // cout<<"blt"<<endl;
+   std:: string reg1 = pp[i][0].substr(3, 2);
+    std:: string reg2 = pp[i][0].substr(6, 2);
 
     // Check for hazards with the previous instruction
     if(i != 0 && (reg1 == hazard(pp[i-1][0]) || reg2 == hazard(pp[i-1][0]))) {
@@ -811,14 +811,14 @@ if(pp[i][0].substr(0, 3) == "blt") {
 }
 if(pp[i][0]=="exit")
 {
-    cout<<"exit"<<endl;
+   // cout<<"exit"<<endl;
     return;
 }
 if(pp[i][0].substr(0, 2) == "mv") {
     // Extracting the registers involved in the mv instruction
-    cout<<"mv"<<endl;
-    string reg1 = pp[i][0].substr(2, 2);
-    string reg2 = pp[i][0].substr(5, 2);
+   // cout<<"mv"<<endl;
+    std::string reg1 = pp[i][0].substr(2, 2);
+    std::string reg2 = pp[i][0].substr(5, 2);
 
     // Check for hazards with the previous instruction
     if(i != 0 && (reg1 == hazard(pp[i-1][0]) || reg2 == hazard(pp[i-1][0]))) {
@@ -847,7 +847,7 @@ if(pp[i][0].substr(0, 2) == "mv") {
     }
 }
                 if(pp[i][0].substr(0,2)=="la"){   //data and structural hazards not possible in la
-                cout<<"la"<<endl;
+            //    cout<<"la"<<endl;
                         stalls_hazard(i-1);
                         if(branchhazard(pp[i-1][0]) && branch_flag==1){
                             fill(i,j,1,0,0,0,0);
@@ -877,40 +877,40 @@ if(pp[i][0].substr(0, 2) == "mv") {
         }
 
 
-    int execute(vector<int> &memory,int flag) {
+    int execute(std::vector<int> &memory,int flag) {
         int pipeRow = 0;
       while (pc < program.size()) {
-        string instruction = program[pc];
+       std::string instruction = program[pc];
         //  pp[pipeRow][0]=instruction;
         //         pipeRow++;
-        cout<<program[pc]<<endl;
+      //  cout<<program[pc]<<endl;
 
         if (instruction == "exit") {
             //Print register values after sorting
         
-            cout << "Register Values after sorting:" << endl;
+            std::cout << "Register Values after sorting:" <<std:: endl;
             for (auto it = registers.begin(); it != registers.end(); ++it) {
-                cout << it->first << " = " << it->second <<" ";
+                std::cout << it->first << " = " << it->second <<" ";
             }
-            cout<<endl;
+            std::cout<<std::endl;
             pp[pipeRow][0]="exit";
            // cout<<pp[181][0]<<" ";
             return pipeRow;
         }
-           stringstream ss(instruction);
-        vector<string> parts;
-        string part;
+           std::stringstream ss(instruction);
+        std::vector<std::string> parts;
+        std::string part;
 
         while (getline(ss, part, ' ')) {
             parts.push_back(part);
         }
      
-        string opcode = parts[0];
+        std::string opcode = parts[0];
         //cout<<opcode<<endl;
         if (opcode == "sub") {
-            string rd = parts[1];
-            string rs1 = parts[2];
-            string rs2 = parts[3];
+            std::string rd = parts[1];
+            std::string rs1 = parts[2];
+            std::string rs2 = parts[3];
             
             // Perform subtraction
            registers[rd]=registers[rs1]-registers[rs2];
@@ -921,9 +921,9 @@ if(pp[i][0].substr(0, 2) == "mv") {
         } 
         else if(opcode=="blt")
         {
-                string rs1 = parts[1]; // Source register 1
-         string rs2 = parts[2]; // Source register 2
-         string label = parts[3]; // Label to branch to if rs1 < rs2
+                std::string rs1 = parts[1]; // Source register 1
+         std::string rs2 = parts[2]; // Source register 2
+         std::string label = parts[3]; // Label to branch to if rs1 < rs2
          if (registers[rs1] < registers[rs2]) {
         auto it = find(program.begin(), program.end(), label);
         if (it != program.end()) {
@@ -941,9 +941,9 @@ if(pp[i][0].substr(0, 2) == "mv") {
         }
         else if(opcode=="bgt")
         {
-            string rs1 = parts[1];
-                string rs2 = parts[2];
-                string label = parts[3];
+            std::string rs1 = parts[1];
+                std::string rs2 = parts[2];
+                std::string label = parts[3];
                 if (registers[rs1] > registers[rs2]) {
                     auto it = find(program.begin(), program.end(), label);
                     if (it != program.end()) {
@@ -957,8 +957,8 @@ if(pp[i][0].substr(0, 2) == "mv") {
         }
         else if(opcode=="mv")
         {
-           string rd = parts[1]; // Destination register
-          string rs = parts[2]; // Source register
+           std::string rd = parts[1]; // Destination register
+          std::string rs = parts[2]; // Source register
           registers[rd] = registers[rs];
            
           pp[pipeRow][0]=instruction;
@@ -968,9 +968,9 @@ if(pp[i][0].substr(0, 2) == "mv") {
         }
            else if(opcode=="bge")
         {
-            string rs1 = parts[1];
-                string rs2 = parts[2];
-                string label = parts[3];
+            std::string rs1 = parts[1];
+                std::string rs2 = parts[2];
+                std::string label = parts[3];
                 if (registers[rs1] >= registers[rs2]) {
                     auto it = find(program.begin(), program.end(), label);
                     if (it != program.end()) {
@@ -984,8 +984,8 @@ if(pp[i][0].substr(0, 2) == "mv") {
         }
         else if(opcode=="li")
         {
-            string rd=parts[1];
-            registers[rd]=stoi(parts[2]);
+            std::string rd=parts[1];
+            registers[rd]=std::stoi(parts[2]);
              
           pp[pipeRow][0]=instruction;
             pipeRow++;
@@ -993,8 +993,8 @@ if(pp[i][0].substr(0, 2) == "mv") {
         }
        else if(opcode=="addi")
        {
-          string rd = parts[1];
-          string rs1 = parts[2];
+          std::string rd = parts[1];
+          std::string rs1 = parts[2];
           registers[rd]=registers[rs1]+stoi(parts[3]);
            
           pp[pipeRow][0]=instruction;
@@ -1003,8 +1003,8 @@ if(pp[i][0].substr(0, 2) == "mv") {
        }
         else if(opcode=="subi")
        {
-          string rd = parts[1];
-          string rs1 = parts[2];
+          std::string rd = parts[1];
+          std::string rs1 = parts[2];
           registers[rd]=registers[rs1]-stoi(parts[3]);
            
           pp[pipeRow][0]=instruction;
@@ -1013,16 +1013,16 @@ if(pp[i][0].substr(0, 2) == "mv") {
        }
        else if(opcode=="lw")
        {
-          string rd = parts[1]; // Destination register
-          string address = parts[2]; // Memory address
+          std::string rd = parts[1]; // Destination register
+          std::string address = parts[2]; // Memory address
            size_t openBracketPos = address.find('(');
           size_t closeBracketPos = address.find(')');
-          if (openBracketPos != string::npos && closeBracketPos != string::npos) {
+          if (openBracketPos != std::string::npos && closeBracketPos != std::string::npos) {
         // Extracting the register name from the address string
-        string rs = address.substr(openBracketPos + 1, closeBracketPos - openBracketPos - 1);
+        std::string rs = address.substr(openBracketPos + 1, closeBracketPos - openBracketPos - 1);
         // Extracting the offset from the address string
-        string offsetStr = address.substr(0, openBracketPos);
-        int offset = stoi(offsetStr);
+        std::string offsetStr = address.substr(0, openBracketPos);
+        int offset = std::stoi(offsetStr);
         // Calculating the effective address by adding the offset to the value in the register
         int effectiveAddress = registers[rs] + offset;
         // Loading the value from memory at the effective address into the destination register
@@ -1035,16 +1035,16 @@ if(pp[i][0].substr(0, 2) == "mv") {
          }
          else if(opcode=="sw")
          {
-           string rs = parts[1]; // Source register
-            string address = parts[2]; // Memory address
+           std::string rs = parts[1]; // Source register
+            std::string address = parts[2]; // Memory address
           size_t openBracketPos = address.find('(');
           size_t closeBracketPos = address.find(')');
-         if (openBracketPos != string::npos && closeBracketPos != string::npos) {
+         if (openBracketPos != std::string::npos && closeBracketPos != std::string::npos) {
          // Extracting the destination register name from the address string
-         string rd = address.substr(openBracketPos + 1, closeBracketPos - openBracketPos - 1);
+         std::string rd = address.substr(openBracketPos + 1, closeBracketPos - openBracketPos - 1);
          // Extracting the offset from the address string
-          string offsetStr = address.substr(0, openBracketPos);
-         int offset = stoi(offsetStr);
+          std::string offsetStr = address.substr(0, openBracketPos);
+         int offset = std::stoi(offsetStr);
          // Calculating the effective address by adding the offset to the value in the register
          int effectiveAddress = registers[rd] + offset;
          // Storing the value from the source register into memory at the effective address
@@ -1057,9 +1057,9 @@ if(pp[i][0].substr(0, 2) == "mv") {
          }
          else if(opcode=="slt")
          {
-             string rd = parts[1]; // Destination register
-             string rs1 = parts[2]; // Source register 1
-             string rs2 = parts[3]; // Source register 2
+             std::string rd = parts[1]; // Destination register
+             std::string rs1 = parts[2]; // Source register 1
+             std::string rs2 = parts[3]; // Source register 2
 
          // Set the destination register to 1 if source register 1 < source register 2, otherwise set it to 0
             registers[rd] = (registers[rs1] < registers[rs2]) ? 1 : 0;
@@ -1070,7 +1070,7 @@ if(pp[i][0].substr(0, 2) == "mv") {
          }
          else if(opcode=="j")
          {
-               string label = parts[1]; // Target label
+               std::string label = parts[1]; // Target label
             auto it = find(program.begin(), program.end(), label);
             if (it != program.end()) {
                 pc = distance(program.begin(), it)-1;
@@ -1082,9 +1082,9 @@ if(pp[i][0].substr(0, 2) == "mv") {
          }
            else if(opcode=="bne")
          {
-            string rs1=parts[1];
-            string rs2=parts[2];
-            string label=parts[3];
+            std::string rs1=parts[1];
+            std::string rs2=parts[2];
+            std::string label=parts[3];
             if(registers[rs1]!=registers[rs2])
             {
                  auto it = find(program.begin(), program.end(), label);
@@ -1137,15 +1137,15 @@ if(pp[i][0].substr(0, 2) == "mv") {
        
      //fillPipeline(pipeRow, flag);
         int cnt=0;
-        cout<<pipeRow<<endl;
+       // cout<<pipeRow<<endl;
             for(int j=1;j<10000;j++){
                 if(pp[pipeRow-1][j] == "WB"){
-                    cout << "Total number of clock cycles: " << j << endl<<endl;
+                    std::cout << "Total number of clock cycles: " << j <<std:: endl<<std::endl;
                     cnt=j;
                 }
             }
 
-            string stallInstruction[5000];
+            std::string stallInstruction[5000];
             int count=0;
             int k=0;
             for(int i=0; i<pipeRow ;i++){
@@ -1158,9 +1158,9 @@ if(pp[i][0].substr(0, 2) == "mv") {
                 k++;
             }
  
-            cout<< "Total number of stalls: " << count <<endl<<endl;
+            std::cout<< "Total number of stalls: " << count << std:: endl<<std:: endl;
             float ipc=(float)pipeRow/cnt;
-           cout<<"IPC(Instructions per cycle is) :"<<ipc<<endl<<endl;
+           std:: cout<<"IPC(Instructions per cycle is) :"<<ipc<< std:: endl<<std:: endl;
            return;
 
     }
@@ -1168,18 +1168,18 @@ if(pp[i][0].substr(0, 2) == "mv") {
 };
 class Processor {
 public:
-    vector<int> memory;
+    std::vector<int> memory;
    // int clock;
-    vector<Core> cores;
+    std::vector<Core> cores;
 
 public:
     Processor()
     {
-        memory = vector<int>(4096, 0);
+        memory = std::vector<int>(4096, 0);
        //clock = 0;
-       cores = vector<Core>(2);
+       cores = std::vector<Core>(2);
     }
-    void send(vector<string> & program,int coreval)
+    void send(std::vector<std::string> & program,int coreval)
     {
        cores[coreval].program=program;
     }
@@ -1198,36 +1198,32 @@ public:
 int main()
 {
     Processor sim;
-    ifstream bubble_input("bubblesort.asm");
+    std::ifstream bubble_input("bubblesort.asm");
     if (!bubble_input.is_open()) {
-        cerr << "Failed to open bubblesort.asm" << endl;
+        std:: cerr << "Failed to open bubblesort.asm" << std:: endl;
         return 1;
     }
 
-    string bubble_line;
-    vector<string> bubble_asmLines;
+    std::string bubble_line;
+    std::vector<std::string> bubble_asmLines;
     //vector<string> temp;
-    vector<int> bubble_values;
+    std::vector<int> bubble_values;
     bool dataSection1 = false;
 
     while (getline(bubble_input, bubble_line)) {
-        if(bubble_line.empty())
-        {
-            continue;
-        }
-       else if (!bubble_line.empty()) {
+        if (!bubble_line.empty()) {
             if (bubble_line == ".data" || bubble_line == ".text" || bubble_line == "main:") {
                // temp.push_back(line);
                 continue;
             } 
-            else if (bubble_line.find(".word") != string::npos) {
+            else if (bubble_line.find(".word") != std::string::npos) {
                 size_t pos = bubble_line.find(".word");
-                if (pos != string::npos) {
+                if (pos != std::string::npos) {
                     // Extract the substring after ".word"
-                    string valuesStr = bubble_line.substr(pos + 6); // 6 is the length of ".word" plus a space
+                    std::string valuesStr = bubble_line.substr(pos + 6); // 6 is the length of ".word" plus a space
 
                     // Create a string stream to parse the values
-                    istringstream iss(valuesStr);
+                    std::istringstream iss(valuesStr);
                     int value;
 
                     // Read each value and store it in the vector
@@ -1238,9 +1234,9 @@ int main()
             } else {
                 // Process other lines
                 size_t pos = bubble_line.find(":");
-                if (pos != string::npos) {
+                if (pos != std::string::npos) {
                     // If a colon is found, extract the word before the colon
-                    string word = bubble_line.substr(0, pos);
+                    std::string word = bubble_line.substr(0, pos);
                     bubble_asmLines.push_back(word);
                 } else {
                     // If no colon is found, simply add the line to asmLines
@@ -1251,41 +1247,37 @@ int main()
     }
    // cout << endl;
     bubble_input.close();
-    for(int i=0;i<bubble_asmLines.size();i++)
-    {
-        cout<<bubble_asmLines[i]<<endl;
-    }
-    cout<<endl;
-    ifstream selection_input("selectionsort.asm");
+    // for(int i=0;i<bubble_asmLines.size();i++)
+    // {
+    //     cout<<bubble_asmLines[i]<<endl;
+    // }
+    std:: cout<< std:: endl;
+    std::ifstream selection_input("selectionsort.asm");
     if (!selection_input.is_open()) {
-        cerr << "Failed to open" << endl;
+       std:: cerr << "Failed to open" << std:: endl;
         return 1;
     }
 
-    string selection_line;
-    vector<string> selection_asmLines;
+    std::string selection_line;
+    std::vector<std::string> selection_asmLines;
     //vector<string> temp;
-    vector<int> selection_values;
+    std::vector<int> selection_values;
     bool dataSection2 = false;
 
     while (getline(selection_input,selection_line)) {
-        if(selection_line.empty())
-        {
-            continue;
-        }
-        else if (!selection_line.empty()) {
+        if (!selection_line.empty()) {
             if (selection_line == ".data" || selection_line == ".text" || selection_line == "main:") {
                // temp.push_back(line);
                 continue;
             } 
-            else if (selection_line.find(".word") != string::npos) {
+            else if (selection_line.find(".word") != std::string::npos) {
                 size_t pos = selection_line.find(".word");
-                if (pos != string::npos) {
+                if (pos != std::string::npos) {
                     // Extract the substring after ".word"
-                    string valuesStr = selection_line.substr(pos + 6); // 6 is the length of ".word" plus a space
+                    std::string valuesStr = selection_line.substr(pos + 6); // 6 is the length of ".word" plus a space
 
                     // Create a string stream to parse the values
-                    istringstream iss(valuesStr);
+                    std::istringstream iss(valuesStr);
                     int value;
 
                     // Read each value and store it in the vector
@@ -1296,9 +1288,9 @@ int main()
             } else {
                 // Process other lines
                 size_t pos = selection_line.find(":");
-                if (pos != string::npos) {
+                if (pos != std::string::npos) {
                     // If a colon is found, extract the word before the colon
-                    string word =selection_line.substr(0, pos);
+                    std::string word =selection_line.substr(0, pos);
                     selection_asmLines.push_back(word);
                 } else {
                     // If no colon is found, simply add the line to asmLines
@@ -1319,27 +1311,27 @@ int main()
      sim.send(selection_asmLines, 1); // Load bubble sort program into core 0
      sim.send(bubble_asmLines, 0);
      int flag;
-     cout<<"enter 1 for forwarding 0 for non forwarding"<<" ";
-     cin>>flag;
+     std:: cout<<"enter 1 for forwarding 0 for non forwarding"<<" ";
+     std::cin>>flag;
      sim.run(flag);
-     cout<<"memory values:"<<" ";
+     std:: cout<<"memory values:"<<" ";
      for(int i=0;i<9;i++)
      {
-        cout<<sim.memory[i]<<" ";
+        std:: cout<<sim.memory[i]<<" ";
      }
-     cout<<endl;
-     cout << "selection Sort Result: ";
+     std:: cout<<std:: endl;
+     std:: cout << "selection Sort Result: ";
     for (int i = 0; i < selection_values.size(); i++) {
-        cout << sim.memory[i] << " ";
+        std:: cout << sim.memory[i] << " ";
     }
-    cout << endl;
+    std:: cout << std:: endl;
 
     // Print selection sort result
-    cout << "Bubble Sort Result: ";
+    std:: cout << "Bubble Sort Result: ";
     for (int i = 0; i < bubble_values.size(); i++) {
-        cout << sim.memory[i + selection_values.size()] << " ";
+        std:: cout << sim.memory[i + selection_values.size()] << " ";
     }
-    cout << endl;
+    std:: cout << std:: endl;
 
 return 0;
 
