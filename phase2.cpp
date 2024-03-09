@@ -1450,8 +1450,18 @@ int main()
      int flag2;
      std:: cout<<"Enter 1 for FORWARDING and 0 for NON FORWARDING for BUBBLE SORT: "<<" "<<std::endl;
      std::cin>>flag1;
+     if(flag1>1&& flag1<0)
+     {
+        std::cout<<"INVALID KEY ENTERED"<<std::endl;
+        return 0;
+     }
       std:: cout<<"Enter 1 for FORWARDING 0 for NON FORWARDING for SELECTION SORT: "<<" "<<std::endl;
       std::cin>>flag2;
+       if(flag2>1&& flag2<0)
+     {
+        std::cout<<"INVALID KEY ENTERED"<<std::endl;
+        return 0;
+     }
       std::map<std::string, int> latencies;
     std::cout << "Enter latencies for arithmetic operations:" << std::endl;
     std::cout << "ADD: ";
