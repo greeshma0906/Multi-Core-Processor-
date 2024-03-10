@@ -30,10 +30,7 @@ public:
         while (pc < program.size())
         {
             std::string instruction = program[pc];
-            //  pp[ppRow][0]=instruction;
-            //         ppRow++;
-            //  cout<<program[pc]<<endl;
-
+            
             if (instruction == "exit")
             {
                 // Print register values after sorting
