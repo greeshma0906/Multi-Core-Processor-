@@ -4,8 +4,8 @@ arr: .word 4 2 3 1 5 6
 addi x19 x0 0
 addi x18 x0 0
 addi x7 x0 0
-addi x2 x0 0 
-addi x3 x0 0 
+add x2 x7 x0 
+add x3 x7 x0 
 addi x12 x0 6
 addi x11 x0 0
 loop1:
