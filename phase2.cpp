@@ -7,7 +7,7 @@ public:
     std::vector<std::string> program;
     std::string pp[500][10000];
     int flag1;
-    int pipeRow;
+    int ppRow;
     int clockk;
 
 public:
@@ -21,17 +21,17 @@ public:
         }
         pc = 0;
         flag1 = 0; // always branch is assumed to be not taken..
-        int pipeRow = 0;
+        int ppRow = 0;
         clockk = 1;
     }
     int execute(std::vector<int> &memory, int flag, std::map<std::string, int> latencies)
     {
-        int pipeRow = 0;
+        int ppRow = 0;
         while (pc < program.size())
         {
             std::string instruction = program[pc];
-            //  pp[pipeRow][0]=instruction;
-            //         pipeRow++;
+            //  pp[ppRow][0]=instruction;
+            //         ppRow++;
             //  cout<<program[pc]<<endl;
 
             if (instruction == "exit")
@@ -46,8 +46,8 @@ public:
                 }
                 std::cout << std::endl
                           << std::endl;
-                pp[pipeRow][0] = "exit";
-                return pipeRow;
+                pp[ppRow][0] = "exit";
+                return ppRow;
             }
             std::stringstream ss(instruction);
             std::vector<std::string> parts;
@@ -69,9 +69,9 @@ public:
                 // Perform subtraction
                 registers[rd] = registers[rs1] - registers[rs2];
 
-                pp[pipeRow][0] = instruction;
-                execute_ins(pipeRow, flag, latencies);
-                pipeRow++;
+                pp[ppRow][0] = instruction;
+                execute_ins(ppRow, flag, latencies);
+                ppRow++;
                 pc += 1;
             }
             if (opcode == "add")
@@ -83,9 +83,9 @@ public:
                 // Perform subtraction
                 registers[rd] = registers[rs1] + registers[rs2];
 
-                pp[pipeRow][0] = instruction;
-                execute_ins(pipeRow, flag, latencies);
-                pipeRow++;
+                pp[ppRow][0] = instruction;
+                execute_ins(ppRow, flag, latencies);
+                ppRow++;
                 pc += 1;
             }
             else if (opcode == "mul")
@@ -97,9 +97,9 @@ public:
                 // Perform multiplication
                 registers[rd] = registers[rs1] * registers[rs2];
 
-                pp[pipeRow][0] = instruction;
-                execute_ins(pipeRow, flag, latencies);
-                pipeRow++;
+                pp[ppRow][0] = instruction;
+                execute_ins(ppRow, flag, latencies);
+                ppRow++;
                 pc += 1;
             }
 
@@ -121,9 +121,9 @@ public:
                     // Optionally, set rd to a default value or handle the error in a different way
                 }
 
-                pp[pipeRow][0] = instruction;
-                execute_ins(pipeRow, flag, latencies);
-                pipeRow++;
+                pp[ppRow][0] = instruction;
+                execute_ins(ppRow, flag, latencies);
+                ppRow++;
                 pc += 1;
             }
 
@@ -141,9 +141,9 @@ public:
                     }
                 }
 
-                pp[pipeRow][0] = instruction;
-                execute_ins(pipeRow, flag, latencies);
-                pipeRow++;
+                pp[ppRow][0] = instruction;
+                execute_ins(ppRow, flag, latencies);
+                ppRow++;
                 pc += 1;
             }
             else if (opcode == "loope" || opcode == "swap" || opcode == "min_ind" || opcode == "outerloop" || opcode == "innerloop" || opcode == "swap" || opcode == "leave" || opcode == "loop1" || opcode == "loop" || opcode == "loop2" || opcode == "noswap")
@@ -164,9 +164,9 @@ public:
                     }
                 }
 
-                pp[pipeRow][0] = instruction;
-                execute_ins(pipeRow, flag, latencies);
-                pipeRow++;
+                pp[ppRow][0] = instruction;
+                execute_ins(ppRow, flag, latencies);
+                ppRow++;
                 pc += 1;
             }
             else if (opcode == "mv")
@@ -175,9 +175,9 @@ public:
                 std::string rs = parts[2]; // Source register
                 registers[rd] = registers[rs];
 
-                pp[pipeRow][0] = instruction;
-                execute_ins(pipeRow, flag, latencies);
-                pipeRow++;
+                pp[ppRow][0] = instruction;
+                execute_ins(ppRow, flag, latencies);
+                ppRow++;
                 pc += 1;
             }
             else if (opcode == "bge")
@@ -194,9 +194,9 @@ public:
                     }
                 }
 
-                pp[pipeRow][0] = instruction;
-                execute_ins(pipeRow, flag, latencies);
-                pipeRow++;
+                pp[ppRow][0] = instruction;
+                execute_ins(ppRow, flag, latencies);
+                ppRow++;
                 pc += 1;
             }
             else if (opcode == "li")
@@ -204,9 +204,9 @@ public:
                 std::string rd = parts[1];
                 registers[rd] = std::stoi(parts[2]);
 
-                pp[pipeRow][0] = instruction;
-                execute_ins(pipeRow, flag, latencies);
-                pipeRow++;
+                pp[ppRow][0] = instruction;
+                execute_ins(ppRow, flag, latencies);
+                ppRow++;
                 pc += 1;
             }
             else if (opcode == "addi")
@@ -215,9 +215,9 @@ public:
                 std::string rs1 = parts[2];
                 registers[rd] = registers[rs1] + stoi(parts[3]);
 
-                pp[pipeRow][0] = instruction;
-                execute_ins(pipeRow, flag, latencies);
-                pipeRow++;
+                pp[ppRow][0] = instruction;
+                execute_ins(ppRow, flag, latencies);
+                ppRow++;
                 pc += 1;
             }
             else if (opcode == "subi")
@@ -226,9 +226,9 @@ public:
                 std::string rs1 = parts[2];
                 registers[rd] = registers[rs1] - stoi(parts[3]);
 
-                pp[pipeRow][0] = instruction;
-                execute_ins(pipeRow, flag, latencies);
-                pipeRow++;
+                pp[ppRow][0] = instruction;
+                execute_ins(ppRow, flag, latencies);
+                ppRow++;
                 pc += 1;
             }
             else if (opcode == "lw")
@@ -250,9 +250,9 @@ public:
                     registers[rd] = memory[effectiveAddress];
                 }
 
-                pp[pipeRow][0] = instruction;
-                execute_ins(pipeRow, flag, latencies);
-                pipeRow++;
+                pp[ppRow][0] = instruction;
+                execute_ins(ppRow, flag, latencies);
+                ppRow++;
                 pc += 1;
             }
             else if (opcode == "sw")
@@ -274,9 +274,9 @@ public:
                     memory[effectiveAddress] = registers[rs];
                 }
 
-                pp[pipeRow][0] = instruction;
-                execute_ins(pipeRow, flag, latencies);
-                pipeRow++;
+                pp[ppRow][0] = instruction;
+                execute_ins(ppRow, flag, latencies);
+                ppRow++;
                 pc += 1;
             }
             else if (opcode == "slt")
@@ -288,9 +288,9 @@ public:
                 // Set the destination register to 1 if source register 1 < source register 2, otherwise set it to 0
                 registers[rd] = (registers[rs1] < registers[rs2]) ? 1 : 0;
 
-                pp[pipeRow][0] = instruction;
-                execute_ins(pipeRow, flag, latencies);
-                pipeRow++;
+                pp[ppRow][0] = instruction;
+                execute_ins(ppRow, flag, latencies);
+                ppRow++;
                 pc += 1;
             }
             else if (opcode == "j")
@@ -302,9 +302,9 @@ public:
                     pc = distance(program.begin(), it) - 1;
                 }
 
-                pp[pipeRow][0] = instruction;
-                execute_ins(pipeRow, flag, latencies);
-                pipeRow++;
+                pp[ppRow][0] = instruction;
+                execute_ins(ppRow, flag, latencies);
+                ppRow++;
                 pc += 1;
             }
             else if (opcode == "bne")
@@ -321,9 +321,9 @@ public:
                     }
                 }
 
-                pp[pipeRow][0] = instruction;
-                execute_ins(pipeRow, flag, latencies);
-                pipeRow++;
+                pp[ppRow][0] = instruction;
+                execute_ins(ppRow, flag, latencies);
+                ppRow++;
                 pc += 1;
             }
         }
@@ -1471,15 +1471,15 @@ public:
         return;
     }
 
-    void printval(int pipeRow, int flag)
+    void printval(int ppRow, int flag)
     {
 
-        // execute_ins(pipeRow, flag);
+        // execute_ins(ppRow, flag);
         int cnt = 0;
-        // cout<<pipeRow<<endl;
+        // cout<<ppRow<<endl;
         for (int j = 1; j < 10000; j++)
         {
-            if (pp[pipeRow - 1][j] == "WB")
+            if (pp[ppRow - 1][j] == "WB")
             {
                 std::cout << "Total number of clock cycles: " << j << std::endl
                           << std::endl;
@@ -1490,7 +1490,7 @@ public:
         std::string stallInstruction[5000];
         int count = 0;
         int k = 0;
-        for (int i = 0; i < pipeRow; i++)
+        for (int i = 0; i < ppRow; i++)
         {
             for (int j = 1; j < 10000; j++)
             {
@@ -1505,9 +1505,9 @@ public:
 
         std::cout << "Total number of stalls: " << count << std::endl
                   << std::endl;
-        std::cout << "Instructions: " << pipeRow << std::endl
+        std::cout << "Instructions: " << ppRow << std::endl
                   << std::endl;
-        float ipc = (float)pipeRow / cnt;
+        float ipc = (float)ppRow / cnt;
         std::cout << "IPC(Instructions per cycle is) : " << ipc << std::endl
                   << std::endl;
         return;
@@ -1533,17 +1533,17 @@ public:
     }
     void run(int flag1, int flag2, std::map<std::string, int> latencies)
     {
-        int pipeRow;
-        pipeRow = cores[0].execute(memory, flag1, latencies);
-        // cores[0].execute_ins(pipeRow,flag1,latencies);
+        int ppRow;
+        ppRow = cores[0].execute(memory, flag1, latencies);
+        // cores[0].execute_ins(ppRow,flag1,latencies);
         std::cout << "BUBBLE SORT: " << std::endl
                   << std::endl;
-        cores[0].printval(pipeRow, flag1);
-        pipeRow = cores[1].execute(memory, flag2, latencies);
-        // cores[1].execute_ins(pipeRow,flag2,latencies);
+        cores[0].printval(ppRow, flag1);
+        ppRow = cores[1].execute(memory, flag2, latencies);
+        // cores[1].execute_ins(ppRow,flag2,latencies);
         std::cout << "SELECTION SORT: " << std::endl
                   << std::endl;
-        cores[1].printval(pipeRow, flag2);
+        cores[1].printval(ppRow, flag2);
         return;
     }
 };
