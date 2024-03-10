@@ -7,7 +7,7 @@ public:
     std::vector<std::string> program;
     std::string pp[500][10000]; // pipeline is taken as 2D array
     int flag1;
-    int ppRow;
+    int ppRow;  // row value in 2D array
     int clockk; // after every ins clockk gets updated based on where IF is present in prev ins
 
 public:
@@ -335,7 +335,7 @@ public:
         {
             if (pp[x][y] == "stall")
             {
-                y++;
+                y++; // when it sees stall it moves to position after stall..
             }
             else
             {
@@ -349,7 +349,7 @@ public:
             y++;
         }
 
-        pp[x][y] = "IF";
+        pp[x][y] = "IF"; // fills the location with IF
         y++;
         while (id != 0)
         {
@@ -756,11 +756,10 @@ public:
         }
         else if (pp[i][0].substr(0, 4) == "subi")
         {
-            // cout<<"subi"<<endl;
-            //  Extracting the registers involved in the subi instruction
             std::string reg1 = pp[i][0].substr(4, 2);
 
             // Check for hazards with the previous instruction
+            //(it checks if destination reg of prev is same as that of before ins..)
             if (i != 0 && reg1 == checkHazard(pp[i - 1][0]))
             {
                 if (flag == 0)
