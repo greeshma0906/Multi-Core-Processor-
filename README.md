@@ -3,7 +3,7 @@ Date: 10-03-2024
 
 Members: Greeshma, Snehitha
 
-Finally we submitted the code after aligning the code.
+Finally we submitted after aligning the code.
 
 Date: 09-03-2024
 
@@ -26,7 +26,7 @@ Members: Greeshma, Snehitha
 
 We added only few instructions in the pipeline function , we added few more  instructions like mv,blt ..
 We decided to implement the latencies as a Map.
-But we didnot try to implement it bcz we didn't  complete much so we decided to do it at the last.
+But we didnot try to implement it bcz we didn't complete much so we decided to do it at the last.
 
 NOTE: About the hazards we only tried to check the destination register of the current instruction and if it is the same as the previous one , we assumed it as  a hazard.
 
@@ -55,7 +55,7 @@ Date: 01-03-2024
 Members: Greeshma, Snehitha
 
 Discussion on implementing the pipeline logic , searched for the similar repositories in the github.
-We didn't have any about implementing Latencies.
+We didn't have any idea for implementing Latencies.
 
 Date: 25-02-2024
 
