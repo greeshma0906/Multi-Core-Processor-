@@ -281,9 +281,10 @@ public:
         // if ..... other functions
     }
 
-    bool branchhazard(std::string ins)
+    bool predict(std::string ins)
     {
         bool flag = false;
+        //if it is branch instruction..then it always returns true.
         if (ins.substr(0, 3) == "beq" || ins.substr(0, 3) == "bne" || (ins.substr(0, 1) == "j" && ins.substr(1, 1) != "r"))
         {
             flag = true;
@@ -368,7 +369,7 @@ public:
                 if (flagForwdg == 0)
                 { // no forwarding
                     stalls_hazard(i - 1);
-                    if (branchhazard(pp[i - 1][0]) && branch_flag == 1)
+                    if (predict(pp[i - 1][0]) && branch_flag == 1)
                     {
                         fill(i, j, 1, 0, 2, 0, 0);
                     }
@@ -381,7 +382,7 @@ public:
                 { // with forwarding
 
                     stalls_hazard(i - 1);
-                    if (branchhazard(pp[i - 1][0]) && branch_flag == 1)
+                    if (predict(pp[i - 1][0]) && branch_flag == 1)
                     {
                         fill(i, j, 1, 0, 0, 0, 0);
                     }
@@ -400,7 +401,7 @@ public:
             { // i!=0 and no hazard in previous instruction
 
                 stalls_hazard(i - 1);
-                if (branchhazard(pp[i - 1][0]) && branch_flag == 1)
+                if (predict(pp[i - 1][0]) && branch_flag == 1)
                 {
                     fill(i, j, 1, 0, 0, 0, 0);
                 }
@@ -423,7 +424,7 @@ public:
                 if (flagForwdg == 0)
                 { // No forwarding
                     stalls_hazard(i - 1);
-                    if (branchhazard(pp[i - 1][0]) && branch_flag == 1)
+                    if (predict(pp[i - 1][0]) && branch_flag == 1)
                     {
                         fill(i, j, 1, 0, 2, 0, 0);
                     }
@@ -435,7 +436,7 @@ public:
                 else
                 { // With forwarding
                     stalls_hazard(i - 1);
-                    if (branchhazard(pp[i - 1][0]) && branch_flag == 1)
+                    if (predict(pp[i - 1][0]) && branch_flag == 1)
                     {
                         fill(i, j, 1, 0, 0, 0, 0);
                     }
@@ -448,7 +449,7 @@ public:
             else
             {
                 stalls_hazard(i - 1);
-                if (branchhazard(pp[i - 1][0]) && branch_flag == 1)
+                if (predict(pp[i - 1][0]) && branch_flag == 1)
                 {
                     fill(i, j, 1, 0, 0, 0, 0);
                 }
@@ -458,50 +459,6 @@ public:
                 }
             }
         }
-        // if(pp[i][0].substr(0, 2) == "li") {
-        //     // Check for hazards with the previous instruction
-        //     cout<<"li"<<" ";
-        //     if(i != 0 && hazard(pp[i-1][0]) != "nulll") {
-        //         if(flagForwdg == 0) { // No forwarding
-        //             stalls_hazard(i-1);
-        //             if(branchhazard(pp[i-1][0]) && branch_flag == 1) {
-        //                 fill(i, j, 1, 0, 2, 0, 0);
-        //             } else {
-        //                 fill(i, j, 0, 0, 2, 0, 0);
-        //             }
-        //         } else {
-
-        //                      stalls_hazard(i-1);
-
-        //             if(branchhazard(pp[i-1][0]) && branch_flag == 1) {
-        //                 fill(i, 1, 1, 0, 0, 0, 0);
-        //             } else {
-        //                 fill(i, 1, 0, 0, 0, 0, 0);
-        //             }
-
-        //         }
-        //     } else {
-        //              if(i!=0)
-        //                   {
-        //                      stalls_hazard(i-1);
-        //                   }
-        //        else
-        //        {
-        //         if(i==0)
-        //         {
-        //             fill(i,1,0,0,0,0,0);
-        //         }
-        //         else
-        //         {
-        //         if(branchhazard(pp[i-1][0]) && branch_flag == 1) {
-        //             fill(i, 1, 1, 0, 0, 0, 0);
-        //         } else {
-        //             fill(i, 1, 0, 0, 0, 0, 0);
-        //         }
-        //         }
-        //     }
-        //     }
-        // }
         else if (pp[i][0].substr(0, 4) == "subi")
         {
             // cout<<"subi"<<endl;
@@ -514,7 +471,7 @@ public:
                 if (flagForwdg == 0)
                 { // No forwarding
                     stalls_hazard(i - 1);
-                    if (branchhazard(pp[i - 1][0]) && branch_flag == 1)
+                    if (predict(pp[i - 1][0]) && branch_flag == 1)
                     {
                         fill(i, j, 1, 0, 2, 0, 0);
                     }
@@ -526,7 +483,7 @@ public:
                 else
                 { // With forwarding
                     stalls_hazard(i - 1);
-                    if (branchhazard(pp[i - 1][0]) && branch_flag == 1)
+                    if (predict(pp[i - 1][0]) && branch_flag == 1)
                     {
                         fill(i, j, 1, 0, 0, 0, 0);
                     }
@@ -539,7 +496,7 @@ public:
             else
             {
                 stalls_hazard(i - 1);
-                if (branchhazard(pp[i - 1][0]) && branch_flag == 1)
+                if (predict(pp[i - 1][0]) && branch_flag == 1)
                 {
                     fill(i, j, 1, 0, 0, 0, 0);
                 }
@@ -559,7 +516,7 @@ public:
                 if (flagForwdg == 0)
                 { // no forwarding
                     stalls_hazard(i - 1);
-                    if (branchhazard(pp[i - 1][0]) && branch_flag == 1)
+                    if (predict(pp[i - 1][0]) && branch_flag == 1)
                     {
                         fillarith(i, j, 1, 0, 2, 0, 0, latency_val);
                     }
@@ -571,7 +528,7 @@ public:
                 else
                 { // with forwarding
                     stalls_hazard(i - 1);
-                    if (branchhazard(pp[i - 1][0]) && branch_flag == 1)
+                    if (predict(pp[i - 1][0]) && branch_flag == 1)
                     {
                         fillarith(i, j, 1, 0, 0, 0, 0, latency_val);
                     }
@@ -585,7 +542,7 @@ public:
             else
             {
                 stalls_hazard(i - 1);
-                if (branchhazard(pp[i - 1][0]) && branch_flag == 1)
+                if (predict(pp[i - 1][0]) && branch_flag == 1)
                 {
                     fillarith(i, j, 1, 0, 0, 0, 0, latency_val);
                 }
@@ -606,7 +563,7 @@ public:
                 if (flagForwdg == 0)
                 { // no forwarding
                     stalls_hazard(i - 1);
-                    if (branchhazard(pp[i - 1][0]) && branch_flag == 1)
+                    if (predict(pp[i - 1][0]) && branch_flag == 1)
                     {
                         fillarith(i, j, 1, 0, 2, 0, 0, latency_val);
                     }
@@ -621,7 +578,7 @@ public:
                 else
                 { // with forwarding
                     stalls_hazard(i - 1);
-                    if (branchhazard(pp[i - 1][0]) && branch_flag == 1)
+                    if (predict(pp[i - 1][0]) && branch_flag == 1)
                     {
                         fillarith(i, j, 1, 0, 0, 0, 0, latency_val);
                     }
@@ -635,7 +592,7 @@ public:
             else
             {
                 stalls_hazard(i - 1);
-                if (branchhazard(pp[i - 1][0]) && branch_flag == 1)
+                if (predict(pp[i - 1][0]) && branch_flag == 1)
                 {
                     fill(i, j, 1, 0, 0, 0, 0);
                 }
@@ -655,7 +612,7 @@ public:
                 if (flagForwdg == 0)
                 { // no forwarding
                     stalls_hazard(i - 1);
-                    if (branchhazard(pp[i - 1][0]) && branch_flag == 1)
+                    if (predict(pp[i - 1][0]) && branch_flag == 1)
                     {
                         fillarith(i, j, 1, 0, 2, 0, 0, latency_val);
                     }
@@ -668,7 +625,7 @@ public:
                 else
                 { // with forwarding
                     stalls_hazard(i - 1);
-                    if (branchhazard(pp[i - 1][0]) && branch_flag == 1)
+                    if (predict(pp[i - 1][0]) && branch_flag == 1)
                     {
                         fillarith(i, j, 1, 0, 0, 0, 0, latency_val);
                     }
@@ -682,7 +639,7 @@ public:
             else
             {
                 stalls_hazard(i - 1);
-                if (branchhazard(pp[i - 1][0]) && branch_flag == 1)
+                if (predict(pp[i - 1][0]) && branch_flag == 1)
                 {
                     fillarith(i, j, 1, 0, 0, 0, 0, latency_val);
                 }
@@ -702,7 +659,7 @@ public:
                 if (flagForwdg == 0)
                 { // no forwarding
                     stalls_hazard(i - 1);
-                    if (branchhazard(pp[i - 1][0]) && branch_flag == 1)
+                    if (predict(pp[i - 1][0]) && branch_flag == 1)
                     {
                         fillarith(i, j, 1, 0, 2, 0, 0, latency_val);
                     }
@@ -715,7 +672,7 @@ public:
                 else
                 { // with forwarding
                     stalls_hazard(i - 1);
-                    if (branchhazard(pp[i - 1][0]) && branch_flag == 1)
+                    if (predict(pp[i - 1][0]) && branch_flag == 1)
                     {
                         fillarith(i, j, 1, 0, 0, 0, 0, latency_val);
                     }
@@ -729,7 +686,7 @@ public:
             else
             {
                 stalls_hazard(i - 1);
-                if (branchhazard(pp[i - 1][0]) && branch_flag == 1)
+                if (predict(pp[i - 1][0]) && branch_flag == 1)
                 {
                     fillarith(i, j, 1, 0, 0, 0, 0, latency_val);
                 }
@@ -748,7 +705,7 @@ public:
                 if (flagForwdg == 0)
                 { // no forwarding
                     stalls_hazard(i - 1);
-                    if (branchhazard(pp[i - 1][0]) && branch_flag == 1)
+                    if (predict(pp[i - 1][0]) && branch_flag == 1)
                     {
                         fill(i, j, 1, 0, 2, 0, 0);
                     }
@@ -761,7 +718,7 @@ public:
                 else
                 { // with forwarding
                     stalls_hazard(i - 1);
-                    if (branchhazard(pp[i - 1][0]) && branch_flag == 1)
+                    if (predict(pp[i - 1][0]) && branch_flag == 1)
                     {
                         fill(i, j, 1, 0, 0, 0, 0);
                     }
@@ -774,7 +731,7 @@ public:
             else
             {
                 stalls_hazard(i - 1);
-                if (branchhazard(pp[i - 1][0]) && branch_flag == 1)
+                if (predict(pp[i - 1][0]) && branch_flag == 1)
                 {
                     fill(i, j, 1, 0, 0, 0, 0);
                 }
@@ -806,7 +763,7 @@ public:
                 if (flagForwdg == 0)
                 { // no forwarding
                     stalls_hazard(i - 1);
-                    if (branchhazard(pp[i - 1][0]) && branch_flag == 1)
+                    if (predict(pp[i - 1][0]) && branch_flag == 1)
                     {
                         fill(i, j, 1, 0, 2, 0, 0);
                     }
@@ -820,7 +777,7 @@ public:
                 else
                 { // with forwarding
                     stalls_hazard(i - 1);
-                    if (branchhazard(pp[i - 1][0]) && branch_flag == 1)
+                    if (predict(pp[i - 1][0]) && branch_flag == 1)
                     {
                         fill(i, j, 1, 0, 0, 0, 0);
                     }
@@ -834,7 +791,7 @@ public:
             else
             {
                 stalls_hazard(i - 1);
-                if (branchhazard(pp[i - 1][0]) && branch_flag == 1)
+                if (predict(pp[i - 1][0]) && branch_flag == 1)
                 {
                     fill(i, j, 1, 0, 0, 0, 0);
                 }
@@ -864,7 +821,7 @@ public:
                 if (flagForwdg == 0)
                 { // no forwarding
                     stalls_hazard(i - 1);
-                    if (branchhazard(pp[i - 1][0]) && branch_flag == 1)
+                    if (predict(pp[i - 1][0]) && branch_flag == 1)
                     {
                         fill(i, j, 1, 0, 2, 0, 0);
                     }
@@ -877,7 +834,7 @@ public:
                 else
                 { // with forwarding
                     stalls_hazard(i - 1);
-                    if (branchhazard(pp[i - 1][0]) && branch_flag == 1)
+                    if (predict(pp[i - 1][0]) && branch_flag == 1)
                     {
                         fill(i, j, 1, 0, 0, 0, 0);
                     }
@@ -890,7 +847,7 @@ public:
             else
             {
                 stalls_hazard(i - 1);
-                if (branchhazard(pp[i - 1][0]) && branch_flag == 1)
+                if (predict(pp[i - 1][0]) && branch_flag == 1)
                 {
                     fill(i, j, 1, 0, 0, 0, 0);
                 }
@@ -917,7 +874,7 @@ public:
                 branch_flag = 0;
 
             stalls_hazard(i - 1);
-            if (branchhazard(pp[i - 1][0]) && branch_flag == 1)
+            if (predict(pp[i - 1][0]) && branch_flag == 1)
             {
                 fill(i, j, 1, 0, 0, 0, 0);
             }
@@ -945,7 +902,7 @@ public:
                 if (flagForwdg == 0)
                 { // no forwarding
                     stalls_hazard(i - 1);
-                    if (branchhazard(pp[i - 1][0]) && branch_flag == 1)
+                    if (predict(pp[i - 1][0]) && branch_flag == 1)
                     {
                         fill(i, j, 1, 0, 2, 0, 0);
                     }
@@ -958,7 +915,7 @@ public:
                 else
                 { // with forwarding
                     stalls_hazard(i - 1);
-                    if (branchhazard(pp[i - 1][0]) && branch_flag == 1)
+                    if (predict(pp[i - 1][0]) && branch_flag == 1)
                     {
                         fill(i, j, 1, 0, 0, 0, 0);
                     }
@@ -971,7 +928,7 @@ public:
             else
             {
                 stalls_hazard(i - 1);
-                if (branchhazard(pp[i - 1][0]) && branch_flag == 1)
+                if (predict(pp[i - 1][0]) && branch_flag == 1)
                 {
                     fill(i, j, 1, 0, 0, 0, 0);
                 }
@@ -991,7 +948,7 @@ public:
                 if (flagForwdg == 0)
                 { // no forwarding
                     stalls_hazard(i - 1);
-                    if (branchhazard(pp[i - 1][0]) && branch_flag == 1)
+                    if (predict(pp[i - 1][0]) && branch_flag == 1)
                     {
                         fill(i, j, 1, 0, 2, 0, 0);
                     }
@@ -1003,7 +960,7 @@ public:
                 else
                 { // with forwarding
                     stalls_hazard(i - 1);
-                    if (branchhazard(pp[i - 1][0]) && branch_flag == 1)
+                    if (predict(pp[i - 1][0]) && branch_flag == 1)
                     {
                         fill(i, j, 1, 0, 0, 0, 0);
                     }
@@ -1016,7 +973,7 @@ public:
             else
             {
                 stalls_hazard(i - 1);
-                if (branchhazard(pp[i - 1][0]) && branch_flag == 1)
+                if (predict(pp[i - 1][0]) && branch_flag == 1)
                 {
                     fill(i, j, 1, 0, 0, 0, 0);
                 }
@@ -1035,7 +992,7 @@ public:
                 if (flagForwdg == 0)
                 { // no forwarding
                     stalls_hazard(i - 1);
-                    if (branchhazard(pp[i - 1][0]) && branch_flag == 1)
+                    if (predict(pp[i - 1][0]) && branch_flag == 1)
                     {
                         fill(i, j, 1, 0, 2, 0, 0);
                     }
@@ -1047,7 +1004,7 @@ public:
                 else
                 { // with forwarding
                     stalls_hazard(i - 1);
-                    if (branchhazard(pp[i - 1][0]) && branch_flag == 1)
+                    if (predict(pp[i - 1][0]) && branch_flag == 1)
                     {
                         fill(i, j, 1, 0, 0, 0, 0);
                     }
@@ -1060,7 +1017,7 @@ public:
             else
             {
                 stalls_hazard(i - 1);
-                if (branchhazard(pp[i - 1][0]) && branch_flag == 1)
+                if (predict(pp[i - 1][0]) && branch_flag == 1)
                 {
                     fill(i, j, 1, 0, 0, 0, 0);
                 }
@@ -1084,7 +1041,7 @@ public:
                 if (flagForwdg == 0)
                 { // No forwarding
                     stalls_hazard(i - 1);
-                    if (branchhazard(pp[i - 1][0]) && branch_flag == 1)
+                    if (predict(pp[i - 1][0]) && branch_flag == 1)
                     {
                         fill(i, j, 1, 0, 2, 0, 0);
                     }
@@ -1096,7 +1053,7 @@ public:
                 else
                 { // With forwarding
                     stalls_hazard(i - 1);
-                    if (branchhazard(pp[i - 1][0]) && branch_flag == 1)
+                    if (predict(pp[i - 1][0]) && branch_flag == 1)
                     {
                         fill(i, j, 1, 0, 0, 0, 0);
                     }
@@ -1109,7 +1066,7 @@ public:
             else
             {
                 stalls_hazard(i - 1);
-                if (branchhazard(pp[i - 1][0]) && branch_flag == 1)
+                if (predict(pp[i - 1][0]) && branch_flag == 1)
                 {
                     fill(i, j, 1, 0, 0, 0, 0);
                 }
@@ -1137,7 +1094,7 @@ public:
                 if (flagForwdg == 0)
                 { // No forwarding
                     stalls_hazard(i - 1);
-                    if (branchhazard(pp[i - 1][0]) && branch_flag == 1)
+                    if (predict(pp[i - 1][0]) && branch_flag == 1)
                     {
                         fill(i, j, 1, 0, 2, 0, 0);
                     }
@@ -1149,7 +1106,7 @@ public:
                 else
                 { // With forwarding
                     stalls_hazard(i - 1);
-                    if (branchhazard(pp[i - 1][0]) && branch_flag == 1)
+                    if (predict(pp[i - 1][0]) && branch_flag == 1)
                     {
                         fill(i, j, 1, 0, 0, 0, 0);
                     }
@@ -1162,7 +1119,7 @@ public:
             else
             {
                 stalls_hazard(i - 1);
-                if (branchhazard(pp[i - 1][0]) && branch_flag == 1)
+                if (predict(pp[i - 1][0]) && branch_flag == 1)
                 {
                     fill(i, j, 1, 0, 0, 0, 0);
                 }
@@ -1176,7 +1133,7 @@ public:
         { // data and structural hazards not possible in la
             //    cout<<"la"<<endl;
             stalls_hazard(i - 1);
-            if (branchhazard(pp[i - 1][0]) && branch_flag == 1)
+            if (predict(pp[i - 1][0]) && branch_flag == 1)
             {
                 fill(i, j, 1, 0, 0, 0, 0);
             }
@@ -1189,7 +1146,7 @@ public:
         else if (pp[i][0].substr(0, 2) == "jr")
         { // data and structural hazards not possible in jr
             stalls_hazard(i - 1);
-            if (branchhazard(pp[i - 1][0]) && branch_flag == 1)
+            if (predict(pp[i - 1][0]) && branch_flag == 1)
             {
                 fill(i, j, 1, 0, 0, 0, 0);
             }
