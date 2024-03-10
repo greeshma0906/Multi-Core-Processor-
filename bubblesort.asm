@@ -3,9 +3,9 @@ arr: .word 5 1 3
 .text
 main:
 addi x2 x0 6
-addi x3 x0 9
 addi x4 x0 7
-addi x5 x0 8
+addi x5 x0 9
+addi x5 x5 -1
 loop:
 lw x6 0(x2)
 lw x7 1(x2)
