@@ -5,10 +5,10 @@ public:
     std::unordered_map<std::string, int> registers;
     int pc;
     std::vector<std::string> program;
-    std::string pp[500][10000];
+    std::string pp[500][10000]; // pipeline is taken as 2D array
     int flag1;
     int ppRow;
-    int clockk;
+    int clockk; // after every ins clockk gets updated based on where IF is present in prev ins
 
 public:
     Core()
@@ -328,6 +328,7 @@ public:
             }
         }
     }
+    // storing IF,ID etc..in pipeline
     void store_pp(int x, int y, int iF, int id, int ex, int mem, int wb)
     {
         while (iF != 0)
@@ -426,6 +427,7 @@ public:
         }
         pp[x][y] = "WB";
     }
+    // function for storing arithmetic instructions in pipeline based on latencies..
     void fillarith(int x, int y, int iF, int id, int ex, int mem, int wb, int latency_val)
     {
         while (iF != 0)
@@ -544,8 +546,8 @@ public:
 
         pp[x][y] = "WB";
     }
-
-    std::string hazard(std::string ins)
+    // checkHazard fn returns destination register...
+    std::string checkHazard(std::string ins)
     {
 
         if (ins.substr(0, 4) == "addi")
@@ -584,7 +586,7 @@ public:
         return "false";
         // if ..... other functions
     }
-
+    // prdict fn checks if its a branch instruction and it assumes it as always taken..
     bool predict(std::string ins)
     {
         bool flag = false;
@@ -595,16 +597,11 @@ public:
         }
         return flag;
     }
+    // if prev instructions have stalls it transforms all those stalls downwards to present instruction..
     void fill_stalls(int ins_row)
     {
-        // if(ins_row==-1)
-        // {
-        //     return;
-        // }
         int IF, ID, EX, MEM;
         int clk_len = 0;
-        //  cout<<pp[ins_row][5]<<" ";
-        //     cout<<endl;
         for (int j = 1; j < 10000; j++)
         {
 
@@ -643,8 +640,6 @@ public:
         {
             if (pp[ins_row][j] == "stall")
             {
-                // store_pp(ins_row+1,i,0,0,0,1,0);
-
                 pp[ins_row + 1][j] = "stall";
             }
         }
@@ -652,7 +647,6 @@ public:
         {
             if (pp[ins_row][j] == "stall")
             {
-                // store_pp(ins_row+1,i,0,0,0,0,1);
                 pp[ins_row + 1][j] = "stall";
             }
         }
@@ -661,18 +655,15 @@ public:
     void execute_ins(int i, int flag, std::map<std::string, int> latencies)
     {
         // cout<<numb_rows<<endl;
-        // int clockk=1;
-
         int j = clockk;
-
         if (pp[i][0].substr(0, 4) == "addi")
         {
-            //       cout<<"addi"<<" ";
-            if (i != 0 && pp[i][0].substr(5, 2) == hazard(pp[i - 1][0]))
+            if (i != 0 && pp[i][0].substr(5, 2) == checkHazard(pp[i - 1][0]))
             {
                 if (flag == 0)
                 { // no forwarding
                     fill_stalls(i - 1);
+                    // check if previous instruction is branch instruction..
                     if (predict(pp[i - 1][0]) && flag1 == 1)
                     {
                         store_pp(i, j, 1, 0, 2, 0, 0);
@@ -702,7 +693,7 @@ public:
                 store_pp(i, j, 0, 0, 0, 0, 0);
             }
             else
-            { // i!=0 and no hazard in previous instruction
+            { // i!=0 and no checkHazard in previous instruction
 
                 fill_stalls(i - 1);
                 if (predict(pp[i - 1][0]) && flag1 == 1)
@@ -723,7 +714,7 @@ public:
             std::string reg2 = pp[i][0].substr(6, 2);
 
             // Check for hazards with the previous instruction
-            if (i != 0 && (reg1 == hazard(pp[i - 1][0]) || reg2 == hazard(pp[i - 1][0])))
+            if (i != 0 && (reg1 == checkHazard(pp[i - 1][0]) || reg2 == checkHazard(pp[i - 1][0])))
             {
                 if (flag == 0)
                 { // No forwarding
@@ -770,7 +761,7 @@ public:
             std::string reg1 = pp[i][0].substr(4, 2);
 
             // Check for hazards with the previous instruction
-            if (i != 0 && reg1 == hazard(pp[i - 1][0]))
+            if (i != 0 && reg1 == checkHazard(pp[i - 1][0]))
             {
                 if (flag == 0)
                 { // No forwarding
@@ -815,7 +806,7 @@ public:
         {
 
             int latency_val = latencies["add"];
-            if (pp[i][0].substr(5, 2) == hazard(pp[i - 1][0]) || pp[i][0].substr(7, 2) == hazard(pp[i - 1][0]))
+            if (pp[i][0].substr(5, 2) == checkHazard(pp[i - 1][0]) || pp[i][0].substr(7, 2) == checkHazard(pp[i - 1][0]))
             {
                 if (flag == 0)
                 { // no forwarding
@@ -862,7 +853,7 @@ public:
         {
             int latency_val = latencies["sub"];
             // cout<<"sub"<<endl;
-            if (pp[i][0].substr(5, 2) == hazard(pp[i - 1][0]) || pp[i][0].substr(7, 2) == hazard(pp[i - 1][0]))
+            if (pp[i][0].substr(5, 2) == checkHazard(pp[i - 1][0]) || pp[i][0].substr(7, 2) == checkHazard(pp[i - 1][0]))
             {
                 if (flag == 0)
                 { // no forwarding
@@ -911,7 +902,7 @@ public:
         else if (pp[i][0].substr(0, 3) == "mul")
         {
             int latency_val = latencies["mul"];
-            if (pp[i][0].substr(5, 2) == hazard(pp[i - 1][0]) || pp[i][0].substr(7, 2) == hazard(pp[i - 1][0]))
+            if (pp[i][0].substr(5, 2) == checkHazard(pp[i - 1][0]) || pp[i][0].substr(7, 2) == checkHazard(pp[i - 1][0]))
             {
                 if (flag == 0)
                 { // no forwarding
@@ -958,7 +949,7 @@ public:
         else if (pp[i][0].substr(0, 3) == "div")
         {
             int latency_val = latencies["div"];
-            if (pp[i][0].substr(5, 2) == hazard(pp[i - 1][0]) || pp[i][0].substr(7, 2) == hazard(pp[i - 1][0]))
+            if (pp[i][0].substr(5, 2) == checkHazard(pp[i - 1][0]) || pp[i][0].substr(7, 2) == checkHazard(pp[i - 1][0]))
             {
                 if (flag == 0)
                 { // no forwarding
@@ -1004,7 +995,7 @@ public:
         else if (pp[i][0].substr(0, 3) == "slt")
         {
             // cout<<"slt"<<" ";
-            if (pp[i][0].substr(5, 2) == hazard(pp[i - 1][0]) || pp[i][0].substr(7, 2) == hazard(pp[i - 1][0]))
+            if (pp[i][0].substr(5, 2) == checkHazard(pp[i - 1][0]) || pp[i][0].substr(7, 2) == checkHazard(pp[i - 1][0]))
             {
                 if (flag == 0)
                 { // no forwarding
@@ -1062,7 +1053,7 @@ public:
                 flag1 = 1;
             else
                 flag1 = 0;
-            if (pp[i][0].substr(3, 2) == hazard(pp[i - 1][0]) || pp[i][0].substr(5, 2) == hazard(pp[i - 1][0]))
+            if (pp[i][0].substr(3, 2) == checkHazard(pp[i - 1][0]) || pp[i][0].substr(5, 2) == checkHazard(pp[i - 1][0]))
             {
                 if (flag == 0)
                 { // no forwarding
@@ -1120,7 +1111,7 @@ public:
                 flag1 = 1;
             else
                 flag1 = 0;
-            if (pp[i][0].substr(3, 2) == hazard(pp[i - 1][0]) || pp[i][0].substr(5, 2) == hazard(pp[i - 1][0]))
+            if (pp[i][0].substr(3, 2) == checkHazard(pp[i - 1][0]) || pp[i][0].substr(5, 2) == checkHazard(pp[i - 1][0]))
             {
                 if (flag == 0)
                 { // no forwarding
@@ -1201,7 +1192,7 @@ public:
                 flag1 = 1;
             else
                 flag1 = 0;
-            if (pp[i][0].substr(3, 2) == hazard(pp[i - 1][0]) || pp[i][0].substr(5, 2) == hazard(pp[i - 1][0]))
+            if (pp[i][0].substr(3, 2) == checkHazard(pp[i - 1][0]) || pp[i][0].substr(5, 2) == checkHazard(pp[i - 1][0]))
             {
                 if (flag == 0)
                 { // no forwarding
@@ -1247,7 +1238,7 @@ public:
         else if (pp[i][0].substr(0, 2) == "lw")
         {
             //   cout<<"lw"<<endl;
-            if (i != 0 && pp[i][0].substr(pp[i][0].length() - 3, 2) == hazard(pp[i - 1][0]))
+            if (i != 0 && pp[i][0].substr(pp[i][0].length() - 3, 2) == checkHazard(pp[i - 1][0]))
             {
                 if (flag == 0)
                 { // no forwarding
@@ -1291,7 +1282,7 @@ public:
         else if (pp[i][0].substr(0, 2) == "sw")
         {
             // cout<<"sw"<<endl;
-            if (i != 0 && pp[i][0].substr(pp[i][0].length() - 3, 2) == hazard(pp[i - 1][0]))
+            if (i != 0 && pp[i][0].substr(pp[i][0].length() - 3, 2) == checkHazard(pp[i - 1][0]))
             {
                 if (flag == 0)
                 { // no forwarding
@@ -1340,7 +1331,7 @@ public:
             std::string reg2 = pp[i][0].substr(6, 2);
 
             // Check for hazards with the previous instruction
-            if (i != 0 && (reg1 == hazard(pp[i - 1][0]) || reg2 == hazard(pp[i - 1][0])))
+            if (i != 0 && (reg1 == checkHazard(pp[i - 1][0]) || reg2 == checkHazard(pp[i - 1][0])))
             {
                 if (flag == 0)
                 { // No forwarding
@@ -1382,18 +1373,15 @@ public:
         }
         else if (pp[i][0] == "exit")
         {
-            // cout<<"exit"<<endl;
             return;
         }
         else if (pp[i][0].substr(0, 2) == "mv")
         {
-            // Extracting the registers involved in the mv instruction
-            // cout<<"mv"<<endl;
             std::string reg1 = pp[i][0].substr(2, 2);
             std::string reg2 = pp[i][0].substr(5, 2);
 
             // Check for hazards with the previous instruction
-            if (i != 0 && (reg1 == hazard(pp[i - 1][0]) || reg2 == hazard(pp[i - 1][0])))
+            if (i != 0 && (reg1 == checkHazard(pp[i - 1][0]) || reg2 == checkHazard(pp[i - 1][0])))
             {
                 if (flag == 0)
                 { // No forwarding
@@ -1435,7 +1423,6 @@ public:
         }
         else if (pp[i][0].substr(0, 2) == "la")
         { // data and structural hazards not possible in la
-            //    cout<<"la"<<endl;
             fill_stalls(i - 1);
             if (predict(pp[i - 1][0]) && flag1 == 1)
             {
@@ -1473,10 +1460,7 @@ public:
 
     void printval(int ppRow, int flag)
     {
-
-        // execute_ins(ppRow, flag);
         int cnt = 0;
-        // cout<<ppRow<<endl;
         for (int j = 1; j < 10000; j++)
         {
             if (pp[ppRow - 1][j] == "WB")
