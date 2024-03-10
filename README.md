@@ -1,5 +1,4 @@
 # Multi-Core-Processor-
-
 Date: 10-03-2024
 Members: Greeshma, Snehitha
 Finally we submitted the code after aligning the code.
