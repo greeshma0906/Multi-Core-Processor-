@@ -6,9 +6,9 @@ public:
     int pc;
     std::vector<std::string> program;
     std::string pp[500][10000];
-    int branch_flag;
+    int flag1;
     int pipeRow;
-    int clock1;
+    int clockk;
 
 public:
     Core()
@@ -20,11 +20,315 @@ public:
             registers["x" + std::to_string(i)] = 0;
         }
         pc = 0;
-        branch_flag = 0; // always branch is assumed to be not taken..
+        flag1 = 0; // always branch is assumed to be not taken..
         int pipeRow = 0;
-        clock1 = 1;
+        clockk = 1;
     }
-    void fill(int x, int y, int iF, int id, int ex, int mem, int wb)
+    int execute(std::vector<int> &memory, int flag, std::map<std::string, int> latencies)
+    {
+        int pipeRow = 0;
+        while (pc < program.size())
+        {
+            std::string instruction = program[pc];
+            //  pp[pipeRow][0]=instruction;
+            //         pipeRow++;
+            //  cout<<program[pc]<<endl;
+
+            if (instruction == "exit")
+            {
+                // Print register values after sorting
+
+                std::cout << "Register Values after sorting:" << std::endl
+                          << std::endl;
+                for (auto it = registers.begin(); it != registers.end(); ++it)
+                {
+                    std::cout << it->first << " = " << it->second << " ";
+                }
+                std::cout << std::endl
+                          << std::endl;
+                pp[pipeRow][0] = "exit";
+                return pipeRow;
+            }
+            std::stringstream ss(instruction);
+            std::vector<std::string> parts;
+            std::string part;
+
+            while (getline(ss, part, ' '))
+            {
+                parts.push_back(part);
+            }
+
+            std::string opcode = parts[0];
+            // cout<<opcode<<endl;
+            if (opcode == "sub")
+            {
+                std::string rd = parts[1];
+                std::string rs1 = parts[2];
+                std::string rs2 = parts[3];
+
+                // Perform subtraction
+                registers[rd] = registers[rs1] - registers[rs2];
+
+                pp[pipeRow][0] = instruction;
+                execute_ins(pipeRow, flag, latencies);
+                pipeRow++;
+                pc += 1;
+            }
+            if (opcode == "add")
+            {
+                std::string rd = parts[1];
+                std::string rs1 = parts[2];
+                std::string rs2 = parts[3];
+
+                // Perform subtraction
+                registers[rd] = registers[rs1] + registers[rs2];
+
+                pp[pipeRow][0] = instruction;
+                execute_ins(pipeRow, flag, latencies);
+                pipeRow++;
+                pc += 1;
+            }
+            else if (opcode == "mul")
+            {
+                std::string rd = parts[1];
+                std::string rs1 = parts[2];
+                std::string rs2 = parts[3];
+
+                // Perform multiplication
+                registers[rd] = registers[rs1] * registers[rs2];
+
+                pp[pipeRow][0] = instruction;
+                execute_ins(pipeRow, flag, latencies);
+                pipeRow++;
+                pc += 1;
+            }
+
+            else if (opcode == "div")
+            {
+                std::string rd = parts[1];
+                std::string rs1 = parts[2];
+                std::string rs2 = parts[3];
+
+                // Perform division
+                if (registers[rs2] != 0)
+                {
+                    registers[rd] = registers[rs1] / registers[rs2];
+                }
+                else
+                {
+                    // Handle division by zero
+                    std::cout << "Error: Division by zero" << std::endl;
+                    // Optionally, set rd to a default value or handle the error in a different way
+                }
+
+                pp[pipeRow][0] = instruction;
+                execute_ins(pipeRow, flag, latencies);
+                pipeRow++;
+                pc += 1;
+            }
+
+            else if (opcode == "blt")
+            {
+                std::string rs1 = parts[1];   // Source register 1
+                std::string rs2 = parts[2];   // Source register 2
+                std::string label = parts[3]; // Label to branch to if rs1 < rs2
+                if (registers[rs1] < registers[rs2])
+                {
+                    auto it = find(program.begin(), program.end(), label);
+                    if (it != program.end())
+                    {
+                        pc = distance(program.begin(), it) - 1;
+                    }
+                }
+
+                pp[pipeRow][0] = instruction;
+                execute_ins(pipeRow, flag, latencies);
+                pipeRow++;
+                pc += 1;
+            }
+            else if (opcode == "loope" || opcode == "swap" || opcode == "min_ind" || opcode == "outerloop" || opcode == "innerloop" || opcode == "swap" || opcode == "leave" || opcode == "loop1" || opcode == "loop" || opcode == "loop2" || opcode == "noswap")
+            {
+                pc += 1;
+            }
+            else if (opcode == "bgt")
+            {
+                std::string rs1 = parts[1];
+                std::string rs2 = parts[2];
+                std::string label = parts[3];
+                if (registers[rs1] > registers[rs2])
+                {
+                    auto it = find(program.begin(), program.end(), label);
+                    if (it != program.end())
+                    {
+                        pc = distance(program.begin(), it) - 1;
+                    }
+                }
+
+                pp[pipeRow][0] = instruction;
+                execute_ins(pipeRow, flag, latencies);
+                pipeRow++;
+                pc += 1;
+            }
+            else if (opcode == "mv")
+            {
+                std::string rd = parts[1]; // Destination register
+                std::string rs = parts[2]; // Source register
+                registers[rd] = registers[rs];
+
+                pp[pipeRow][0] = instruction;
+                execute_ins(pipeRow, flag, latencies);
+                pipeRow++;
+                pc += 1;
+            }
+            else if (opcode == "bge")
+            {
+                std::string rs1 = parts[1];
+                std::string rs2 = parts[2];
+                std::string label = parts[3];
+                if (registers[rs1] >= registers[rs2])
+                {
+                    auto it = find(program.begin(), program.end(), label);
+                    if (it != program.end())
+                    {
+                        pc = distance(program.begin(), it) - 1;
+                    }
+                }
+
+                pp[pipeRow][0] = instruction;
+                execute_ins(pipeRow, flag, latencies);
+                pipeRow++;
+                pc += 1;
+            }
+            else if (opcode == "li")
+            {
+                std::string rd = parts[1];
+                registers[rd] = std::stoi(parts[2]);
+
+                pp[pipeRow][0] = instruction;
+                execute_ins(pipeRow, flag, latencies);
+                pipeRow++;
+                pc += 1;
+            }
+            else if (opcode == "addi")
+            {
+                std::string rd = parts[1];
+                std::string rs1 = parts[2];
+                registers[rd] = registers[rs1] + stoi(parts[3]);
+
+                pp[pipeRow][0] = instruction;
+                execute_ins(pipeRow, flag, latencies);
+                pipeRow++;
+                pc += 1;
+            }
+            else if (opcode == "subi")
+            {
+                std::string rd = parts[1];
+                std::string rs1 = parts[2];
+                registers[rd] = registers[rs1] - stoi(parts[3]);
+
+                pp[pipeRow][0] = instruction;
+                execute_ins(pipeRow, flag, latencies);
+                pipeRow++;
+                pc += 1;
+            }
+            else if (opcode == "lw")
+            {
+                std::string rd = parts[1];      // Destination register
+                std::string address = parts[2]; // Memory address
+                size_t openBracketPos = address.find('(');
+                size_t closeBracketPos = address.find(')');
+                if (openBracketPos != std::string::npos && closeBracketPos != std::string::npos)
+                {
+                    // Extracting the register name from the address string
+                    std::string rs = address.substr(openBracketPos + 1, closeBracketPos - openBracketPos - 1);
+                    // Extracting the offset from the address string
+                    std::string offsetStr = address.substr(0, openBracketPos);
+                    int offset = std::stoi(offsetStr);
+                    // Calculating the effective address by adding the offset to the value in the register
+                    int effectiveAddress = registers[rs] + offset;
+                    // Loading the value from memory at the effective address into the destination register
+                    registers[rd] = memory[effectiveAddress];
+                }
+
+                pp[pipeRow][0] = instruction;
+                execute_ins(pipeRow, flag, latencies);
+                pipeRow++;
+                pc += 1;
+            }
+            else if (opcode == "sw")
+            {
+                std::string rs = parts[1];      // Source register
+                std::string address = parts[2]; // Memory address
+                size_t openBracketPos = address.find('(');
+                size_t closeBracketPos = address.find(')');
+                if (openBracketPos != std::string::npos && closeBracketPos != std::string::npos)
+                {
+                    // Extracting the destination register name from the address string
+                    std::string rd = address.substr(openBracketPos + 1, closeBracketPos - openBracketPos - 1);
+                    // Extracting the offset from the address string
+                    std::string offsetStr = address.substr(0, openBracketPos);
+                    int offset = std::stoi(offsetStr);
+                    // Calculating the effective address by adding the offset to the value in the register
+                    int effectiveAddress = registers[rd] + offset;
+                    // Storing the value from the source register into memory at the effective address
+                    memory[effectiveAddress] = registers[rs];
+                }
+
+                pp[pipeRow][0] = instruction;
+                execute_ins(pipeRow, flag, latencies);
+                pipeRow++;
+                pc += 1;
+            }
+            else if (opcode == "slt")
+            {
+                std::string rd = parts[1];  // Destination register
+                std::string rs1 = parts[2]; // Source register 1
+                std::string rs2 = parts[3]; // Source register 2
+
+                // Set the destination register to 1 if source register 1 < source register 2, otherwise set it to 0
+                registers[rd] = (registers[rs1] < registers[rs2]) ? 1 : 0;
+
+                pp[pipeRow][0] = instruction;
+                execute_ins(pipeRow, flag, latencies);
+                pipeRow++;
+                pc += 1;
+            }
+            else if (opcode == "j")
+            {
+                std::string label = parts[1]; // Target label
+                auto it = find(program.begin(), program.end(), label);
+                if (it != program.end())
+                {
+                    pc = distance(program.begin(), it) - 1;
+                }
+
+                pp[pipeRow][0] = instruction;
+                execute_ins(pipeRow, flag, latencies);
+                pipeRow++;
+                pc += 1;
+            }
+            else if (opcode == "bne")
+            {
+                std::string rs1 = parts[1];
+                std::string rs2 = parts[2];
+                std::string label = parts[3];
+                if (registers[rs1] != registers[rs2])
+                {
+                    auto it = find(program.begin(), program.end(), label);
+                    if (it != program.end())
+                    {
+                        pc = distance(program.begin(), it) - 1;
+                    }
+                }
+
+                pp[pipeRow][0] = instruction;
+                execute_ins(pipeRow, flag, latencies);
+                pipeRow++;
+                pc += 1;
+            }
+        }
+    }
+    void store_pp(int x, int y, int iF, int id, int ex, int mem, int wb)
     {
         while (iF != 0)
         {
@@ -277,21 +581,21 @@ public:
             return ins.substr(3, 2);
         }
 
-        return "nulll";
+        return "false";
         // if ..... other functions
     }
 
     bool predict(std::string ins)
     {
         bool flag = false;
-        //if it is branch instruction..then it always returns true.
+        // if it is branch instruction..then it always returns true.
         if (ins.substr(0, 3) == "beq" || ins.substr(0, 3) == "bne" || (ins.substr(0, 1) == "j" && ins.substr(1, 1) != "r"))
         {
             flag = true;
         }
         return flag;
     }
-    void stalls_hazard(int ins_row)
+    void fill_stalls(int ins_row)
     {
         // if(ins_row==-1)
         // {
@@ -339,7 +643,7 @@ public:
         {
             if (pp[ins_row][j] == "stall")
             {
-                // fill(ins_row+1,i,0,0,0,1,0);
+                // store_pp(ins_row+1,i,0,0,0,1,0);
 
                 pp[ins_row + 1][j] = "stall";
             }
@@ -348,66 +652,66 @@ public:
         {
             if (pp[ins_row][j] == "stall")
             {
-                // fill(ins_row+1,i,0,0,0,0,1);
+                // store_pp(ins_row+1,i,0,0,0,0,1);
                 pp[ins_row + 1][j] = "stall";
             }
         }
     }
 
-    void fillPipeline(int i, int flagForwdg, std::map<std::string, int> latencies)
+    void execute_ins(int i, int flag, std::map<std::string, int> latencies)
     {
         // cout<<numb_rows<<endl;
-        // int clock1=1;
+        // int clockk=1;
 
-        int j = clock1;
+        int j = clockk;
 
         if (pp[i][0].substr(0, 4) == "addi")
         {
             //       cout<<"addi"<<" ";
             if (i != 0 && pp[i][0].substr(5, 2) == hazard(pp[i - 1][0]))
             {
-                if (flagForwdg == 0)
+                if (flag == 0)
                 { // no forwarding
-                    stalls_hazard(i - 1);
-                    if (predict(pp[i - 1][0]) && branch_flag == 1)
+                    fill_stalls(i - 1);
+                    if (predict(pp[i - 1][0]) && flag1 == 1)
                     {
-                        fill(i, j, 1, 0, 2, 0, 0);
+                        store_pp(i, j, 1, 0, 2, 0, 0);
                     }
                     else
                     {
-                        fill(i, j, 0, 0, 2, 0, 0);
+                        store_pp(i, j, 0, 0, 2, 0, 0);
                     }
                 }
                 else
                 { // with forwarding
 
-                    stalls_hazard(i - 1);
-                    if (predict(pp[i - 1][0]) && branch_flag == 1)
+                    fill_stalls(i - 1);
+                    if (predict(pp[i - 1][0]) && flag1 == 1)
                     {
-                        fill(i, j, 1, 0, 0, 0, 0);
+                        store_pp(i, j, 1, 0, 0, 0, 0);
                     }
                     else
                     {
-                        fill(i, j, 0, 0, 0, 0, 0);
+                        store_pp(i, j, 0, 0, 0, 0, 0);
                     }
                 }
             }
 
             else if (i == 0)
             {
-                fill(i, j, 0, 0, 0, 0, 0);
+                store_pp(i, j, 0, 0, 0, 0, 0);
             }
             else
             { // i!=0 and no hazard in previous instruction
 
-                stalls_hazard(i - 1);
-                if (predict(pp[i - 1][0]) && branch_flag == 1)
+                fill_stalls(i - 1);
+                if (predict(pp[i - 1][0]) && flag1 == 1)
                 {
-                    fill(i, j, 1, 0, 0, 0, 0);
+                    store_pp(i, j, 1, 0, 0, 0, 0);
                 }
                 else
                 {
-                    fill(i, j, 0, 0, 0, 0, 0);
+                    store_pp(i, j, 0, 0, 0, 0, 0);
                 }
             }
         }
@@ -421,41 +725,41 @@ public:
             // Check for hazards with the previous instruction
             if (i != 0 && (reg1 == hazard(pp[i - 1][0]) || reg2 == hazard(pp[i - 1][0])))
             {
-                if (flagForwdg == 0)
+                if (flag == 0)
                 { // No forwarding
-                    stalls_hazard(i - 1);
-                    if (predict(pp[i - 1][0]) && branch_flag == 1)
+                    fill_stalls(i - 1);
+                    if (predict(pp[i - 1][0]) && flag1 == 1)
                     {
-                        fill(i, j, 1, 0, 2, 0, 0);
+                        store_pp(i, j, 1, 0, 2, 0, 0);
                     }
                     else
                     {
-                        fill(i, j, 0, 0, 2, 0, 0);
+                        store_pp(i, j, 0, 0, 2, 0, 0);
                     }
                 }
                 else
                 { // With forwarding
-                    stalls_hazard(i - 1);
-                    if (predict(pp[i - 1][0]) && branch_flag == 1)
+                    fill_stalls(i - 1);
+                    if (predict(pp[i - 1][0]) && flag1 == 1)
                     {
-                        fill(i, j, 1, 0, 0, 0, 0);
+                        store_pp(i, j, 1, 0, 0, 0, 0);
                     }
                     else
                     {
-                        fill(i, j, 0, 0, 0, 0, 0);
+                        store_pp(i, j, 0, 0, 0, 0, 0);
                     }
                 }
             }
             else
             {
-                stalls_hazard(i - 1);
-                if (predict(pp[i - 1][0]) && branch_flag == 1)
+                fill_stalls(i - 1);
+                if (predict(pp[i - 1][0]) && flag1 == 1)
                 {
-                    fill(i, j, 1, 0, 0, 0, 0);
+                    store_pp(i, j, 1, 0, 0, 0, 0);
                 }
                 else
                 {
-                    fill(i, j, 0, 0, 0, 0, 0);
+                    store_pp(i, j, 0, 0, 0, 0, 0);
                 }
             }
         }
@@ -468,41 +772,41 @@ public:
             // Check for hazards with the previous instruction
             if (i != 0 && reg1 == hazard(pp[i - 1][0]))
             {
-                if (flagForwdg == 0)
+                if (flag == 0)
                 { // No forwarding
-                    stalls_hazard(i - 1);
-                    if (predict(pp[i - 1][0]) && branch_flag == 1)
+                    fill_stalls(i - 1);
+                    if (predict(pp[i - 1][0]) && flag1 == 1)
                     {
-                        fill(i, j, 1, 0, 2, 0, 0);
+                        store_pp(i, j, 1, 0, 2, 0, 0);
                     }
                     else
                     {
-                        fill(i, j, 0, 0, 2, 0, 0);
+                        store_pp(i, j, 0, 0, 2, 0, 0);
                     }
                 }
                 else
                 { // With forwarding
-                    stalls_hazard(i - 1);
-                    if (predict(pp[i - 1][0]) && branch_flag == 1)
+                    fill_stalls(i - 1);
+                    if (predict(pp[i - 1][0]) && flag1 == 1)
                     {
-                        fill(i, j, 1, 0, 0, 0, 0);
+                        store_pp(i, j, 1, 0, 0, 0, 0);
                     }
                     else
                     {
-                        fill(i, j, 0, 0, 0, 0, 0);
+                        store_pp(i, j, 0, 0, 0, 0, 0);
                     }
                 }
             }
             else
             {
-                stalls_hazard(i - 1);
-                if (predict(pp[i - 1][0]) && branch_flag == 1)
+                fill_stalls(i - 1);
+                if (predict(pp[i - 1][0]) && flag1 == 1)
                 {
-                    fill(i, j, 1, 0, 0, 0, 0);
+                    store_pp(i, j, 1, 0, 0, 0, 0);
                 }
                 else
                 {
-                    fill(i, j, 0, 0, 0, 0, 0);
+                    store_pp(i, j, 0, 0, 0, 0, 0);
                 }
             }
         }
@@ -513,10 +817,10 @@ public:
             int latency_val = latencies["add"];
             if (pp[i][0].substr(5, 2) == hazard(pp[i - 1][0]) || pp[i][0].substr(7, 2) == hazard(pp[i - 1][0]))
             {
-                if (flagForwdg == 0)
+                if (flag == 0)
                 { // no forwarding
-                    stalls_hazard(i - 1);
-                    if (predict(pp[i - 1][0]) && branch_flag == 1)
+                    fill_stalls(i - 1);
+                    if (predict(pp[i - 1][0]) && flag1 == 1)
                     {
                         fillarith(i, j, 1, 0, 2, 0, 0, latency_val);
                     }
@@ -527,8 +831,8 @@ public:
                 }
                 else
                 { // with forwarding
-                    stalls_hazard(i - 1);
-                    if (predict(pp[i - 1][0]) && branch_flag == 1)
+                    fill_stalls(i - 1);
+                    if (predict(pp[i - 1][0]) && flag1 == 1)
                     {
                         fillarith(i, j, 1, 0, 0, 0, 0, latency_val);
                     }
@@ -541,8 +845,8 @@ public:
             }
             else
             {
-                stalls_hazard(i - 1);
-                if (predict(pp[i - 1][0]) && branch_flag == 1)
+                fill_stalls(i - 1);
+                if (predict(pp[i - 1][0]) && flag1 == 1)
                 {
                     fillarith(i, j, 1, 0, 0, 0, 0, latency_val);
                 }
@@ -560,10 +864,10 @@ public:
             // cout<<"sub"<<endl;
             if (pp[i][0].substr(5, 2) == hazard(pp[i - 1][0]) || pp[i][0].substr(7, 2) == hazard(pp[i - 1][0]))
             {
-                if (flagForwdg == 0)
+                if (flag == 0)
                 { // no forwarding
-                    stalls_hazard(i - 1);
-                    if (predict(pp[i - 1][0]) && branch_flag == 1)
+                    fill_stalls(i - 1);
+                    if (predict(pp[i - 1][0]) && flag1 == 1)
                     {
                         fillarith(i, j, 1, 0, 2, 0, 0, latency_val);
                     }
@@ -573,12 +877,12 @@ public:
                         fillarith(i, j, 0, 0, 2, 0, 0, latency_val);
                     }
 
-                    // stalls_hazard(i-1);
+                    // fill_stalls(i-1);
                 }
                 else
                 { // with forwarding
-                    stalls_hazard(i - 1);
-                    if (predict(pp[i - 1][0]) && branch_flag == 1)
+                    fill_stalls(i - 1);
+                    if (predict(pp[i - 1][0]) && flag1 == 1)
                     {
                         fillarith(i, j, 1, 0, 0, 0, 0, latency_val);
                     }
@@ -591,15 +895,15 @@ public:
             }
             else
             {
-                stalls_hazard(i - 1);
-                if (predict(pp[i - 1][0]) && branch_flag == 1)
+                fill_stalls(i - 1);
+                if (predict(pp[i - 1][0]) && flag1 == 1)
                 {
-                    fill(i, j, 1, 0, 0, 0, 0);
+                    store_pp(i, j, 1, 0, 0, 0, 0);
                 }
 
                 else
                 {
-                    fill(i, j, 0, 0, 0, 0, 0);
+                    store_pp(i, j, 0, 0, 0, 0, 0);
                 }
             }
         }
@@ -609,10 +913,10 @@ public:
             int latency_val = latencies["mul"];
             if (pp[i][0].substr(5, 2) == hazard(pp[i - 1][0]) || pp[i][0].substr(7, 2) == hazard(pp[i - 1][0]))
             {
-                if (flagForwdg == 0)
+                if (flag == 0)
                 { // no forwarding
-                    stalls_hazard(i - 1);
-                    if (predict(pp[i - 1][0]) && branch_flag == 1)
+                    fill_stalls(i - 1);
+                    if (predict(pp[i - 1][0]) && flag1 == 1)
                     {
                         fillarith(i, j, 1, 0, 2, 0, 0, latency_val);
                     }
@@ -624,8 +928,8 @@ public:
                 }
                 else
                 { // with forwarding
-                    stalls_hazard(i - 1);
-                    if (predict(pp[i - 1][0]) && branch_flag == 1)
+                    fill_stalls(i - 1);
+                    if (predict(pp[i - 1][0]) && flag1 == 1)
                     {
                         fillarith(i, j, 1, 0, 0, 0, 0, latency_val);
                     }
@@ -638,8 +942,8 @@ public:
             }
             else
             {
-                stalls_hazard(i - 1);
-                if (predict(pp[i - 1][0]) && branch_flag == 1)
+                fill_stalls(i - 1);
+                if (predict(pp[i - 1][0]) && flag1 == 1)
                 {
                     fillarith(i, j, 1, 0, 0, 0, 0, latency_val);
                 }
@@ -656,10 +960,10 @@ public:
             int latency_val = latencies["div"];
             if (pp[i][0].substr(5, 2) == hazard(pp[i - 1][0]) || pp[i][0].substr(7, 2) == hazard(pp[i - 1][0]))
             {
-                if (flagForwdg == 0)
+                if (flag == 0)
                 { // no forwarding
-                    stalls_hazard(i - 1);
-                    if (predict(pp[i - 1][0]) && branch_flag == 1)
+                    fill_stalls(i - 1);
+                    if (predict(pp[i - 1][0]) && flag1 == 1)
                     {
                         fillarith(i, j, 1, 0, 2, 0, 0, latency_val);
                     }
@@ -671,8 +975,8 @@ public:
                 }
                 else
                 { // with forwarding
-                    stalls_hazard(i - 1);
-                    if (predict(pp[i - 1][0]) && branch_flag == 1)
+                    fill_stalls(i - 1);
+                    if (predict(pp[i - 1][0]) && flag1 == 1)
                     {
                         fillarith(i, j, 1, 0, 0, 0, 0, latency_val);
                     }
@@ -685,8 +989,8 @@ public:
             }
             else
             {
-                stalls_hazard(i - 1);
-                if (predict(pp[i - 1][0]) && branch_flag == 1)
+                fill_stalls(i - 1);
+                if (predict(pp[i - 1][0]) && flag1 == 1)
                 {
                     fillarith(i, j, 1, 0, 0, 0, 0, latency_val);
                 }
@@ -702,43 +1006,43 @@ public:
             // cout<<"slt"<<" ";
             if (pp[i][0].substr(5, 2) == hazard(pp[i - 1][0]) || pp[i][0].substr(7, 2) == hazard(pp[i - 1][0]))
             {
-                if (flagForwdg == 0)
+                if (flag == 0)
                 { // no forwarding
-                    stalls_hazard(i - 1);
-                    if (predict(pp[i - 1][0]) && branch_flag == 1)
+                    fill_stalls(i - 1);
+                    if (predict(pp[i - 1][0]) && flag1 == 1)
                     {
-                        fill(i, j, 1, 0, 2, 0, 0);
+                        store_pp(i, j, 1, 0, 2, 0, 0);
                     }
 
                     else
                     {
-                        fill(i, j, 0, 0, 2, 0, 0);
+                        store_pp(i, j, 0, 0, 2, 0, 0);
                     }
                 }
                 else
                 { // with forwarding
-                    stalls_hazard(i - 1);
-                    if (predict(pp[i - 1][0]) && branch_flag == 1)
+                    fill_stalls(i - 1);
+                    if (predict(pp[i - 1][0]) && flag1 == 1)
                     {
-                        fill(i, j, 1, 0, 0, 0, 0);
+                        store_pp(i, j, 1, 0, 0, 0, 0);
                     }
                     else
                     {
-                        fill(i, j, 0, 0, 0, 0, 0);
+                        store_pp(i, j, 0, 0, 0, 0, 0);
                     }
                 }
             }
             else
             {
-                stalls_hazard(i - 1);
-                if (predict(pp[i - 1][0]) && branch_flag == 1)
+                fill_stalls(i - 1);
+                if (predict(pp[i - 1][0]) && flag1 == 1)
                 {
-                    fill(i, j, 1, 0, 0, 0, 0);
+                    store_pp(i, j, 1, 0, 0, 0, 0);
                 }
 
                 else
                 {
-                    fill(i, j, 0, 0, 0, 0, 0);
+                    store_pp(i, j, 0, 0, 0, 0, 0);
                 }
             }
         }
@@ -746,7 +1050,7 @@ public:
         {
             //  cout<<"beq"<<endl;
             int pc;
-            branch_flag = 0;
+            flag1 = 0;
             for (int j = 0; j < program.size(); j++)
             {
                 if (pp[i][0] == program[j])
@@ -755,50 +1059,50 @@ public:
                 }
             }
             if (pp[i + 1][0] != program[pc + 1])
-                branch_flag = 1;
+                flag1 = 1;
             else
-                branch_flag = 0;
+                flag1 = 0;
             if (pp[i][0].substr(3, 2) == hazard(pp[i - 1][0]) || pp[i][0].substr(5, 2) == hazard(pp[i - 1][0]))
             {
-                if (flagForwdg == 0)
+                if (flag == 0)
                 { // no forwarding
-                    stalls_hazard(i - 1);
-                    if (predict(pp[i - 1][0]) && branch_flag == 1)
+                    fill_stalls(i - 1);
+                    if (predict(pp[i - 1][0]) && flag1 == 1)
                     {
-                        fill(i, j, 1, 0, 2, 0, 0);
+                        store_pp(i, j, 1, 0, 2, 0, 0);
                     }
 
                     else
                     {
-                        fill(i, j, 0, 0, 2, 0, 0);
-                        // stalls_hazard(i-1);
+                        store_pp(i, j, 0, 0, 2, 0, 0);
+                        // fill_stalls(i-1);
                     }
                 }
                 else
                 { // with forwarding
-                    stalls_hazard(i - 1);
-                    if (predict(pp[i - 1][0]) && branch_flag == 1)
+                    fill_stalls(i - 1);
+                    if (predict(pp[i - 1][0]) && flag1 == 1)
                     {
-                        fill(i, j, 1, 0, 0, 0, 0);
+                        store_pp(i, j, 1, 0, 0, 0, 0);
                     }
 
                     else
                     {
-                        fill(i, j, 0, 0, 0, 0, 0);
+                        store_pp(i, j, 0, 0, 0, 0, 0);
                     }
                 }
             }
             else
             {
-                stalls_hazard(i - 1);
-                if (predict(pp[i - 1][0]) && branch_flag == 1)
+                fill_stalls(i - 1);
+                if (predict(pp[i - 1][0]) && flag1 == 1)
                 {
-                    fill(i, j, 1, 0, 0, 0, 0);
+                    store_pp(i, j, 1, 0, 0, 0, 0);
                 }
 
                 else
                 {
-                    fill(i, j, 0, 0, 0, 0, 0);
+                    store_pp(i, j, 0, 0, 0, 0, 0);
                 }
             }
         }
@@ -806,55 +1110,55 @@ public:
         {
             // cout<<"bne"<<endl;
             int pc;
-            branch_flag = 0;
+            flag1 = 0;
             for (int j = 0; j < program.size(); j++)
             {
                 if (pp[i][0] == program[j])
                     pc = j;
             }
             if (pp[i + 1][0] != program[pc + 1])
-                branch_flag = 1;
+                flag1 = 1;
             else
-                branch_flag = 0;
+                flag1 = 0;
             if (pp[i][0].substr(3, 2) == hazard(pp[i - 1][0]) || pp[i][0].substr(5, 2) == hazard(pp[i - 1][0]))
             {
-                if (flagForwdg == 0)
+                if (flag == 0)
                 { // no forwarding
-                    stalls_hazard(i - 1);
-                    if (predict(pp[i - 1][0]) && branch_flag == 1)
+                    fill_stalls(i - 1);
+                    if (predict(pp[i - 1][0]) && flag1 == 1)
                     {
-                        fill(i, j, 1, 0, 2, 0, 0);
+                        store_pp(i, j, 1, 0, 2, 0, 0);
                     }
 
                     else
                     {
-                        fill(i, j, 0, 0, 2, 0, 0);
+                        store_pp(i, j, 0, 0, 2, 0, 0);
                     }
                 }
                 else
                 { // with forwarding
-                    stalls_hazard(i - 1);
-                    if (predict(pp[i - 1][0]) && branch_flag == 1)
+                    fill_stalls(i - 1);
+                    if (predict(pp[i - 1][0]) && flag1 == 1)
                     {
-                        fill(i, j, 1, 0, 0, 0, 0);
+                        store_pp(i, j, 1, 0, 0, 0, 0);
                     }
                     else
                     {
-                        fill(i, j, 0, 0, 0, 0, 0);
+                        store_pp(i, j, 0, 0, 0, 0, 0);
                     }
                 }
             }
             else
             {
-                stalls_hazard(i - 1);
-                if (predict(pp[i - 1][0]) && branch_flag == 1)
+                fill_stalls(i - 1);
+                if (predict(pp[i - 1][0]) && flag1 == 1)
                 {
-                    fill(i, j, 1, 0, 0, 0, 0);
+                    store_pp(i, j, 1, 0, 0, 0, 0);
                 }
 
                 else
                 {
-                    fill(i, j, 0, 0, 0, 0, 0);
+                    store_pp(i, j, 0, 0, 0, 0, 0);
                 }
             }
         }
@@ -862,80 +1166,80 @@ public:
         {
             //   cout<<"j"<<endl;
             int pc;
-            branch_flag = 0;
+            flag1 = 0;
             for (int j = 0; j < program.size(); j++)
             {
                 if (pp[i][0] == program[j])
                     pc = j;
             }
             if (pp[i + 1][0] != program[pc + 1])
-                branch_flag = 1;
+                flag1 = 1;
             else
-                branch_flag = 0;
+                flag1 = 0;
 
-            stalls_hazard(i - 1);
-            if (predict(pp[i - 1][0]) && branch_flag == 1)
+            fill_stalls(i - 1);
+            if (predict(pp[i - 1][0]) && flag1 == 1)
             {
-                fill(i, j, 1, 0, 0, 0, 0);
+                store_pp(i, j, 1, 0, 0, 0, 0);
             }
             else
             {
-                fill(i, j, 0, 0, 0, 0, 0);
+                store_pp(i, j, 0, 0, 0, 0, 0);
             }
         }
         else if (pp[i][0].substr(0, 3) == "bge")
         {
             // cout<<"bge"<<endl;
             int pc;
-            branch_flag = 0;
+            flag1 = 0;
             for (int j = 0; j < program.size(); j++)
             {
                 if (pp[i][0] == program[j])
                     pc = j;
             }
             if (pp[i + 1][0] != program[pc + 1])
-                branch_flag = 1;
+                flag1 = 1;
             else
-                branch_flag = 0;
+                flag1 = 0;
             if (pp[i][0].substr(3, 2) == hazard(pp[i - 1][0]) || pp[i][0].substr(5, 2) == hazard(pp[i - 1][0]))
             {
-                if (flagForwdg == 0)
+                if (flag == 0)
                 { // no forwarding
-                    stalls_hazard(i - 1);
-                    if (predict(pp[i - 1][0]) && branch_flag == 1)
+                    fill_stalls(i - 1);
+                    if (predict(pp[i - 1][0]) && flag1 == 1)
                     {
-                        fill(i, j, 1, 0, 2, 0, 0);
+                        store_pp(i, j, 1, 0, 2, 0, 0);
                     }
 
                     else
                     {
-                        fill(i, j, 0, 0, 2, 0, 0);
+                        store_pp(i, j, 0, 0, 2, 0, 0);
                     }
                 }
                 else
                 { // with forwarding
-                    stalls_hazard(i - 1);
-                    if (predict(pp[i - 1][0]) && branch_flag == 1)
+                    fill_stalls(i - 1);
+                    if (predict(pp[i - 1][0]) && flag1 == 1)
                     {
-                        fill(i, j, 1, 0, 0, 0, 0);
+                        store_pp(i, j, 1, 0, 0, 0, 0);
                     }
                     else
                     {
-                        fill(i, j, 0, 0, 0, 0, 0);
+                        store_pp(i, j, 0, 0, 0, 0, 0);
                     }
                 }
             }
             else
             {
-                stalls_hazard(i - 1);
-                if (predict(pp[i - 1][0]) && branch_flag == 1)
+                fill_stalls(i - 1);
+                if (predict(pp[i - 1][0]) && flag1 == 1)
                 {
-                    fill(i, j, 1, 0, 0, 0, 0);
+                    store_pp(i, j, 1, 0, 0, 0, 0);
                 }
 
                 else
                 {
-                    fill(i, j, 0, 0, 0, 0, 0);
+                    store_pp(i, j, 0, 0, 0, 0, 0);
                 }
             }
         }
@@ -945,41 +1249,41 @@ public:
             //   cout<<"lw"<<endl;
             if (i != 0 && pp[i][0].substr(pp[i][0].length() - 3, 2) == hazard(pp[i - 1][0]))
             {
-                if (flagForwdg == 0)
+                if (flag == 0)
                 { // no forwarding
-                    stalls_hazard(i - 1);
-                    if (predict(pp[i - 1][0]) && branch_flag == 1)
+                    fill_stalls(i - 1);
+                    if (predict(pp[i - 1][0]) && flag1 == 1)
                     {
-                        fill(i, j, 1, 0, 2, 0, 0);
+                        store_pp(i, j, 1, 0, 2, 0, 0);
                     }
                     else
                     {
-                        fill(i, j, 0, 0, 2, 0, 0);
+                        store_pp(i, j, 0, 0, 2, 0, 0);
                     }
                 }
                 else
                 { // with forwarding
-                    stalls_hazard(i - 1);
-                    if (predict(pp[i - 1][0]) && branch_flag == 1)
+                    fill_stalls(i - 1);
+                    if (predict(pp[i - 1][0]) && flag1 == 1)
                     {
-                        fill(i, j, 1, 0, 0, 0, 0);
+                        store_pp(i, j, 1, 0, 0, 0, 0);
                     }
                     else
                     {
-                        fill(i, j, 0, 0, 0, 0, 0);
+                        store_pp(i, j, 0, 0, 0, 0, 0);
                     }
                 }
             }
             else
             {
-                stalls_hazard(i - 1);
-                if (predict(pp[i - 1][0]) && branch_flag == 1)
+                fill_stalls(i - 1);
+                if (predict(pp[i - 1][0]) && flag1 == 1)
                 {
-                    fill(i, j, 1, 0, 0, 0, 0);
+                    store_pp(i, j, 1, 0, 0, 0, 0);
                 }
                 else
                 {
-                    fill(i, j, 0, 0, 0, 0, 0);
+                    store_pp(i, j, 0, 0, 0, 0, 0);
                 }
             }
         }
@@ -989,41 +1293,41 @@ public:
             // cout<<"sw"<<endl;
             if (i != 0 && pp[i][0].substr(pp[i][0].length() - 3, 2) == hazard(pp[i - 1][0]))
             {
-                if (flagForwdg == 0)
+                if (flag == 0)
                 { // no forwarding
-                    stalls_hazard(i - 1);
-                    if (predict(pp[i - 1][0]) && branch_flag == 1)
+                    fill_stalls(i - 1);
+                    if (predict(pp[i - 1][0]) && flag1 == 1)
                     {
-                        fill(i, j, 1, 0, 2, 0, 0);
+                        store_pp(i, j, 1, 0, 2, 0, 0);
                     }
                     else
                     {
-                        fill(i, j, 0, 0, 2, 0, 0);
+                        store_pp(i, j, 0, 0, 2, 0, 0);
                     }
                 }
                 else
                 { // with forwarding
-                    stalls_hazard(i - 1);
-                    if (predict(pp[i - 1][0]) && branch_flag == 1)
+                    fill_stalls(i - 1);
+                    if (predict(pp[i - 1][0]) && flag1 == 1)
                     {
-                        fill(i, j, 1, 0, 0, 0, 0);
+                        store_pp(i, j, 1, 0, 0, 0, 0);
                     }
                     else
                     {
-                        fill(i, j, 0, 0, 0, 0, 0);
+                        store_pp(i, j, 0, 0, 0, 0, 0);
                     }
                 }
             }
             else
             {
-                stalls_hazard(i - 1);
-                if (predict(pp[i - 1][0]) && branch_flag == 1)
+                fill_stalls(i - 1);
+                if (predict(pp[i - 1][0]) && flag1 == 1)
                 {
-                    fill(i, j, 1, 0, 0, 0, 0);
+                    store_pp(i, j, 1, 0, 0, 0, 0);
                 }
                 else
                 {
-                    fill(i, j, 0, 0, 0, 0, 0);
+                    store_pp(i, j, 0, 0, 0, 0, 0);
                 }
             }
         }
@@ -1038,41 +1342,41 @@ public:
             // Check for hazards with the previous instruction
             if (i != 0 && (reg1 == hazard(pp[i - 1][0]) || reg2 == hazard(pp[i - 1][0])))
             {
-                if (flagForwdg == 0)
+                if (flag == 0)
                 { // No forwarding
-                    stalls_hazard(i - 1);
-                    if (predict(pp[i - 1][0]) && branch_flag == 1)
+                    fill_stalls(i - 1);
+                    if (predict(pp[i - 1][0]) && flag1 == 1)
                     {
-                        fill(i, j, 1, 0, 2, 0, 0);
+                        store_pp(i, j, 1, 0, 2, 0, 0);
                     }
                     else
                     {
-                        fill(i, j, 0, 0, 2, 0, 0);
+                        store_pp(i, j, 0, 0, 2, 0, 0);
                     }
                 }
                 else
                 { // With forwarding
-                    stalls_hazard(i - 1);
-                    if (predict(pp[i - 1][0]) && branch_flag == 1)
+                    fill_stalls(i - 1);
+                    if (predict(pp[i - 1][0]) && flag1 == 1)
                     {
-                        fill(i, j, 1, 0, 0, 0, 0);
+                        store_pp(i, j, 1, 0, 0, 0, 0);
                     }
                     else
                     {
-                        fill(i, j, 0, 0, 0, 0, 0);
+                        store_pp(i, j, 0, 0, 0, 0, 0);
                     }
                 }
             }
             else
             {
-                stalls_hazard(i - 1);
-                if (predict(pp[i - 1][0]) && branch_flag == 1)
+                fill_stalls(i - 1);
+                if (predict(pp[i - 1][0]) && flag1 == 1)
                 {
-                    fill(i, j, 1, 0, 0, 0, 0);
+                    store_pp(i, j, 1, 0, 0, 0, 0);
                 }
                 else
                 {
-                    fill(i, j, 0, 0, 0, 0, 0);
+                    store_pp(i, j, 0, 0, 0, 0, 0);
                 }
             }
         }
@@ -1091,68 +1395,68 @@ public:
             // Check for hazards with the previous instruction
             if (i != 0 && (reg1 == hazard(pp[i - 1][0]) || reg2 == hazard(pp[i - 1][0])))
             {
-                if (flagForwdg == 0)
+                if (flag == 0)
                 { // No forwarding
-                    stalls_hazard(i - 1);
-                    if (predict(pp[i - 1][0]) && branch_flag == 1)
+                    fill_stalls(i - 1);
+                    if (predict(pp[i - 1][0]) && flag1 == 1)
                     {
-                        fill(i, j, 1, 0, 2, 0, 0);
+                        store_pp(i, j, 1, 0, 2, 0, 0);
                     }
                     else
                     {
-                        fill(i, j, 0, 0, 2, 0, 0);
+                        store_pp(i, j, 0, 0, 2, 0, 0);
                     }
                 }
                 else
                 { // With forwarding
-                    stalls_hazard(i - 1);
-                    if (predict(pp[i - 1][0]) && branch_flag == 1)
+                    fill_stalls(i - 1);
+                    if (predict(pp[i - 1][0]) && flag1 == 1)
                     {
-                        fill(i, j, 1, 0, 0, 0, 0);
+                        store_pp(i, j, 1, 0, 0, 0, 0);
                     }
                     else
                     {
-                        fill(i, j, 0, 0, 0, 0, 0);
+                        store_pp(i, j, 0, 0, 0, 0, 0);
                     }
                 }
             }
             else
             {
-                stalls_hazard(i - 1);
-                if (predict(pp[i - 1][0]) && branch_flag == 1)
+                fill_stalls(i - 1);
+                if (predict(pp[i - 1][0]) && flag1 == 1)
                 {
-                    fill(i, j, 1, 0, 0, 0, 0);
+                    store_pp(i, j, 1, 0, 0, 0, 0);
                 }
                 else
                 {
-                    fill(i, j, 0, 0, 0, 0, 0);
+                    store_pp(i, j, 0, 0, 0, 0, 0);
                 }
             }
         }
         else if (pp[i][0].substr(0, 2) == "la")
         { // data and structural hazards not possible in la
             //    cout<<"la"<<endl;
-            stalls_hazard(i - 1);
-            if (predict(pp[i - 1][0]) && branch_flag == 1)
+            fill_stalls(i - 1);
+            if (predict(pp[i - 1][0]) && flag1 == 1)
             {
-                fill(i, j, 1, 0, 0, 0, 0);
+                store_pp(i, j, 1, 0, 0, 0, 0);
             }
             else
             {
-                fill(i, j, 0, 0, 0, 0, 0);
+                store_pp(i, j, 0, 0, 0, 0, 0);
             }
         }
 
         else if (pp[i][0].substr(0, 2) == "jr")
         { // data and structural hazards not possible in jr
-            stalls_hazard(i - 1);
-            if (predict(pp[i - 1][0]) && branch_flag == 1)
+            fill_stalls(i - 1);
+            if (predict(pp[i - 1][0]) && flag1 == 1)
             {
-                fill(i, j, 1, 0, 0, 0, 0);
+                store_pp(i, j, 1, 0, 0, 0, 0);
             }
             else
             {
-                fill(i, j, 0, 0, 0, 0, 0);
+                store_pp(i, j, 0, 0, 0, 0, 0);
             }
         }
 
@@ -1160,325 +1464,17 @@ public:
         {
             if (pp[i][q] == "IF")
             {
-                clock1 = q + 1;
+                clockk = q + 1;
             }
         }
 
         return;
     }
 
-    int execute(std::vector<int> &memory, int flag, std::map<std::string, int> latencies)
-    {
-        int pipeRow = 0;
-        while (pc < program.size())
-        {
-            std::string instruction = program[pc];
-            //  pp[pipeRow][0]=instruction;
-            //         pipeRow++;
-            //  cout<<program[pc]<<endl;
-
-            if (instruction == "exit")
-            {
-                // Print register values after sorting
-
-                std::cout << "Register Values after sorting:" << std::endl
-                          << std::endl;
-                for (auto it = registers.begin(); it != registers.end(); ++it)
-                {
-                    std::cout << it->first << " = " << it->second << " ";
-                }
-                std::cout << std::endl
-                          << std::endl;
-                pp[pipeRow][0] = "exit";
-                return pipeRow;
-            }
-            std::stringstream ss(instruction);
-            std::vector<std::string> parts;
-            std::string part;
-
-            while (getline(ss, part, ' '))
-            {
-                parts.push_back(part);
-            }
-
-            std::string opcode = parts[0];
-            // cout<<opcode<<endl;
-            if (opcode == "sub")
-            {
-                std::string rd = parts[1];
-                std::string rs1 = parts[2];
-                std::string rs2 = parts[3];
-
-                // Perform subtraction
-                registers[rd] = registers[rs1] - registers[rs2];
-
-                pp[pipeRow][0] = instruction;
-                fillPipeline(pipeRow, flag, latencies);
-                pipeRow++;
-                pc += 1;
-            }
-            if (opcode == "add")
-            {
-                std::string rd = parts[1];
-                std::string rs1 = parts[2];
-                std::string rs2 = parts[3];
-
-                // Perform subtraction
-                registers[rd] = registers[rs1] + registers[rs2];
-
-                pp[pipeRow][0] = instruction;
-                fillPipeline(pipeRow, flag, latencies);
-                pipeRow++;
-                pc += 1;
-            }
-            else if (opcode == "mul")
-            {
-                std::string rd = parts[1];
-                std::string rs1 = parts[2];
-                std::string rs2 = parts[3];
-
-                // Perform multiplication
-                registers[rd] = registers[rs1] * registers[rs2];
-
-                pp[pipeRow][0] = instruction;
-                fillPipeline(pipeRow, flag, latencies);
-                pipeRow++;
-                pc += 1;
-            }
-
-            else if (opcode == "div")
-            {
-                std::string rd = parts[1];
-                std::string rs1 = parts[2];
-                std::string rs2 = parts[3];
-
-                // Perform division
-                if (registers[rs2] != 0)
-                {
-                    registers[rd] = registers[rs1] / registers[rs2];
-                }
-                else
-                {
-                    // Handle division by zero
-                    std::cout << "Error: Division by zero" << std::endl;
-                    // Optionally, set rd to a default value or handle the error in a different way
-                }
-
-                pp[pipeRow][0] = instruction;
-                fillPipeline(pipeRow, flag, latencies);
-                pipeRow++;
-                pc += 1;
-            }
-
-            else if (opcode == "blt")
-            {
-                std::string rs1 = parts[1];   // Source register 1
-                std::string rs2 = parts[2];   // Source register 2
-                std::string label = parts[3]; // Label to branch to if rs1 < rs2
-                if (registers[rs1] < registers[rs2])
-                {
-                    auto it = find(program.begin(), program.end(), label);
-                    if (it != program.end())
-                    {
-                        pc = distance(program.begin(), it) - 1;
-                    }
-                }
-
-                pp[pipeRow][0] = instruction;
-                fillPipeline(pipeRow, flag, latencies);
-                pipeRow++;
-                pc += 1;
-            }
-            else if (opcode == "loope" || opcode == "swap" || opcode == "min_ind" || opcode == "outerloop" || opcode == "innerloop" || opcode == "swap" || opcode == "leave" || opcode == "loop1" || opcode == "loop" || opcode == "loop2" || opcode == "noswap")
-            {
-                pc += 1;
-            }
-            else if (opcode == "bgt")
-            {
-                std::string rs1 = parts[1];
-                std::string rs2 = parts[2];
-                std::string label = parts[3];
-                if (registers[rs1] > registers[rs2])
-                {
-                    auto it = find(program.begin(), program.end(), label);
-                    if (it != program.end())
-                    {
-                        pc = distance(program.begin(), it) - 1;
-                    }
-                }
-
-                pp[pipeRow][0] = instruction;
-                fillPipeline(pipeRow, flag, latencies);
-                pipeRow++;
-                pc += 1;
-            }
-            else if (opcode == "mv")
-            {
-                std::string rd = parts[1]; // Destination register
-                std::string rs = parts[2]; // Source register
-                registers[rd] = registers[rs];
-
-                pp[pipeRow][0] = instruction;
-                fillPipeline(pipeRow, flag, latencies);
-                pipeRow++;
-                pc += 1;
-            }
-            else if (opcode == "bge")
-            {
-                std::string rs1 = parts[1];
-                std::string rs2 = parts[2];
-                std::string label = parts[3];
-                if (registers[rs1] >= registers[rs2])
-                {
-                    auto it = find(program.begin(), program.end(), label);
-                    if (it != program.end())
-                    {
-                        pc = distance(program.begin(), it) - 1;
-                    }
-                }
-
-                pp[pipeRow][0] = instruction;
-                fillPipeline(pipeRow, flag, latencies);
-                pipeRow++;
-                pc += 1;
-            }
-            else if (opcode == "li")
-            {
-                std::string rd = parts[1];
-                registers[rd] = std::stoi(parts[2]);
-
-                pp[pipeRow][0] = instruction;
-                fillPipeline(pipeRow, flag, latencies);
-                pipeRow++;
-                pc += 1;
-            }
-            else if (opcode == "addi")
-            {
-                std::string rd = parts[1];
-                std::string rs1 = parts[2];
-                registers[rd] = registers[rs1] + stoi(parts[3]);
-
-                pp[pipeRow][0] = instruction;
-                fillPipeline(pipeRow, flag, latencies);
-                pipeRow++;
-                pc += 1;
-            }
-            else if (opcode == "subi")
-            {
-                std::string rd = parts[1];
-                std::string rs1 = parts[2];
-                registers[rd] = registers[rs1] - stoi(parts[3]);
-
-                pp[pipeRow][0] = instruction;
-                fillPipeline(pipeRow, flag, latencies);
-                pipeRow++;
-                pc += 1;
-            }
-            else if (opcode == "lw")
-            {
-                std::string rd = parts[1];      // Destination register
-                std::string address = parts[2]; // Memory address
-                size_t openBracketPos = address.find('(');
-                size_t closeBracketPos = address.find(')');
-                if (openBracketPos != std::string::npos && closeBracketPos != std::string::npos)
-                {
-                    // Extracting the register name from the address string
-                    std::string rs = address.substr(openBracketPos + 1, closeBracketPos - openBracketPos - 1);
-                    // Extracting the offset from the address string
-                    std::string offsetStr = address.substr(0, openBracketPos);
-                    int offset = std::stoi(offsetStr);
-                    // Calculating the effective address by adding the offset to the value in the register
-                    int effectiveAddress = registers[rs] + offset;
-                    // Loading the value from memory at the effective address into the destination register
-                    registers[rd] = memory[effectiveAddress];
-                }
-
-                pp[pipeRow][0] = instruction;
-                fillPipeline(pipeRow, flag, latencies);
-                pipeRow++;
-                pc += 1;
-            }
-            else if (opcode == "sw")
-            {
-                std::string rs = parts[1];      // Source register
-                std::string address = parts[2]; // Memory address
-                size_t openBracketPos = address.find('(');
-                size_t closeBracketPos = address.find(')');
-                if (openBracketPos != std::string::npos && closeBracketPos != std::string::npos)
-                {
-                    // Extracting the destination register name from the address string
-                    std::string rd = address.substr(openBracketPos + 1, closeBracketPos - openBracketPos - 1);
-                    // Extracting the offset from the address string
-                    std::string offsetStr = address.substr(0, openBracketPos);
-                    int offset = std::stoi(offsetStr);
-                    // Calculating the effective address by adding the offset to the value in the register
-                    int effectiveAddress = registers[rd] + offset;
-                    // Storing the value from the source register into memory at the effective address
-                    memory[effectiveAddress] = registers[rs];
-                }
-
-                pp[pipeRow][0] = instruction;
-                fillPipeline(pipeRow, flag, latencies);
-                pipeRow++;
-                pc += 1;
-            }
-            else if (opcode == "slt")
-            {
-                std::string rd = parts[1];  // Destination register
-                std::string rs1 = parts[2]; // Source register 1
-                std::string rs2 = parts[3]; // Source register 2
-
-                // Set the destination register to 1 if source register 1 < source register 2, otherwise set it to 0
-                registers[rd] = (registers[rs1] < registers[rs2]) ? 1 : 0;
-
-                pp[pipeRow][0] = instruction;
-                fillPipeline(pipeRow, flag, latencies);
-                pipeRow++;
-                pc += 1;
-            }
-            else if (opcode == "j")
-            {
-                std::string label = parts[1]; // Target label
-                auto it = find(program.begin(), program.end(), label);
-                if (it != program.end())
-                {
-                    pc = distance(program.begin(), it) - 1;
-                }
-
-                pp[pipeRow][0] = instruction;
-                fillPipeline(pipeRow, flag, latencies);
-                pipeRow++;
-                pc += 1;
-            }
-            else if (opcode == "bne")
-            {
-                std::string rs1 = parts[1];
-                std::string rs2 = parts[2];
-                std::string label = parts[3];
-                if (registers[rs1] != registers[rs2])
-                {
-                    auto it = find(program.begin(), program.end(), label);
-                    if (it != program.end())
-                    {
-                        pc = distance(program.begin(), it) - 1;
-                    }
-                }
-
-                pp[pipeRow][0] = instruction;
-                fillPipeline(pipeRow, flag, latencies);
-                pipeRow++;
-                pc += 1;
-            }
-
-            //   pp[pipeRow][0]=instruction;
-            //     pipeRow++;
-            //   pc+=1;
-        }
-    }
     void printval(int pipeRow, int flag)
     {
 
-        // fillPipeline(pipeRow, flag);
+        // execute_ins(pipeRow, flag);
         int cnt = 0;
         // cout<<pipeRow<<endl;
         for (int j = 1; j < 10000; j++)
@@ -1539,12 +1535,12 @@ public:
     {
         int pipeRow;
         pipeRow = cores[0].execute(memory, flag1, latencies);
-        // cores[0].fillPipeline(pipeRow,flag1,latencies);
+        // cores[0].execute_ins(pipeRow,flag1,latencies);
         std::cout << "BUBBLE SORT: " << std::endl
                   << std::endl;
         cores[0].printval(pipeRow, flag1);
         pipeRow = cores[1].execute(memory, flag2, latencies);
-        // cores[1].fillPipeline(pipeRow,flag2,latencies);
+        // cores[1].execute_ins(pipeRow,flag2,latencies);
         std::cout << "SELECTION SORT: " << std::endl
                   << std::endl;
         cores[1].printval(pipeRow, flag2);
