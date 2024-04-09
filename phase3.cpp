@@ -2117,6 +2117,7 @@ public:
         float ipc = (float)ppRow / cnt;
         std::cout << "IPC(Instructions per cycle is) : " << ipc << std::endl
                   << std::endl;
+        cout<<"totalmisses"<<totalmisses<<endl;
         cout << "Miss rate for cache: " << totalmisses/accesslatency << endl;
         return;
     }
@@ -2146,6 +2147,7 @@ public:
         pipeRow = cores[0].execute(memory, flag1,latencies);
         std::cout << "BUBBLE SORT: " << std::endl;
         cores[0].printval(pipeRow, flag1);
+        cores[1].assignval(cacheSize, blockSize,Associativity, accessLatency,memTime);
         pipeRow = cores[1].execute(memory, flag2,latencies);
           std::cout<<pipeRow<<std::endl;
         std::cout << "SELECTION SORT: " << std::endl;
