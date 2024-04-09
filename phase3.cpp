@@ -338,13 +338,15 @@ public:
                 std::string address = parts[2]; // Memory address
                 size_t openBracketPos = address.find('(');
                 size_t closeBracketPos = address.find(')');
+                int offset;
+                string rs;
                 if (openBracketPos != std::string::npos && closeBracketPos != std::string::npos)
                 {
                     // Extracting the register name from the address string
                     std::string rs = address.substr(openBracketPos + 1, closeBracketPos - openBracketPos - 1);
                     // Extracting the offset from the address string
                     std::string offsetStr = address.substr(0, openBracketPos);
-                    int offset = std::stoi(offsetStr);
+                     offset = std::stoi(offsetStr);
                     // Calculating the effective address by adding the offset to the value in the register
                     int effectiveAddress = registers[rs] + offset;
                     // Loading the value from memory at the effective address into the destination register
@@ -352,6 +354,19 @@ public:
                 }
 
                 pp[ppRow][0] = instruction;
+                int adrs;
+               adrs = (offset + registers[rs])/4;
+              if(search(adrs) == true){//hit in L1
+               miss=0;
+             incrementcounter(adrs);
+             accesscache++;
+           }
+              else{
+                 miss=1; 
+                  totalmisses++;
+                  memtoCache(adrs,memory);
+                accesscache++;
+               }
                 execute_ins(ppRow, flag, latencies);
                 ppRow++;
                 pc += 1;
@@ -362,13 +377,15 @@ public:
                 std::string address = parts[2]; // Memory address
                 size_t openBracketPos = address.find('(');
                 size_t closeBracketPos = address.find(')');
+                string rd;
+                int offset;
                 if (openBracketPos != std::string::npos && closeBracketPos != std::string::npos)
                 {
                     // Extracting the destination register name from the address string
                     std::string rd = address.substr(openBracketPos + 1, closeBracketPos - openBracketPos - 1);
                     // Extracting the offset from the address string
                     std::string offsetStr = address.substr(0, openBracketPos);
-                    int offset = std::stoi(offsetStr);
+                     offset = std::stoi(offsetStr);
                     // Calculating the effective address by adding the offset to the value in the register
                     int effectiveAddress = registers[rd] + offset;
                     // Storing the value from the source register into memory at the effective address
@@ -376,6 +393,20 @@ public:
                 }
 
                 pp[ppRow][0] = instruction;
+                int adrs, value1;
+               value1 = registers[rs];
+               adrs = (offset +registers[rd])/4;
+             if(search(adrs) == true) { // hit in L1
+              miss = 0;
+             incrementcounter(adrs);
+            updateInCache(adrs, value1);
+            accesscache++;
+           } else {
+              miss = 1;
+               memtoCache(adrs,memory);
+              totalmisses++;
+              accesscache++;
+            }
                 execute_ins(ppRow, flag, latencies);
                 ppRow++;
                 pc += 1;
@@ -2086,8 +2117,6 @@ public:
         float ipc = (float)ppRow / cnt;
         std::cout << "IPC(Instructions per cycle is) : " << ipc << std::endl
                   << std::endl;
-        cout<<"totalmissess"<<totalmisses<<endl;
-         cout<<"accesslatency"<<accesslatency<<endl;
         cout << "Miss rate for cache: " << totalmisses/accesslatency << endl;
         return;
     }
@@ -2178,11 +2207,10 @@ int main()
     }
    // cout << endl;
     bubble_input.close();
-    for(int i=0;i<bubble_asmLines.size();i++)
-    {
-        cout<<bubble_asmLines[i]<<endl;
-    }
-    cout<<endl;
+    // for(int i=0;i<bubble_asmLines.size();i++)
+    // {
+    //     cout<<bubble_asmLines[i]<<endl;
+    // }
     ifstream selection_input("selectionsort.asm");
     if (!selection_input.is_open()) {
         cerr << "Failed to open" << endl;
