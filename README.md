@@ -5,7 +5,7 @@ Date:10-04-2024
 Members: Greeshma, Snehitha
 
 We added Second replacement policy which will replace the first block each time the cache gets filled.
-Finally we submitted it . Should have a nice sleep atleast today.
+Finally we submitted it . Should have a good sleep atleast today.
 
 Date:09-04-2024
 
