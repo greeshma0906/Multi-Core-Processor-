@@ -1,4 +1,31 @@
 # Multi-Core-Processor-
+
+Date:10-04-2024
+
+Members: Greeshma, Snehitha
+
+We added Second replacement policy which will replace the first block each time the cache gets filled.
+Finally we submitted it . Should have a nice sleep atleast today.
+
+Date:09-04-2024
+
+We added functions like searching for the address in the cache, searching for the nearest address and memtoCache function.
+
+Date:07-04-2024
+
+Made changes in the load and store fuctions in the execute function.
+
+Date:05-04-2024
+
+We gave all the inputs as parameters instead of passing them as a seperate file because we are not sure 
+that we might finish phase 3 so we chose the easiest way.
+
+Date:04-04-2024
+
+So finally we started to think about the project after 10 days of vacation and
+as expected we thought of starting it before 5 days of the dead line.
+We decided to take cache as an array which has a set of blocks .
+
 Date: 10-03-2024
 
 Members: Greeshma, Snehitha
