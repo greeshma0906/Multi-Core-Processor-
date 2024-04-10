@@ -1,5 +1,5 @@
 #include <bits/stdc++.h>
-using namespace std;
+//using namespace std;
 class Core
 {
 public:
@@ -20,6 +20,7 @@ public:
      int miss=-1;
      double totalmisses=0;
      int memaccess=0;
+     int temp;
 public:
     Core()
     {
@@ -34,8 +35,10 @@ public:
         int ppRow = 0;
         clockk = 1;
     }
-    void assignval(int cacheSize, int blockSize,int Associativity, int accessLatency,int memTime)
+    void assignval(int cacheSize, int blockSize,int Associativity, int accessLatency,int memTime,int n)
     {
+        temp=n;
+
          cachesize=cacheSize;  
         blocksize=blockSize; 
         associativity=Associativity;
@@ -88,7 +91,8 @@ public:
                 }
             }
         } 
-        void memtoCache(int addrs,vector<int>& memory){
+        void memtoCache(int addrs,std::vector<int>& memory){
+            if(temp==1){
             int j,k1;
             for(j=0;j<numblocks;j++){
                 if(tag[j]==-1){
@@ -117,6 +121,44 @@ public:
                     addrs++;
                 }
             }
+        }
+        else if(temp==2){
+             int j, k1;
+
+    // Check if there's an empty block in the cache
+    for (j = 0; j < numblocks; j++) {
+        if (tag[j] == -1) {
+            k1 = blockins * j;
+            tag[j] = findnear(addrs);
+            counter[j] = 1;
+            for (int k = 0; k < blockins; k++) {
+                cache[k1] = memory[addrs];
+                k1++;
+                addrs++;
+            }
+            return; // Exit the function once a block is placed in the cache
+        }
+    }
+
+    // If cache is full, apply FIFO replacement policy
+    int firstBlockIndex = 0;
+    for (j = 1; j < numblocks; j++) {
+        if (counter[j] < counter[firstBlockIndex]) {
+            firstBlockIndex = j;
+        }
+    }
+
+    // Replace the first block in the cache (FIFO policy)
+    k1 = blockins * firstBlockIndex;
+    tag[firstBlockIndex] = findnear(addrs);
+    counter[firstBlockIndex] = 1;
+    for (int k = 0; k < blockins; k++) {
+        cache[k1] = memory[addrs];
+        k1++;
+        addrs++;
+    }
+
+        }
         }
         void updateInCache(int addrs, int val) {
         int j;
@@ -340,7 +382,7 @@ public:
                 size_t openBracketPos = address.find('(');
                 size_t closeBracketPos = address.find(')');
                 int offset;
-                string rs;
+                std::string rs;
                 if (openBracketPos != std::string::npos && closeBracketPos != std::string::npos)
                 {
                     // Extracting the register name from the address string
@@ -357,7 +399,7 @@ public:
                 pp[ppRow][0] = instruction;
                 int adrs;
                adrs = offset + registers[rs];
-               cout<<"lwaddr"<<adrs<<" ";
+               //std::cout<<"lwaddr"<<adrs<<" ";
               if(search(adrs) == true){//hit in L1
                miss=0;
               // cout<<"lw"<<endl;
@@ -382,7 +424,7 @@ public:
                 std::string address = parts[2]; // Memory address
                 size_t openBracketPos = address.find('(');
                 size_t closeBracketPos = address.find(')');
-                string rd;
+                std::string rd;
                 int offset;
                 if (openBracketPos != std::string::npos && closeBracketPos != std::string::npos)
                 {
@@ -401,7 +443,7 @@ public:
                 int adrs, value1;
                value1 = registers[rs];
                adrs = offset +registers[rd];
-                   cout<<"swaddr"<<adrs<<" ";
+                 // std:: cout<<"swaddr"<<adrs<<" ";
              if(search(adrs) == true) { // hit in L1
               miss = 0;
              incrementcounter(adrs);
@@ -2123,37 +2165,37 @@ public:
         float ipc = (float)ppRow / cnt;
         std::cout << "IPC(Instructions per cycle is) : " << ipc << std::endl
                   << std::endl;
-        cout<<"totalmisses"<<totalmisses<<endl;
-        cout << "Miss rate for cache: " << totalmisses/memaccess << endl;
+       // std::cout<<"totalmisses"<<totalmisses<<std::endl;
+        std::cout << "Miss rate for cache: " << totalmisses/memaccess <<std:: endl;
         return;
     }
 };
 class Processor {
 public:
-    vector<int> memory;
+   std:: vector<int> memory;
    // int clock;
-    vector<Core> cores;
+    std::vector<Core> cores;
 
 public:
     Processor()
     {
-        memory = vector<int>(4096, 0);
+        memory = std::vector<int>(4096, 0);
        //clock = 0;
-       cores = vector<Core>(2);
+       cores = std::vector<Core>(2);
     }
-    void send(vector<string> & program,int coreval)
+    void send(std::vector<std::string> & program,int coreval)
     {
        cores[coreval].program=program;
     }
-    void run(int flag1, int flag2, std::map<std::string, int> latencies,int cacheSize,int blockSize,int Associativity,int accessLatency,int memTime) {
+    void run(int flag1, int flag2, std::map<std::string, int> latencies,int cacheSize,int blockSize,int Associativity,int accessLatency,int memTime,int n) {
         
         int pipeRow;
        // cores[0].core( flag1,  flag2,  latencies,int cacheSize,int blockSize,int Associativity,int accessLatency,int memTime)
-       cores[0].assignval(cacheSize, blockSize,Associativity, accessLatency,memTime);
+       cores[0].assignval(cacheSize, blockSize,Associativity, accessLatency,memTime,n);
         pipeRow = cores[0].execute(memory, flag1,latencies);
         std::cout << "BUBBLE SORT: " << std::endl;
         cores[0].printval(pipeRow, flag1);
-        cores[1].assignval(cacheSize, blockSize,Associativity, accessLatency,memTime);
+        cores[1].assignval(cacheSize, blockSize,Associativity, accessLatency,memTime,n);
         pipeRow = cores[1].execute(memory, flag2,latencies);
           std::cout<<pipeRow<<std::endl;
         std::cout << "SELECTION SORT: " << std::endl;
@@ -2166,16 +2208,16 @@ public:
 int main()
 {
     Processor sim;
-    ifstream bubble_input("bubblesort.asm");
+    std::ifstream bubble_input("bubblesort.asm");
     if (!bubble_input.is_open()) {
-        cerr << "Failed to open bubblesort.asm" << endl;
+        std::cerr << "Failed to open bubblesort.asm" << std::endl;
         return 1;
     }
 
-    string bubble_line;
-    vector<string> bubble_asmLines;
+    std::string bubble_line;
+    std::vector<std::string> bubble_asmLines;
     //vector<string> temp;
-    vector<int> bubble_values;
+    std::vector<int> bubble_values;
     bool dataSection1 = false;
 
     while (getline(bubble_input, bubble_line)) {
@@ -2184,14 +2226,14 @@ int main()
                // temp.push_back(line);
                 continue;
             } 
-            else if (bubble_line.find(".word") != string::npos) {
+            else if (bubble_line.find(".word") != std::string::npos) {
                 size_t pos = bubble_line.find(".word");
-                if (pos != string::npos) {
+                if (pos != std::string::npos) {
                     // Extract the substring after ".word"
-                    string valuesStr = bubble_line.substr(pos + 6); // 6 is the length of ".word" plus a space
+                    std::string valuesStr = bubble_line.substr(pos + 6); // 6 is the length of ".word" plus a space
 
                     // Create a string stream to parse the values
-                    istringstream iss(valuesStr);
+                    std::istringstream iss(valuesStr);
                     int value;
 
                     // Read each value and store it in the vector
@@ -2202,9 +2244,9 @@ int main()
             } else {
                 // Process other lines
                 size_t pos = bubble_line.find(":");
-                if (pos != string::npos) {
+                if (pos != std::string::npos) {
                     // If a colon is found, extract the word before the colon
-                    string word = bubble_line.substr(0, pos);
+                    std::string word = bubble_line.substr(0, pos);
                     bubble_asmLines.push_back(word);
                 } else {
                     // If no colon is found, simply add the line to asmLines
@@ -2219,16 +2261,16 @@ int main()
     // {
     //     cout<<bubble_asmLines[i]<<endl;
     // }
-    ifstream selection_input("selectionsort.asm");
+    std::ifstream selection_input("selectionsort.asm");
     if (!selection_input.is_open()) {
-        cerr << "Failed to open" << endl;
+        std::cerr << "Failed to open" << std::endl;
         return 1;
     }
 
-    string selection_line;
-    vector<string> selection_asmLines;
+    std::string selection_line;
+    std::vector<std::string> selection_asmLines;
     //vector<string> temp;
-    vector<int> selection_values;
+   std:: vector<int> selection_values;
     bool dataSection2 = false;
 
     while (getline(selection_input,selection_line)) {
@@ -2237,14 +2279,14 @@ int main()
                // temp.push_back(line);
                 continue;
             } 
-            else if (selection_line.find(".word") != string::npos) {
+            else if (selection_line.find(".word") != std::string::npos) {
                 size_t pos = selection_line.find(".word");
-                if (pos != string::npos) {
+                if (pos != std::string::npos) {
                     // Extract the substring after ".word"
-                    string valuesStr = selection_line.substr(pos + 6); // 6 is the length of ".word" plus a space
+                    std::string valuesStr = selection_line.substr(pos + 6); // 6 is the length of ".word" plus a space
 
                     // Create a string stream to parse the values
-                    istringstream iss(valuesStr);
+                    std::istringstream iss(valuesStr);
                     int value;
 
                     // Read each value and store it in the vector
@@ -2255,9 +2297,9 @@ int main()
             } else {
                 // Process other lines
                 size_t pos = selection_line.find(":");
-                if (pos != string::npos) {
+                if (pos != std::string::npos) {
                     // If a colon is found, extract the word before the colon
-                    string word =selection_line.substr(0, pos);
+                    std::string word =selection_line.substr(0, pos);
                     selection_asmLines.push_back(word);
                 } else {
                     // If no colon is found, simply add the line to asmLines
@@ -2308,17 +2350,29 @@ int main()
     latencies["div"] = divLatency;
     int cacheSize, blockSize, accessLatency,memTime, Associativity;
 
-    cout << "Enter the cache size: " << endl;
-    cin >> cacheSize;
-    cout << "Enter the block size: " << endl;
-    cin >> blockSize;
-    cout << "Enter the accociativity: " << endl;
-    cin >> Associativity;
-    cout << "Enter the access latencies: " << endl;
-    cin >> accessLatency;
-    cout << "Enter the memory access time: " << endl;
-    cin >> memTime;
-    sim.run(flag1, flag2, latencies,cacheSize,blockSize,Associativity,accessLatency,memTime);
+    std::cout << "Enter the cache size: " << std::endl;
+    std::cin >> cacheSize;
+    std::cout << "Enter the block size: " <<std:: endl;
+    std::cin >> blockSize;
+    std::cout << "Enter the accociativity: " <<std:: endl;
+    std::cin >> Associativity;
+    std::cout << "Enter the access latencies: " << std::endl;
+    std::cin >> accessLatency;
+    std::cout << "Enter the memory access time: " <<std:: endl;
+    std::cin >> memTime;
+    std::cout<<"Select the Replacement Policy:"<<std::endl;
+    std::cout<<"1.Least Recently Used POlicy(LRU)"<<std::endl;
+    std::cout<<"2.Replacement POlicy 2"<<std::endl;
+    std::cout<<"Enter 1 for REplacement POlicy 1 or Enter 2 for Replacement Policy 2:"<<std::endl;
+    int n;
+    std::cin>>n;
+    if(n==1 || n==2){
+    sim.run(flag1, flag2, latencies,cacheSize,blockSize,Associativity,accessLatency,memTime,n);
+    }
+    else{
+        std::cout<<"INVALID NUMBER ENTERED!";
+        return 0;
+    }
     std::cout << "memory values:"
               << " ";
     for (int i = 0; i < 9; i++)
