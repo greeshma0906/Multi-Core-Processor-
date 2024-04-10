@@ -18,7 +18,6 @@ public:
      int totalins,blockins,numblocks;
      int accesslatency,memtime;
      int miss=-1;
-    // double accesscache=0;
      double totalmisses=0;
      int memaccess=0;
 public:
