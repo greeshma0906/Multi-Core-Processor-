@@ -1,5 +1,5 @@
 #include <bits/stdc++.h>
-using namespace std;
+// using namespace std;
 class Core
 {
 public:
@@ -89,7 +89,7 @@ public:
                 }
             }
         } 
-        void memtoCache(int addrs,vector<int>& memory){
+        void mmtoCache(int addrs,std::vector<int>& memory){
             int j,k1;
             for(j=0;j<numblocks;j++){
                 if(tag[j]==-1){
@@ -341,7 +341,7 @@ public:
                 size_t openBracketPos = address.find('(');
                 size_t closeBracketPos = address.find(')');
                 int offset;
-                string rs;
+                std::string rs;
                 if (openBracketPos != std::string::npos && closeBracketPos != std::string::npos)
                 {
                     // Extracting the register name from the address string
@@ -358,7 +358,7 @@ public:
                 pp[ppRow][0] = instruction;
                 int adrs;
                adrs = offset + registers[rs];
-               cout<<"lwaddr"<<adrs<<" ";
+               std::cout<<"lwaddr"<<adrs<<" ";
               if(search(adrs) == true){//hit in L1
                miss=0;
               // cout<<"lw"<<endl;
@@ -369,7 +369,7 @@ public:
                  miss=1; 
                   totalmisses++;
                  // cout<<"checkincmisses"<<totalmisses<<endl;
-                  memtoCache(adrs,memory);
+                  mmtoCache(adrs,memory);
                 accesscache++;
                }
                 execute_ins(ppRow, flag, latencies);
@@ -383,7 +383,7 @@ public:
                 std::string address = parts[2]; // Memory address
                 size_t openBracketPos = address.find('(');
                 size_t closeBracketPos = address.find(')');
-                string rd;
+                std::string rd;
                 int offset;
                 if (openBracketPos != std::string::npos && closeBracketPos != std::string::npos)
                 {
@@ -402,7 +402,7 @@ public:
                 int adrs, value1;
                value1 = registers[rs];
                adrs = offset +registers[rd];
-                   cout<<"swaddr"<<adrs<<" ";
+                   std::cout<<"swaddr"<<adrs<<" ";
              if(search(adrs) == true) { // hit in L1
               miss = 0;
              incrementcounter(adrs);
@@ -410,7 +410,7 @@ public:
             accesscache++;
            } else {
               miss = 1;
-               memtoCache(adrs,memory);
+               mmtoCache(adrs,memory);
               totalmisses++;
               accesscache++;
             }
@@ -2124,25 +2124,25 @@ public:
         float ipc = (float)ppRow / cnt;
         std::cout << "IPC(Instructions per cycle is) : " << ipc << std::endl
                   << std::endl;
-        cout<<"totalmisses"<<totalmisses<<endl;
-        cout << "Miss rate for cache: " << totalmisses/memaccess << endl;
+        std::cout<<"totalmisses"<<totalmisses<<" "<<std::endl;
+        std::cout << "Miss rate for cache: " << totalmisses/memaccess << std::endl;
         return;
     }
 };
 class Processor {
 public:
-    vector<int> memory;
+   std:: vector<int> memory;
    // int clock;
-    vector<Core> cores;
+    std::vector<Core> cores;
 
 public:
     Processor()
     {
-        memory = vector<int>(4096, 0);
+        memory = std::vector<int>(4096, 0);
        //clock = 0;
-       cores = vector<Core>(2);
+       cores = std::vector<Core>(2);
     }
-    void send(vector<string> & program,int coreval)
+    void send(std::vector<std::string> & program,int coreval)
     {
        cores[coreval].program=program;
     }
@@ -2167,16 +2167,16 @@ public:
 int main()
 {
     Processor sim;
-    ifstream bubble_input("bubblesort.asm");
+    std::ifstream bubble_input("bubblesort.asm");
     if (!bubble_input.is_open()) {
-        cerr << "Failed to open bubblesort.asm" << endl;
+        std::cerr << "Failed to open bubblesort.asm" << std::endl;
         return 1;
     }
 
-    string bubble_line;
-    vector<string> bubble_asmLines;
+    std::string bubble_line;
+    std::vector<std::string> bubble_asmLines;
     //vector<string> temp;
-    vector<int> bubble_values;
+    std::vector<int> bubble_values;
     bool dataSection1 = false;
 
     while (getline(bubble_input, bubble_line)) {
@@ -2185,14 +2185,14 @@ int main()
                // temp.push_back(line);
                 continue;
             } 
-            else if (bubble_line.find(".word") != string::npos) {
+            else if (bubble_line.find(".word") != std::string::npos) {
                 size_t pos = bubble_line.find(".word");
-                if (pos != string::npos) {
+                if (pos != std::string::npos) {
                     // Extract the substring after ".word"
-                    string valuesStr = bubble_line.substr(pos + 6); // 6 is the length of ".word" plus a space
+                    std::string valuesStr = bubble_line.substr(pos + 6); // 6 is the length of ".word" plus a space
 
                     // Create a string stream to parse the values
-                    istringstream iss(valuesStr);
+                    std::istringstream iss(valuesStr);
                     int value;
 
                     // Read each value and store it in the vector
@@ -2203,9 +2203,9 @@ int main()
             } else {
                 // Process other lines
                 size_t pos = bubble_line.find(":");
-                if (pos != string::npos) {
+                if (pos != std::string::npos) {
                     // If a colon is found, extract the word before the colon
-                    string word = bubble_line.substr(0, pos);
+                    std::string word = bubble_line.substr(0, pos);
                     bubble_asmLines.push_back(word);
                 } else {
                     // If no colon is found, simply add the line to asmLines
@@ -2220,16 +2220,16 @@ int main()
     // {
     //     cout<<bubble_asmLines[i]<<endl;
     // }
-    ifstream selection_input("selectionsort.asm");
+    std::ifstream selection_input("selectionsort.asm");
     if (!selection_input.is_open()) {
-        cerr << "Failed to open" << endl;
+       std:: cerr << "Failed to open" << std::endl;
         return 1;
     }
 
-    string selection_line;
-    vector<string> selection_asmLines;
+   std:: string selection_line;
+    std::vector<std::string> selection_asmLines;
     //vector<string> temp;
-    vector<int> selection_values;
+    std::vector<int> selection_values;
     bool dataSection2 = false;
 
     while (getline(selection_input,selection_line)) {
@@ -2238,14 +2238,14 @@ int main()
                // temp.push_back(line);
                 continue;
             } 
-            else if (selection_line.find(".word") != string::npos) {
+            else if (selection_line.find(".word") != std::string::npos) {
                 size_t pos = selection_line.find(".word");
-                if (pos != string::npos) {
+                if (pos != std::string::npos) {
                     // Extract the substring after ".word"
-                    string valuesStr = selection_line.substr(pos + 6); // 6 is the length of ".word" plus a space
+                    std::string valuesStr = selection_line.substr(pos + 6); // 6 is the length of ".word" plus a space
 
                     // Create a string stream to parse the values
-                    istringstream iss(valuesStr);
+                    std::istringstream iss(valuesStr);
                     int value;
 
                     // Read each value and store it in the vector
@@ -2256,9 +2256,9 @@ int main()
             } else {
                 // Process other lines
                 size_t pos = selection_line.find(":");
-                if (pos != string::npos) {
+                if (pos != std::string::npos) {
                     // If a colon is found, extract the word before the colon
-                    string word =selection_line.substr(0, pos);
+                    std::string word =selection_line.substr(0, pos);
                     selection_asmLines.push_back(word);
                 } else {
                     // If no colon is found, simply add the line to asmLines
@@ -2309,16 +2309,16 @@ int main()
     latencies["div"] = divLatency;
     int cacheSize, blockSize, accessLatency,memTime, Associativity;
 
-    cout << "Enter the cache size: " << endl;
-    cin >> cacheSize;
-    cout << "Enter the block size: " << endl;
-    cin >> blockSize;
-    cout << "Enter the accociativity: " << endl;
-    cin >> Associativity;
-    cout << "Enter the access latencies: " << endl;
-    cin >> accessLatency;
-    cout << "Enter the memory access time: " << endl;
-    cin >> memTime;
+    std::cout << "Enter the cache size: " <<std:: endl;
+    std::cin >> cacheSize;
+   std:: cout << "Enter the block size: " << std::endl;
+    std::cin >> blockSize;
+    std::cout << "Enter the accociativity: " <<std:: endl;
+   std:: cin >> Associativity;
+    std::cout << "Enter the access latencies: " << std::endl;
+   std:: cin >> accessLatency;
+    std::cout << "Enter the memory access time: " << std::endl;
+    std::cin >> memTime;
     sim.run(flag1, flag2, latencies,cacheSize,blockSize,Associativity,accessLatency,memTime);
     std::cout << "memory values:"
               << " ";
