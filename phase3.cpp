@@ -35,6 +35,7 @@ public:
         int ppRow = 0;
         clockk = 1;
     }
+    //assigning user input values 
     void assignval(int cacheSize, int blockSize,int Associativity, int accessLatency,int memTime,int n)
     {
         temp=n;
@@ -54,13 +55,14 @@ public:
             missarr[i]=-1;
         }
     }
+    //returns nearest memory address
     int findnear(int addrs){
             while(addrs%blockins!=0){
                 addrs--;
             }
             return addrs;
         }
-
+     //checks if given address is in cache
         bool search(int addrs){
             for(int i=0;i<numblocks;i++){
                 if(tag[i]==findnear(addrs)){
@@ -69,6 +71,7 @@ public:
             }
             return false;
         }
+        //it returns index of minimum value
        int min(int arr[], int n){
             int min=arr[0];
             for(int i=0; i<n; i++){
@@ -82,7 +85,7 @@ public:
             }
             return j;
         }
-
+       //updates access counter
         void incrementcounter(int adrs){
             for(int i=0;i<numblocks;i++){
                 if(tag[i]==adrs){
@@ -91,6 +94,7 @@ public:
                 }
             }
         } 
+        //implementing replacement policies
         void memtoCache(int addrs,std::vector<int>& memory){
             if(temp==1){
             int j,k1;
@@ -160,6 +164,7 @@ public:
 
         }
         }
+        //updating the value in cache
         void updateInCache(int addrs, int val) {
         int j;
         for (j = 0; j < numblocks; j++) {
@@ -2356,7 +2361,7 @@ int main()
     std::cin >> blockSize;
     std::cout << "Enter the accociativity: " <<std:: endl;
     std::cin >> Associativity;
-    std::cout << "Enter the access latencies: " << std::endl;
+    std::cout << "Enter the access latency: " << std::endl;
     std::cin >> accessLatency;
     std::cout << "Enter the memory access time: " <<std:: endl;
     std::cin >> memTime;
@@ -2396,4 +2401,11 @@ int main()
     std::cout << std::endl;
 
     return 0;
+
 }
+// TESTCASE:
+// cache size:32
+// block size:4
+// associativity:2
+// accesslatency:2
+// memory access time:5
