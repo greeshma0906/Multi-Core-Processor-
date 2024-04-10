@@ -18,7 +18,8 @@ public:
      int totalins,blockins,numblocks;
      int accesslatency,memtime;
      int miss=-1;
-     int totalmisses=0;
+     double accesscache=0;
+     double totalmisses=0;
      int memaccess=0;
 public:
     Core()
@@ -51,7 +52,7 @@ public:
             missarr[i]=-1;
         }
     }
-    int findnear(int addrs){
+    int nearest(int addrs){
             while(addrs%blockins!=0){
                 addrs--;
             }
@@ -60,7 +61,7 @@ public:
 
         bool search(int addrs){
             for(int i=0;i<numblocks;i++){
-                if(tag[i]==findnear(addrs)){
+                if(tag[i]==nearest(addrs)){
                    return true; 
                 }
             }
@@ -93,7 +94,7 @@ public:
             for(j=0;j<numblocks;j++){
                 if(tag[j]==-1){
                     k1 = blockins*j;
-                    tag[j]=findnear(addrs);
+                    tag[j]=nearest(addrs);
                     counter[j]=1;
                     for(int k=0; k<blockins; k++){
                         cache[k1]=memory[addrs];
@@ -109,7 +110,7 @@ public:
                 j=minIndex;
                 k1=blockins*j;
                 //bring new block from them memory and put it cache
-                tag[j]=findnear(addrs);
+                tag[j]=nearest(addrs);
                 counter[j]=1;
                 for(int k=0; k<blockins; k++){
                     cache[k1]=memory[addrs];
@@ -118,14 +119,14 @@ public:
                 }
             }
         }
-        void changeIncache(int addrs, int val) {
+        void updateInCache(int addrs, int val) {
         int j;
         for (j = 0; j < numblocks; j++) {
-            if (tag[j] == findnear(addrs))
+            if (tag[j] == nearest(addrs))
                 break;
         }
         int k1 = blockins * j;
-        cache[k1 + (addrs - findnear(addrs))] = val;
+        cache[k1 + (addrs - nearest(addrs))] = val;
     }
 
     int execute(std::vector<int> &memory, int flag, std::map<std::string, int> latencies)
@@ -357,16 +358,19 @@ public:
                 pp[ppRow][0] = instruction;
                 int adrs;
                adrs = offset + registers[rs];
+               cout<<"lwaddr"<<adrs<<" ";
               if(search(adrs) == true){//hit in L1
                miss=0;
               // cout<<"lw"<<endl;
              incrementcounter(adrs);
-            
+             accesscache++;
            }
               else{
                  miss=1; 
                   totalmisses++;
+                 // cout<<"checkincmisses"<<totalmisses<<endl;
                   memtoCache(adrs,memory);
+                accesscache++;
                }
                 execute_ins(ppRow, flag, latencies);
                 ppRow++;
@@ -398,14 +402,17 @@ public:
                 int adrs, value1;
                value1 = registers[rs];
                adrs = offset +registers[rd];
+                   cout<<"swaddr"<<adrs<<" ";
              if(search(adrs) == true) { // hit in L1
               miss = 0;
              incrementcounter(adrs);
-            changeIncache(adrs, value1);
+            updateInCache(adrs, value1);
+            accesscache++;
            } else {
               miss = 1;
                memtoCache(adrs,memory);
               totalmisses++;
+              accesscache++;
             }
                 execute_ins(ppRow, flag, latencies);
                 ppRow++;
@@ -1715,6 +1722,7 @@ public:
 
         else if (pp[i][0].substr(0, 2) == "lw")
         {
+            //   cout<<"lw"<<endl;
              int temp=memory_hazard(i-1);
             if (i != 0 && pp[i][0].substr(pp[i][0].length() - 3, 2) == checkHazard(pp[i - 1][0]))
             {
@@ -1789,6 +1797,7 @@ public:
 
         else if (pp[i][0].substr(0, 2) == "sw")
         {
+            // cout<<"sw"<<endl;
              int temp=memory_hazard(i-1);
             if (i != 0 && pp[i][0].substr(pp[i][0].length() - 3, 2) == checkHazard(pp[i - 1][0]))
             {
