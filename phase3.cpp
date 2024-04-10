@@ -18,7 +18,7 @@ public:
      int totalins,blockins,numblocks;
      int accesslatency,memtime;
      int miss=-1;
-     double accesscache=0;
+    // double accesscache=0;
      double totalmisses=0;
      int memaccess=0;
 public:
@@ -363,14 +363,14 @@ public:
                miss=0;
               // cout<<"lw"<<endl;
              incrementcounter(adrs);
-             accesscache++;
+            
            }
               else{
                  miss=1; 
                   totalmisses++;
                  // cout<<"checkincmisses"<<totalmisses<<endl;
                   memtoCache(adrs,memory);
-                accesscache++;
+               
                }
                 execute_ins(ppRow, flag, latencies);
                 ppRow++;
@@ -407,12 +407,12 @@ public:
               miss = 0;
              incrementcounter(adrs);
             updateInCache(adrs, value1);
-            accesscache++;
+            
            } else {
               miss = 1;
                memtoCache(adrs,memory);
               totalmisses++;
-              accesscache++;
+           
             }
                 execute_ins(ppRow, flag, latencies);
                 ppRow++;
