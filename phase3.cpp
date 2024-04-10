@@ -20,6 +20,7 @@ public:
      int miss=-1;
      double accesscache=0;
      double totalmisses=0;
+     int memaccess=0;
 public:
     Core()
     {
@@ -334,6 +335,7 @@ public:
             }
             else if (opcode == "lw")
             {
+                memaccess++;
                 std::string rd = parts[1];      // Destination register
                 std::string address = parts[2]; // Memory address
                 size_t openBracketPos = address.find('(');
@@ -356,6 +358,7 @@ public:
                 pp[ppRow][0] = instruction;
                 int adrs;
                adrs = offset + registers[rs];
+               cout<<"lwaddr"<<adrs<<" ";
               if(search(adrs) == true){//hit in L1
                miss=0;
               // cout<<"lw"<<endl;
@@ -364,7 +367,6 @@ public:
            }
               else{
                  miss=1; 
-                 //cout<<"lw"<<endl;
                   totalmisses++;
                  // cout<<"checkincmisses"<<totalmisses<<endl;
                   memtoCache(adrs,memory);
@@ -376,6 +378,7 @@ public:
             }
             else if (opcode == "sw")
             {
+                memaccess++;
                 std::string rs = parts[1];      // Source register
                 std::string address = parts[2]; // Memory address
                 size_t openBracketPos = address.find('(');
@@ -399,6 +402,7 @@ public:
                 int adrs, value1;
                value1 = registers[rs];
                adrs = offset +registers[rd];
+                   cout<<"swaddr"<<adrs<<" ";
              if(search(adrs) == true) { // hit in L1
               miss = 0;
              incrementcounter(adrs);
@@ -2121,7 +2125,7 @@ public:
         std::cout << "IPC(Instructions per cycle is) : " << ipc << std::endl
                   << std::endl;
         cout<<"totalmisses"<<totalmisses<<endl;
-        cout << "Miss rate for cache: " << totalmisses/accesslatency << endl;
+        cout << "Miss rate for cache: " << totalmisses/memaccess << endl;
         return;
     }
 };
