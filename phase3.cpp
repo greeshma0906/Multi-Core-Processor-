@@ -52,7 +52,7 @@ public:
             missarr[i]=-1;
         }
     }
-    int nearest(int addrs){
+    int findnear(int addrs){
             while(addrs%blockins!=0){
                 addrs--;
             }
@@ -61,13 +61,13 @@ public:
 
         bool search(int addrs){
             for(int i=0;i<numblocks;i++){
-                if(tag[i]==nearest(addrs)){
+                if(tag[i]==findnear(addrs)){
                    return true; 
                 }
             }
             return false;
         }
-       int minimum(int arr[], int n){
+       int min(int arr[], int n){
             int min=arr[0];
             for(int i=0; i<n; i++){
                 if(arr[i]<=min)
@@ -94,7 +94,7 @@ public:
             for(j=0;j<numblocks;j++){
                 if(tag[j]==-1){
                     k1 = blockins*j;
-                    tag[j]=nearest(addrs);
+                    tag[j]=findnear(addrs);
                     counter[j]=1;
                     for(int k=0; k<blockins; k++){
                         cache[k1]=memory[addrs];
@@ -106,11 +106,11 @@ public:
             }
             if(j==numblocks){  //if cache is full
                 //lru
-                int minIndex = minimum(counter, numblocks);
+                int minIndex = min(counter, numblocks);
                 j=minIndex;
                 k1=blockins*j;
                 //bring new block from them memory and put it cache
-                tag[j]=nearest(addrs);
+                tag[j]=findnear(addrs);
                 counter[j]=1;
                 for(int k=0; k<blockins; k++){
                     cache[k1]=memory[addrs];
@@ -122,11 +122,11 @@ public:
         void updateInCache(int addrs, int val) {
         int j;
         for (j = 0; j < numblocks; j++) {
-            if (tag[j] == nearest(addrs))
+            if (tag[j] == findnear(addrs))
                 break;
         }
         int k1 = blockins * j;
-        cache[k1 + (addrs - nearest(addrs))] = val;
+        cache[k1 + (addrs - findnear(addrs))] = val;
     }
 
     int execute(std::vector<int> &memory, int flag, std::map<std::string, int> latencies)
