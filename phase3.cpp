@@ -343,7 +343,7 @@ public:
                 if (openBracketPos != std::string::npos && closeBracketPos != std::string::npos)
                 {
                     // Extracting the register name from the address string
-                    std::string rs = address.substr(openBracketPos + 1, closeBracketPos - openBracketPos - 1);
+                     rs = address.substr(openBracketPos + 1, closeBracketPos - openBracketPos - 1);
                     // Extracting the offset from the address string
                     std::string offsetStr = address.substr(0, openBracketPos);
                      offset = std::stoi(offsetStr);
@@ -355,15 +355,18 @@ public:
 
                 pp[ppRow][0] = instruction;
                 int adrs;
-               adrs = (offset + registers[rs])/4;
+               adrs = offset + registers[rs];
               if(search(adrs) == true){//hit in L1
                miss=0;
+              // cout<<"lw"<<endl;
              incrementcounter(adrs);
              accesscache++;
            }
               else{
                  miss=1; 
+                 //cout<<"lw"<<endl;
                   totalmisses++;
+                 // cout<<"checkincmisses"<<totalmisses<<endl;
                   memtoCache(adrs,memory);
                 accesscache++;
                }
@@ -382,7 +385,7 @@ public:
                 if (openBracketPos != std::string::npos && closeBracketPos != std::string::npos)
                 {
                     // Extracting the destination register name from the address string
-                    std::string rd = address.substr(openBracketPos + 1, closeBracketPos - openBracketPos - 1);
+                     rd = address.substr(openBracketPos + 1, closeBracketPos - openBracketPos - 1);
                     // Extracting the offset from the address string
                     std::string offsetStr = address.substr(0, openBracketPos);
                      offset = std::stoi(offsetStr);
@@ -395,7 +398,7 @@ public:
                 pp[ppRow][0] = instruction;
                 int adrs, value1;
                value1 = registers[rs];
-               adrs = (offset +registers[rd])/4;
+               adrs = offset +registers[rd];
              if(search(adrs) == true) { // hit in L1
               miss = 0;
              incrementcounter(adrs);
