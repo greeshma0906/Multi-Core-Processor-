@@ -3,6 +3,10 @@ Date:11-05-2024
 
 We have added a two level Cache and modified the secong replacement policy from FIFO to Random Replacement POlicy
 
+Date:10-05-2024
+
+We decided to add a two level cache.
+
 Date:10-04-2024
 
 Members: Greeshma, Snehitha
