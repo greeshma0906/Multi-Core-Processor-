@@ -2633,9 +2633,16 @@ int main()
     return 0;
 
 }
-// TESTCASE:
-// cache size:32
-// block size:4
-// associativity:2
-// accesslatency:2
-// memory access time:5`
+//TESTCASE
+/*Enter the cache sizes of L1 and L2:
+16 32
+Enter the block sizes of L1 and L2:
+8 8
+Enter the accociativity for cache1 and cache2:
+2 2
+Enter the access latencies of L1 and L2:
+2 3
+Enter the memory access time:
+5
+ENTER 1 for Forwarding and 0 for NO forwarding
+0*/
