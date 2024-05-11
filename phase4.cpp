@@ -18,7 +18,8 @@ public:
         int counter1[1024]={0};
         int counter2[1024]={0};
         int cache1size, cache2size, block1size, block2size;
-        int associativity;
+        int associativity1;
+         int associativity2;
         int totalins1, totalins2;
         int blockins1, blockins2;
         int numblocks1, numblocks2;
@@ -49,7 +50,7 @@ public:
         clockk = 1;
     }
     //assigning user input values 
-    void assignval(int cache1Size,int cache2Size, int block1Size,int block2Size,int Associativity, int accessLatency1,int accessLatency2,int memTime,int n)
+    void assignval(int cache1Size,int cache2Size, int block1Size,int block2Size,int Associativity1,int Associativity2, int accessLatency1,int accessLatency2,int memTime,int n)
     {
         temp=n;
 
@@ -57,7 +58,8 @@ public:
          cache2size=cache2Size;
         block1size=block1Size; 
         block2size=block2Size;
-        associativity=Associativity;
+        associativity1=Associativity1;
+        associativity2=Associativity2;
         accesslatency1=accessLatency1;
            accesslatency2=accessLatency2; 
         memtime=memTime;
@@ -2404,15 +2406,15 @@ public:
     {
        cores[coreval].program=program;
     }
-    void run(int flag1, int flag2, std::map<std::string, int> latencies,int cache1Size,int cache2Size,int block1Size,int block2Size,int Associativity,int accessLatency1,int accessLatency2,int memTime,int n) {
+    void run(int flag1, int flag2, std::map<std::string, int> latencies,int cache1Size,int cache2Size,int block1Size,int block2Size,int Associativity1,int Associativity2,int accessLatency1,int accessLatency2,int memTime,int n) {
         
         int pipeRow;
        // cores[0].core( flag1,  flag2,  latencies,int cacheSize,int blockSize,int Associativity,int accessLatency,int memTime)
-       cores[0].assignval(cache1Size,cache2Size,block1Size,block2Size,Associativity, accessLatency1,accessLatency2,memTime,n);
+       cores[0].assignval(cache1Size,cache2Size,block1Size,block2Size,Associativity1,Associativity2, accessLatency1,accessLatency2,memTime,n);
         pipeRow = cores[0].execute(memory, flag1,latencies);
         std::cout << "BUBBLE SORT: " << std::endl;
         cores[0].printval(pipeRow, flag1);
-        cores[1].assignval(cache1Size,cache2Size, block1Size,block2Size,Associativity, accessLatency1,accessLatency2,memTime,n);
+        cores[1].assignval(cache1Size,cache2Size, block1Size,block2Size,Associativity1,Associativity2, accessLatency1,accessLatency2,memTime,n);
         pipeRow = cores[1].execute(memory, flag2,latencies);
           std::cout<<pipeRow<<std::endl;
         std::cout << "SELECTION SORT: " << std::endl;
@@ -2578,14 +2580,16 @@ int main()
     int divLatency;
     std::cin >> divLatency;
     latencies["div"] = divLatency;
-    int cache1Size, cache2Size, block1Size, block2Size, accessLatency1,accessLatency2,memTime, Associativity;
+    int cache1Size, cache2Size, block1Size, block2Size, accessLatency1,accessLatency2,memTime, Associativity1,Associativity2;
 
     std::cout << "Enter the cache sizes for L1 and L2: " << std::endl;
     std::cin >> cache1Size >> cache2Size;
     std::cout << "Enter the block sizes for L1 and L2: " <<std:: endl;
     std::cin >> block1Size >> block2Size;
-    std::cout << "Enter the accociativity: " <<std:: endl;
-    std::cin >> Associativity;
+    std::cout << "Enter the accociativity for Cache1: " <<std:: endl;
+    std::cin >> Associativity1;
+    std::cout << "Enter the accociativity for Cache2: " <<std:: endl;
+    std::cin >> Associativity2;
     std::cout << "Enter the access latency for L1 and L2: " << std::endl;
     std::cin >> accessLatency1 >> accessLatency2;
     std::cout << "Enter the memory access time: " <<std:: endl;
@@ -2597,7 +2601,7 @@ int main()
     int n;
     std::cin>>n;
     if(n==1 || n==2){
- sim.run(flag1, flag2, latencies,cache1Size,cache2Size,block1Size,block2Size,Associativity,accessLatency1,accessLatency2,memTime,n);
+ sim.run(flag1, flag2, latencies,cache1Size,cache2Size,block1Size,block2Size,Associativity1,Associativity2,accessLatency1,accessLatency2,memTime,n);
     }
     else{
         std::cout<<"INVALID NUMBER ENTERED!";
