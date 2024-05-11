@@ -2459,6 +2459,9 @@ int main()
     std::cout << "enter 1 for forwarding 0 for non forwarding for selection sort"
               << " ";
     std::cin >> flag2;
+    if(flag1>1 || flag2>1){
+        std::cout<<"INVALID ENTERED"<<std::endl;
+    }
     std::map<std::string, int> latencies;
     std::cout << "Enter latencies for arithmetic operations:" << std::endl;
     std::cout << "ADD: ";
@@ -2492,19 +2495,19 @@ int main()
     std::cin >> accessLatency1 >> accessLatency2;
     std::cout << "Enter the memory access time: " <<std:: endl;
     std::cin >> memTime;
-    // std::cout<<"Select the Replacement Policy:"<<std::endl;
-    // std::cout<<"1.Least Recently Used POlicy(LRU)"<<std::endl;
-    // std::cout<<"2.Replacement POlicy 2"<<std::endl;
-    // std::cout<<"Enter 1 for REplacement POlicy 1 or Enter 2 for Replacement Policy 2:"<<std::endl;
-    // int n;
-    // std::cin>>n;
-    // if(n==1 || n==2){
-    // sim.run(flag1, flag2, latencies,cacheSize,blockSize,Associativity,accessLatency,memTime,n);
-    // }
-    // else{
-    //     std::cout<<"INVALID NUMBER ENTERED!";
-    //     return 0;
-    // }
+    std::cout<<"Select the Replacement Policy:"<<std::endl;
+    std::cout<<"1.Least Recently Used POlicy(LRU)"<<std::endl;
+    std::cout<<"2.Replacement POlicy 2"<<std::endl;
+    std::cout<<"Enter 1 for REplacement POlicy 1 or Enter 2 for Replacement Policy 2:"<<std::endl;
+    int n;
+    std::cin>>n;
+    if(n==1 || n==2){
+    sim.run(flag1, flag2, latencies,cache1Size,cache2Size,block1Size,block2Size,Associativity,accessLatency1,accessLatency2,memTime);
+    }
+    else{
+        std::cout<<"INVALID NUMBER ENTERED!";
+        return 0;
+    }
          sim.run(flag1, flag2, latencies,cache1Size,cache2Size,block1Size,block2Size,Associativity,accessLatency1,accessLatency2,memTime);
     std::cout << "memory values:"
               << " ";
