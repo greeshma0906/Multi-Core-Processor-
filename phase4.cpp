@@ -1,31 +1,29 @@
-#define _GLIBCXX_USE_CXX11_ABI 0
 #include <bits/stdc++.h>
-using namespace std;
-
-int register_values[32]={0};
-string REG[32]={"zero","at","v0","v1","a0","a1","a2","a3","t0","t1","t2","t3","t4","t5","t6","t7","s0","s1","s2","s3","s4","s5","s6","s7","t8","t9","k0","k1","gp","sp","fp","ra"};
-
-
-string pipeline[500][1000];
-
-class mipsSimulator{
-    public:
-        int MEM[1024]={0};
-        int miss_arr[500];
-        //------------------------------------
-        int cache1[1024]={0};
+//using namespace std;
+class Core
+{
+public:
+    std::unordered_map<std::string, int> registers;
+    int pc;
+    std::vector<std::string> program;
+    std::string pp[500][10000]; // pipeline is taken as 2D array
+    int flag1;
+    int ppRow;  // row value in 2D array
+    int clockk; // after every ins clockk gets updated based on where IF is present in prev ins
+    int missarr[500];
+     int cache1[1024]={0};
         int tag1[1024];
         int cache2[1024]={0}; 
         int tag2[1024];
         int counter1[1024]={0};
         int counter2[1024]={0};
-        int cache1Size, cache2Size, block1Size, block2Size;
+        int cache1size, cache2size, block1size, block2size;
         int associativity;
-        int totalInts1, totalInts2;
-        int blockInts1, blockInts2;
+        int totalins1, totalins2;
+        int blockins1, blockins2;
         int numblocks1, numblocks2;
-        int accessLatency1, accessLatency2; //inputed as number of cycles needed to go to L1 and L2
-        int memTime; //number of cycles needed to go to the main memory
+        int accesslatency1, accesslatency2; //inputed as number of cycles needed to go to L1 and L2
+        int memtime; //number of cycles needed to go to the main memory
 
         int miss = -1; //this could take only three values
         // miss=0 for a hit in cache l1
@@ -35,63 +33,40 @@ class mipsSimulator{
         double accessesL2=0;
         double totalL1misses=0;
         double totalL2misses=0;
-        //--------------------------------------
-        int programCounter;
-        int NumberOfInstructions;
-        int branch_flag;
-        int MaxLength;//10000
-        vector<string> InputProgram; //to store the input program
-        vector<string>Input_ins;
-        int mainindex=0;
-        struct Memoryword{
-            string value;
-            string address;//pc line number
-        };
-        struct Label{
-            string labelname;
-            string address;
-        };
-        vector<struct Memoryword>Mem;
-        vector<struct Label>labeltable;
+     //int temp;
+public:
+    Core()
+    {
+        // Initialize register names and indices
 
-        mipsSimulator(string fileName, int Cache1Size,int Cache2Size,int Block1Size,int Block2Size,int AccessLatency1,int AccessLatency2,int MemTime, int Associativity){
-        programCounter=0;
-        NumberOfInstructions=0;
-        MaxLength=10000;
-        branch_flag=0;
-        ifstream InputFile;
-        InputFile.open(fileName.c_str(),ios::in); //open file
-        if(!InputFile){ //if open failed
-            cout<<"Error: File does not exist or could not be opened"<<endl;
-            exit(1);
+        for (int i = 0; i < 32; ++i)
+        {
+            registers["x" + std::to_string(i)] = 0;
         }
-        string tempString;
-        while(getline(InputFile,tempString)){ //read line by line
-        //readInstruction(tempString);
-            NumberOfInstructions++;
-            if(NumberOfInstructions>MaxLength){ ///check number of instructions with maximum allowed
-                cout<<"Error: Number of lines in input too large, maximum allowed is "<<MaxLength<<" line"<<endl;
-                exit(1);
-            }
-            InputProgram.push_back(tempString); //store in InputProgram
-        }
-        InputFile.close();
+        pc = 0;
+        flag1 = 0; // always branch is assumed to be not taken..
+        int ppRow = 0;
+        clockk = 1;
+    }
+    //assigning user input values 
+    void assignval(int cache1Size,int cache2Size, int block1Size,int block2Size,int Associativity, int accessLatency1,int accessLatency2,int memTime)
+    {
+       // temp=n;
 
-        //--------------------------------------
-        cache1Size=Cache1Size; 
-        cache2Size=Cache2Size; 
-        block1Size=Block1Size; 
-        block2Size=Block2Size;
+         cache1size=cache1Size;  
+         cache2size=cache2Size;
+        block1size=block1Size; 
+        block2size=block2Size;
         associativity=Associativity;
-        accessLatency1=AccessLatency1; 
-        accessLatency2=AccessLatency2;
-        memTime=MemTime;
-        totalInts1 = Cache1Size/4;
-        totalInts2 = Cache2Size/4;
-        blockInts1=Block1Size/4;
-        blockInts2=Block2Size/4;
-        numblocks1=Cache1Size/Block1Size;
-        numblocks2=Cache2Size/Block2Size;
+        accesslatency1=accessLatency1;
+           accesslatency2=accessLatency2; 
+        memtime=memTime;
+        totalins1 = cache1Size/4;
+        totalins2 = cache2Size/4;
+        blockins1=block1Size/4;
+         blockins2=block2Size/4;
+        numblocks1=cache1Size/block1Size;
+        numblocks2=cache2Size/block2Size;
         for(int i=0;i<numblocks1;i++){
             tag1[i]=-1;
         }
@@ -99,38 +74,35 @@ class mipsSimulator{
             tag2[i]=-1;
         }
         for(int i=0; i<500; i++){
-            miss_arr[i]=-1;
+            missarr[i]=-1;
         }
-
-        //--------------------------------------
-        }
-
-        int nearest(int addrs){
-            while(addrs%blockInts1!=0){
+    }
+    //returns findnear memory address
+    int findnear(int addrs){
+            while(addrs%blockins1!=0){
                 addrs--;
             }
             return addrs;
         }
-
+     //checks if given address is in cache
         bool search1(int addrs){
             for(int i=0;i<numblocks1;i++){
-                if(tag1[i]==nearest(addrs)){
+                if(tag1[i]==findnear(addrs)){
                    return true; 
                 }
             }
             return false;
         }
-
         bool search2(int addrs){
             for(int i=0;i<numblocks2;i++){
-                if(tag2[i]==nearest(addrs)){
+                if(tag2[i]==findnear(addrs)){
                    return true; 
                 }
             }
             return false;
         }
-
-        int minimum(int arr[], int n){
+        //it returns index of minimum value
+       int min(int arr[], int n){
             int min=arr[0];
             for(int i=0; i<n; i++){
                 if(arr[i]<=min)
@@ -143,7 +115,7 @@ class mipsSimulator{
             }
             return j;
         }
-
+       //updates access counter
         void incrementcounter1(int adrs){
             for(int i=0;i<numblocks1;i++){
                 if(tag1[i]==adrs){
@@ -151,12 +123,12 @@ class mipsSimulator{
                     break;
                 }
             }
-        }
-
-        void L2toL1(int addrs){
+        } 
+        //implementing replacement policies
+        void L2toL1(int addrs,std::vector<int>& memory){
             int i,j,count;
             for(i=0;i<numblocks2;i++){
-                if(tag2[i]==nearest(addrs))
+                if(tag2[i]==findnear(addrs))
                     break;
             }
             int k1,k2;
@@ -165,9 +137,9 @@ class mipsSimulator{
                     tag1[j]=tag2[i];
                     tag2[i]=-1;
 
-                    k1=blockInts1*j;
-                    k2=blockInts2*i;
-                    for(int k=0; k<blockInts1; k++){
+                    k1=blockins1*j;
+                    k2=blockins2*i;
+                    for(int k=0; k<blockins1; k++){
                         cache1[k1]=cache2[k2];
                         cache2[k2]=0;
                         k1++;
@@ -183,24 +155,24 @@ class mipsSimulator{
                 //check with the counter in cache1, the least one will be pushed 
                 //to cache2(if full, we again apply lru for cache2) and then we put 
                 // new one in the place that has been emptied.
-                int tempcount1, temptag1, tempInts1[blockInts1];
-                int minIndex = minimum(counter1, numblocks1);
+                int tempcount1, temptag1, tempInts1[blockins1];
+                int minIndex = min(counter1, numblocks1);
                 j=minIndex;
-                k1=blockInts1*j;
-                k2=blockInts2*i;
+                k1=blockins1*j;
+                k2=blockins2*i;
                 //copy the contents of the block that is being kicked out of L1
                 //as these are to be put in L2
                 temptag1 = tag1[j];
                 tempcount1 = counter1[j];
-                for(int m=0; m<blockInts1; m++){
+                for(int m=0; m<blockins1; m++){
                     tempInts1[m]= cache1[k1];
                     k1++;
                 }
                 //copy from L2 to L1
                 tag1[j]=tag2[i];
-                k1=blockInts1*j;
-                k2=blockInts2*i;
-                for(int k=0; k<blockInts1; k++){
+                k1=blockins1*j;
+                k2=blockins2*i;
+                for(int k=0; k<blockins1; k++){
                     cache1[k1]=cache2[k2];
                     cache2[k2]=0;
                     k1++;
@@ -211,23 +183,23 @@ class mipsSimulator{
                 //copy back the contents of temp into the block that was emptied in L2
                 tag2[i] = temptag1;
                 counter2[i] = tempcount1;
-                k2=blockInts2*i;
-                for(int m=0; m<blockInts2; m++){
+                k2=blockins2*i;
+                for(int m=0; m<blockins2; m++){
                     cache2[k2] = tempInts1[m];
                     k2++;
                 }
             }
         }
 
-        void memtoL1(int addrs){
+        void memtoL1(int addrs,std::vector<int>& memory){
             int j,k1,k2;
             for(j=0;j<numblocks1;j++){
                 if(tag1[j]==-1){
-                    k1 = blockInts1*j;
-                    tag1[j]=nearest(addrs);
+                    k1 = blockins1*j;
+                    tag1[j]=findnear(addrs);
                     counter1[j]=1;
-                    for(int k=0; k<blockInts1; k++){
-                        cache1[k1]=MEM[addrs];
+                    for(int k=0; k<blockins1; k++){
+                        cache1[k1]=memory[addrs];
                         k1++;
                         addrs++;
                     }
@@ -237,23 +209,23 @@ class mipsSimulator{
             int i; //i for cache L2
             if(j==numblocks1){  //if L1 is full
                 //lru
-                int minIndex1 = minimum(counter1, numblocks1);
-                int tempcount1, temptag1, tempInts1[blockInts1];
+                int minIndex1 = min(counter1, numblocks1);
+                int tempcount1, temptag1, tempInts1[blockins1];
                 j=minIndex1;
-                k1=blockInts1*j;
+                k1=blockins1*j;
                 //copy the contents of the block that is being kicked out of L1
                 //as these are to be put in L2
                 temptag1 = tag1[j];
                 tempcount1 = counter1[j];
-                for(int m=0; m<blockInts1; m++){
+                for(int m=0; m<blockins1; m++){
                     tempInts1[m]= cache1[k1];
                     k1++;
                 }
                 //bring new block from them memory and put it cache
-                tag1[j]=nearest(addrs);
+                tag1[j]=findnear(addrs);
                 counter1[j]=1;
-                for(int k=0; k<blockInts1; k++){
-                    cache1[k1]=MEM[addrs];
+                for(int k=0; k<blockins1; k++){
+                    cache1[k1]=memory[addrs];
                     k1++;
                     addrs++;
                 }
@@ -262,8 +234,8 @@ class mipsSimulator{
                     if(tag2[i]==-1){
                         tag2[i] = temptag1;
                         counter2[i] = tempcount1;
-                        k2=blockInts2*i;
-                        for(int m=0; m<blockInts2; m++){
+                        k2=blockins2*i;
+                        for(int m=0; m<blockins2; m++){
                             cache2[k2] = tempInts1[m];
                             k2++;
                         }
@@ -271,1647 +243,2297 @@ class mipsSimulator{
                     }
                 }
                 if(i==numblocks2){  //if L2 is full, apply lru again
-                    int minIndex2 = minimum(counter2, numblocks2);
+                    int minIndex2 = min(counter2, numblocks2);
                     i=minIndex2;
                     tag2[i] = temptag1;
                     counter2[i] = tempcount1;
-                    k2=blockInts2*i;
-                    for(int m=0; m<blockInts2; m++){
+                    k2=blockins2*i;
+                    for(int m=0; m<blockins2; m++){
                         cache2[k2] = tempInts1[m];
                         k2++;
                     }
                 }
             }
         }
-
-        void updateInL1(int addrs,int val){
+    void updateInL1(int addrs,int val){
             int j;
             for(j=0;j<numblocks1;j++){
-                if(tag1[j]==nearest(addrs))
+                if(tag1[j]==findnear(addrs))
                     break;
             }
-            int k1 = blockInts1*j;
-            cache1[k1 + (addrs-nearest(addrs))] = val;
+            int k1 = blockins1*j;
+            cache1[k1 + (addrs-findnear(addrs))] = val;
         }
 
         void updateInL2(int addrs,int val){
             int i;
             for(i=0;i<numblocks2;i++){
-                if(tag1[i]==nearest(addrs))
+                if(tag1[i]==findnear(addrs))
                     break;
             }
-            int k1 = blockInts2*i;
-            cache2[k1 + (addrs-nearest(addrs))] = val;
+            int k1 = blockins2*i;
+            cache2[k1 + (addrs-findnear(addrs))] = val;
         }
 
-        string readInstruction(string str){
-            if(str.find("#")!=-1){ //remove comments
-                    str=str.substr(0,str.find("#"));
-                    }
-            str.erase(remove(str.begin(), str.end(), ' '), str.end());
-            str.erase(remove(str.begin(), str.end(), ','), str.end());
-            str.erase(remove(str.begin(), str.end(), '$'), str.end());
-           return str;
-        }
-
-        string readArrayinstruction(string str){
-            str.erase(remove(str.begin(), str.end(), ' '), str.end());
-           return str;
-        }
-
-        void reportError(int line_number){
-            cout<<"Error found in :"<<(line_number+1)<<": "<<InputProgram[line_number]<<endl;
-        }
-
-        void preprocess(){
-            int i=0,j=0;
-            int current_section=-1; //current_section=0 - data section, current_section=1 - text section
-            int index; //to hold index of ".data"
-            int flag=0; //whether "..data" found
-            //string current_instruction="";
-            int dataStart=0; //line number for start of data section
-            int textStart=0;
-
-            for(int k=0;k<InputProgram.size();k++){
-                if(InputProgram[k]=="main:")
-                mainindex=k;
-            }
-            int p_count=mainindex+1;
-            for(int k=p_count;k<InputProgram.size();k++){
-                string current_instrucn=readInstruction(InputProgram[k]);
-                Input_ins.push_back(current_instrucn);
-            }
-
-            for(i=0;i<NumberOfInstructions;i++){
-                string current_instruction="";
-                current_instruction=InputProgram[i];
-                current_instruction = readInstruction(current_instruction);
-                index=current_instruction.find(".data");
-                if(index==-1)
-                continue;
-                else if(flag==0){
-                    flag=1;
-                    current_section=0;
-                    dataStart=i;
-                }
-                else if(flag==1){
-                    cout<<"Multiple instances of .data found"<<endl;
-                    exit(1);
-                }
-            }
-            int wordindex,arrayindex;
-            if(current_section==0){
-                for(i=dataStart+1;i<NumberOfInstructions;i++){
-                    string current_instruction="";
-                    current_instruction=InputProgram[i];
-                    current_instruction = readArrayinstruction(current_instruction);
-                    arrayindex=current_instruction.find(":");//array:.word9315
-                    wordindex=current_instruction.find(".word");
-                    int storeline;
-                    if(wordindex==-1 && arrayindex==-1){
-                        if(current_instruction.find(".text")==-1){ //if text section has not started
-                            cout<<"Error: Unexpected symbol in data section"<<endl;
-                        }
-                        else{
-                            break;
-                        }
-                    }
-                    else{
-                        string num=current_instruction.substr(arrayindex+6);//9,3,11,35,2,411
-                        //lets assume array values are <10
-                        int k=0;
-                        while(num.length()!=0){
-                            int found=num.find(',');
-                            if(found != string::npos){
-                                MEM[k]=stoi(num.substr(0,found));
-                                num=num.substr(found+1);
-                                k++;
-                            }
-                            else{
-                                MEM[k]=stoi(num.substr(0));
-                                num=num.substr(num.length());
-                            }
-                        }
-                    } 
-                }
-            }
-            int textIndex=0;
-            int textFlag=0;
-
-            for(i=programCounter;i<NumberOfInstructions;i++)
-            {
-                string current_instruction=InputProgram[i];
-                current_instruction = readInstruction(current_instruction);
-                if(current_instruction=="")
-                {
-                    continue;
-                }
-                textIndex=current_instruction.find(".text"); //find text section similar as above
-                if(textIndex==-1)
-                {
-                    continue;
-                }
-                else if(textFlag==0)
-                {
-                    textFlag=1;
-                    current_section=1;
-                    textStart=i;
-                }
-                else if(textFlag==1)
-                {
-                    cout<<"Error: Multiple instances of .text"<<endl;
-                    reportError(i);
-                }
-            }
-            if(current_section!=1){ //if text section not found
-                cout<<"Error: Text section does not exist or found unknown string"<<endl;
-                exit(1);
-            }
-            if(InputProgram[textStart+1]!=".globl main"){
-                cout<<"Error: No (.globl main) found"<<endl;
-                exit(1);
-            }
-            int foundmain=0;
-            int main_index=0,labelindex=-1;
-            if(InputProgram[textStart+2]!="main:"){
-                cout<<"Error: No main found"<<endl;
-                exit(1);
-            }
-            else{
-                foundmain=1;
-                main_index=textStart+2;
-            }
-            for(int i=main_index+1;i<NumberOfInstructions;i++){
-                string current_instruction=InputProgram[i];
-                current_instruction = readInstruction(current_instruction);
-                labelindex=current_instruction.find(":");
-                if(labelindex==0){
-                    cout<<"Error : Label name expected"<<endl;
-                    reportError(i);
-                }
-                else if(labelindex==-1){
-                    continue;
-                }
-                else{
-                    j=labelindex-1;
-                    string temp="";
-                    temp=current_instruction.substr(0,j+1);
-                    Label templabel;
-                    templabel.labelname=temp;
-                    templabel.address=to_string(i+1);
-                    labeltable.push_back(templabel);
-                }
-            }
-            for(i=0;labeltable.size()>0 && i<(labeltable.size()-1);i++) //check for duplicates
-            {
-                if(labeltable[i].labelname==labeltable[i+1].labelname)
-                {
-                    cout<<"Error: One or more labels are repeated"<<endl;
-                    exit(1);
-                }
-            }
-        }
-
-        void processInstruction(string current_instruction){
-            if(current_instruction.substr(0,3)=="add" && current_instruction.substr(3,1)!="i"){
-                int reg_store[3]={-1};
-                for(int i=0;i<32;i++){
-                    if(current_instruction.substr(3,2)==REG[i])
-                        reg_store[0]=i;
-                    if(current_instruction.substr(5,2)==REG[i])
-                        reg_store[1]=i;
-                    if(current_instruction.substr(7,2)==REG[i])
-                        reg_store[2]=i;
-                }
-                register_values[reg_store[0]]= register_values[reg_store[1]]+ register_values[reg_store[2]];
-                programCounter++;
-                return;
-            }
-            if(current_instruction.substr(0,3)=="sub"){
-                int reg_store[3]={-1};
-                for(int i=0;i<32;i++){
-                    if(current_instruction.substr(3,2)==REG[i])
-                        reg_store[0]=i;
-                    if(current_instruction.substr(5,2)==REG[i])
-                        reg_store[1]=i;
-                    if(current_instruction.substr(7,2)==REG[i])
-                        reg_store[2]=i;
-
-                }
-               
-                     register_values[reg_store[0]]= register_values[reg_store[1]]-register_values[reg_store[2]];
-                      programCounter++;
-                      return;
-            }
-            if(current_instruction.substr(0,3)=="mul"){
-                int reg_store[3]={-1};
-                for(int i=0;i<32;i++){
-                    if(current_instruction.substr(3,2)==REG[i])
-                        reg_store[0]=i;
-                    if(current_instruction.substr(5,2)==REG[i])
-                        reg_store[1]=i;
-                    if(current_instruction.substr(7,2)==REG[i])
-                        reg_store[2]=i;
-                }        
-                     register_values[reg_store[0]]= register_values[reg_store[1]]*register_values[reg_store[2]];
-                      programCounter++;
-                      return;
-            }
-            if(current_instruction.substr(0,3)=="div"){
-                int reg_store[3]={-1};
-                for(int i=0;i<32;i++){
-                    if(current_instruction.substr(3,2)==REG[i])
-                        reg_store[0]=i;
-                    if(current_instruction.substr(5,2)==REG[i])
-                        reg_store[1]=i;
-                    if(current_instruction.substr(7,2)==REG[i])
-                        reg_store[2]=i;
-
-                }
-               
-                     register_values[reg_store[0]]= register_values[reg_store[1]]/register_values[reg_store[2]];
-                      programCounter++;
-                      return;
-            }
-            if(current_instruction.substr(0,4)=="addi"){//addit2t34
-                string rs,rd,imm;
-                int immediate;
-                rd=current_instruction.substr(4,2);
-                if(current_instruction.substr(6,2)!="ze"){
-                    rs=current_instruction.substr(6,2);
-                    imm=current_instruction.substr(8);
-                    immediate=stoi(imm);
-                }
-                else{
-                     rs=current_instruction.substr(6,4);
-                     imm=current_instruction.substr(10);
-                    immediate=stoi(imm);
-                }
-                int reg_store[2]={-1};
-                for(int i=0;i<32;i++){
-                    if(rd==REG[i])
-                        reg_store[0]=i;
-                    if(rs==REG[i])
-                        reg_store[1]=i;
-                }
-                register_values[reg_store[0]]=immediate+register_values[reg_store[1]];
-                programCounter++;
-                return;
-            }       
-            if(current_instruction.substr(0,3)=="beq"){
-                string st;
-                int reg_store[2]={-1};
-                if(current_instruction.substr(5,2)=="ze"){
-                    for(int i=0;i<32;i++){
-                        if(current_instruction.substr(3,2)==REG[i])
-                            reg_store[0]=i;
-                        if(current_instruction.substr(5,4)==REG[i]) //beqt0zeroLABEL
-                            reg_store[1]=i;
-                    }
-                    st = current_instruction.substr(9);
-                }
-                else{
-                    for(int i=0;i<32;i++){
-                        if(current_instruction.substr(3,2)==REG[i])
-                            reg_store[0]=i;
-                        if(current_instruction.substr(5,2)==REG[i])
-                            reg_store[1]=i;
-                    }
-                    st = current_instruction.substr(7);
-                }
-
-                string addr;
-                for(int i=0;i<labeltable.size();i++){
-                    if(labeltable[i].labelname==st){
-                        addr=labeltable[i].address;
-                    }
-                }
-                if(register_values[reg_store[0]]==register_values[reg_store[1]]){
-                    programCounter=stoi(addr) + 1;
-                }
-                else{
-                    programCounter++;
-                }
-                return;
-            }
-            if(current_instruction.substr(0,3)=="bne"){
-                string st;
-                int reg_store[2]={-1};
-                if(current_instruction.substr(5,2)=="ze"){  //bnet2t3LABEL
-                    for(int i=0;i<32;i++){
-                        if(current_instruction.substr(3,2)==REG[i])
-                            reg_store[0]=i;
-                        if(current_instruction.substr(5,4)==REG[i]) //beqt0zeroLABEL
-                            reg_store[1]=i;
-                    }
-                    st = current_instruction.substr(9);
-                }
-                else{
-                    for(int i=0;i<32;i++){
-                        if(current_instruction.substr(3,2)==REG[i])
-                            reg_store[0]=i;
-                        if(current_instruction.substr(5,2)==REG[i])
-                            reg_store[1]=i;
-                    }
-                    st = current_instruction.substr(7);
-                }
-                string addr;
-                for(int i=0;i<labeltable.size();i++){
-                    if(labeltable[i].labelname==st){
-                        addr=labeltable[i].address;
-                    }
-                }
-                if(register_values[reg_store[0]]!=register_values[reg_store[1]]){
-                    programCounter=stoi(addr) + 1;
-                }
-                else{
-                    programCounter++;
-                }
-                return;
-            }
-            if(current_instruction.substr(0,1)=="j" && current_instruction.substr(1,1)!="r"){
-              
-                string st = current_instruction.substr(1);
-                string addr;
-                for(int i=0;i<labeltable.size();i++){
-                    if(labeltable[i].labelname==st){
-                        addr=labeltable[i].address;
-                    }
-                }
-               programCounter=stoi(addr) + 1;
-               return;
-
-            }
+    int execute(std::vector<int> &memory, int flag, std::map<std::string, int> latencies)
+    {
+        int ppRow = 0;
+        while (pc < program.size())
+        {
+            std::string instruction = program[pc];
             
-            if(current_instruction.substr(0,2)=="lw"){
-                string rd,rs,offset;
-                rd=current_instruction.substr(2,2);
-                int index=current_instruction.find("(");
-                rs=current_instruction.substr(index+1,2);
-                offset=current_instruction.substr(4,index-4);
-                int offs = stoi(offset);
-                int value;
-                int reg_store[2]={-1};
-                for(int i=0;i<32;i++){
-                    if(rs==REG[i])
-                        reg_store[0]=i;
-                    else if(rd==REG[i])
-                        reg_store[1]=i;
-                }
-                value = register_values[reg_store[0]];
-                register_values[reg_store[1]] = MEM[(offs + value)/4];
-                programCounter++;
+            if (instruction == "exit")
+            {
+                // Print register values after sorting
 
-                //----------------------------------------
-                int adrs;
-                adrs = (offs + value)/4;
-                if(search1(adrs) == true){//hit in L1
-                    miss=0;
-                    incrementcounter1(adrs);
-                    accessesL1++;
+                std::cout << "Register Values after sorting:" << std::endl
+                          << std::endl;
+                for (auto it = registers.begin(); it != registers.end(); ++it)
+                {
+                    std::cout << it->first << " = " << it->second << " ";
                 }
-                else if(search2(adrs) == true){//hit in L2 but was a miss in L1
+                std::cout << std::endl
+                          << std::endl;
+                pp[ppRow][0] = "exit";
+                return ppRow;
+            }
+            std::stringstream ss(instruction);
+            std::vector<std::string> parts;
+            std::string part;
+
+            while (getline(ss, part, ' '))
+            {
+                parts.push_back(part);
+            }
+
+            std::string opcode = parts[0];
+            // cout<<opcode<<endl;
+            if (opcode == "sub")
+            {
+                std::string rd = parts[1];
+                std::string rs1 = parts[2];
+                std::string rs2 = parts[3];
+
+                // Perform subtraction
+                registers[rd] = registers[rs1] - registers[rs2];
+
+                pp[ppRow][0] = instruction;
+                execute_ins(ppRow, flag, latencies);
+                ppRow++;
+                pc += 1;
+            }
+            if (opcode == "add")
+            {
+                std::string rd = parts[1];
+                std::string rs1 = parts[2];
+                std::string rs2 = parts[3];
+
+                // Perform subtraction
+                registers[rd] = registers[rs1] + registers[rs2];
+
+                pp[ppRow][0] = instruction;
+                execute_ins(ppRow, flag, latencies);
+                ppRow++;
+                pc += 1;
+            }
+            else if (opcode == "mul")
+            {
+                std::string rd = parts[1];
+                std::string rs1 = parts[2];
+                std::string rs2 = parts[3];
+
+                // Perform multiplication
+                registers[rd] = registers[rs1] * registers[rs2];
+
+                pp[ppRow][0] = instruction;
+                execute_ins(ppRow, flag, latencies);
+                ppRow++;
+                pc += 1;
+            }
+
+            else if (opcode == "div")
+            {
+                std::string rd = parts[1];
+                std::string rs1 = parts[2];
+                std::string rs2 = parts[3];
+
+                // Perform division
+                if (registers[rs2] != 0)
+                {
+                    registers[rd] = registers[rs1] / registers[rs2];
+                }
+                else
+                {
+                    // Handle division by zero
+                    std::cout << "Error: Division by zero" << std::endl;
+                    // Optionally, set rd to a default value or handle the error in a different way
+                }
+
+                pp[ppRow][0] = instruction;
+                execute_ins(ppRow, flag, latencies);
+                ppRow++;
+                pc += 1;
+            }
+
+            else if (opcode == "blt")
+            {
+                std::string rs1 = parts[1];   // Source register 1
+                std::string rs2 = parts[2];   // Source register 2
+                std::string label = parts[3]; // Label to branch to if rs1 < rs2
+                if (registers[rs1] < registers[rs2])
+                {
+                    auto it = find(program.begin(), program.end(), label);
+                    if (it != program.end())
+                    {
+                        pc = distance(program.begin(), it) - 1;
+                    }
+                }
+
+                pp[ppRow][0] = instruction;
+                execute_ins(ppRow, flag, latencies);
+                ppRow++;
+                pc += 1;
+            }
+            else if (opcode == "loope" || opcode == "swap" || opcode == "min_ind" || opcode == "outerloop" || opcode == "innerloop" || opcode == "swap" || opcode == "leave" || opcode == "loop1" || opcode == "loop" || opcode == "loop2" || opcode == "noswap")
+            {
+                pc += 1;
+            }
+            else if (opcode == "bgt")
+            {
+                std::string rs1 = parts[1];
+                std::string rs2 = parts[2];
+                std::string label = parts[3];
+                if (registers[rs1] > registers[rs2])
+                {
+                    auto it = find(program.begin(), program.end(), label);
+                    if (it != program.end())
+                    {
+                        pc = distance(program.begin(), it) - 1;
+                    }
+                }
+
+                pp[ppRow][0] = instruction;
+                execute_ins(ppRow, flag, latencies);
+                ppRow++;
+                pc += 1;
+            }
+            else if (opcode == "mv")
+            {
+                std::string rd = parts[1]; // Destination register
+                std::string rs = parts[2]; // Source register
+                registers[rd] = registers[rs];
+
+                pp[ppRow][0] = instruction;
+                execute_ins(ppRow, flag, latencies);
+                ppRow++;
+                pc += 1;
+            }
+            else if (opcode == "bge")
+            {
+                std::string rs1 = parts[1];
+                std::string rs2 = parts[2];
+                std::string label = parts[3];
+                if (registers[rs1] >= registers[rs2])
+                {
+                    auto it = find(program.begin(), program.end(), label);
+                    if (it != program.end())
+                    {
+                        pc = distance(program.begin(), it) - 1;
+                    }
+                }
+
+                pp[ppRow][0] = instruction;
+                execute_ins(ppRow, flag, latencies);
+                ppRow++;
+                pc += 1;
+            }
+            else if (opcode == "li")
+            {
+                std::string rd = parts[1];
+                registers[rd] = std::stoi(parts[2]);
+
+                pp[ppRow][0] = instruction;
+                execute_ins(ppRow, flag, latencies);
+                ppRow++;
+                pc += 1;
+            }
+            else if (opcode == "addi")
+            {
+                std::string rd = parts[1];
+                std::string rs1 = parts[2];
+                registers[rd] = registers[rs1] + stoi(parts[3]);
+
+                pp[ppRow][0] = instruction;
+                execute_ins(ppRow, flag, latencies);
+                ppRow++;
+                pc += 1;
+            }
+            else if (opcode == "subi")
+            {
+                std::string rd = parts[1];
+                std::string rs1 = parts[2];
+                registers[rd] = registers[rs1] - stoi(parts[3]);
+
+                pp[ppRow][0] = instruction;
+                execute_ins(ppRow, flag, latencies);
+                ppRow++;
+                pc += 1;
+            }
+            else if (opcode == "lw")
+            {
+               // memaccess++;
+                std::string rd = parts[1];      // Destination register
+                std::string address = parts[2]; // Memory address
+                size_t openBracketPos = address.find('(');
+                size_t closeBracketPos = address.find(')');
+                int offset;
+                std::string rs;
+                if (openBracketPos != std::string::npos && closeBracketPos != std::string::npos)
+                {
+                    // Extracting the register name from the address string
+                     rs = address.substr(openBracketPos + 1, closeBracketPos - openBracketPos - 1);
+                    // Extracting the offset from the address string
+                    std::string offsetStr = address.substr(0, openBracketPos);
+                     offset = std::stoi(offsetStr);
+                    // Calculating the effective address by adding the offset to the value in the register
+                    int effectiveAddress = registers[rs] + offset;
+                    // Loading the value from memory at the effective address into the destination register
+                    registers[rd] = memory[effectiveAddress];
+                }
+
+                pp[ppRow][0] = instruction;
+                int adrs;
+               adrs = offset + registers[rs];
+               //std::cout<<"lwaddr"<<adrs<<" ";
+              if(search1(adrs) == true){//hit in L1
+               miss=0;
+              // cout<<"lw"<<endl;
+             incrementcounter1(adrs);
+               accessesL1++;
+            
+           }
+           else if(search2(adrs) == true){//hit in L2 but was a miss in L1
                     miss=1; 
                     totalL1misses++;
-                    L2toL1(adrs);
+                    L2toL1(adrs,memory);
                     accessesL1++;
                     accessesL2++; 
                 }
-                else{
+              else{
                     miss=2;
                     totalL1misses++;
                     totalL2misses++;
-                    memtoL1(adrs);
+                    memtoL1(adrs,memory);
                     accessesL1++;
                     accessesL2++;
                 }
-                //----------------------------------------
-                return;
+                execute_ins(ppRow, flag, latencies);
+                ppRow++;
+                pc += 1;
             }
-
-            if(current_instruction.substr(0,2)=="sw"){
-                  string rd,rs,offset;
-                  rs=current_instruction.substr(2,2);
-                  int index=current_instruction.find("(");
-                  rd=current_instruction.substr(index+1,2);
-                  offset=current_instruction.substr(4,index-4);
-                int offs = stoi(offset);
-                int value;
-
-                int reg_store[2]={-1};
-                for(int i=0;i<32;i++){
-                    if(rs==REG[i])
-                        reg_store[0]=i;
-                    else if(rd==REG[i])
-                        reg_store[1]=i;
-                }                                     
-                value = register_values[reg_store[1]];
-                MEM[(offs + value)/4]=register_values[reg_store[0]];
-                programCounter++;
-
-                //---------------------------------------
-                int adrs, value1;
-                value1 = register_values[reg_store[0]];
-                adrs = (offs + value)/4;
-                if(search1(adrs) == true){//hit in L1
-                    miss=0;
-                    incrementcounter1(adrs);
-                    updateInL1(adrs,value1);
-                    accessesL1++;
+            else if (opcode == "sw")
+            {
+               // memaccess++;
+                std::string rs = parts[1];      // Source register
+                std::string address = parts[2]; // Memory address
+                size_t openBracketPos = address.find('(');
+                size_t closeBracketPos = address.find(')');
+                std::string rd;
+                int offset;
+                if (openBracketPos != std::string::npos && closeBracketPos != std::string::npos)
+                {
+                    // Extracting the destination register name from the address string
+                     rd = address.substr(openBracketPos + 1, closeBracketPos - openBracketPos - 1);
+                    // Extracting the offset from the address string
+                    std::string offsetStr = address.substr(0, openBracketPos);
+                     offset = std::stoi(offsetStr);
+                    // Calculating the effective address by adding the offset to the value in the register
+                    int effectiveAddress = registers[rd] + offset;
+                    // Storing the value from the source register into memory at the effective address
+                    memory[effectiveAddress] = registers[rs];
                 }
-                else if(search2(adrs) == true){//hit in L2 but was a miss in L1
+
+                pp[ppRow][0] = instruction;
+                int adrs, value1;
+               value1 = registers[rs];
+               adrs = offset +registers[rd];
+                 // std:: cout<<"swaddr"<<adrs<<" ";
+             if(search1(adrs) == true) { // hit in L1
+              miss = 0;
+             incrementcounter1(adrs);
+            updateInL1(adrs, value1);
+             accessesL1++;
+            
+           }
+           else if(search2(adrs) == true){//hit in L2 but was a miss in L1
                     miss=1; 
-                    L2toL1(adrs);
+                    L2toL1(adrs,memory);
                     updateInL2(adrs,value1); 
                     totalL1misses++;
                     accessesL1++;
                     accessesL2++; 
                 }
-                else{
+           else{
                     miss=2;
-                    memtoL1(adrs);
+                    memtoL1(adrs,memory);
                     totalL1misses++;
                     totalL2misses++;
                     accessesL1++;
                     accessesL2++;
                 }
-                //----------------------------------------
-                return;
+                execute_ins(ppRow, flag, latencies);
+                ppRow++;
+                pc += 1;
             }
+            else if (opcode == "slt")
+            {
+                std::string rd = parts[1];  // Destination register
+                std::string rs1 = parts[2]; // Source register 1
+                std::string rs2 = parts[3]; // Source register 2
 
-            if(current_instruction.substr(0,3)=="slt"){
-                string rd,src1,src2;
-                rd=current_instruction.substr(3,2);
-                src1=current_instruction.substr(5,2);
-                src2=current_instruction.substr(7,2);
-                int reg_store[3]={-1};
-                for(int i=0;i<32;i++){
-                    if(src1==REG[i])
-                    reg_store[0]=i;
-                    else if(src2==REG[i])
-                    reg_store[1]=i;
-                    else if(rd==REG[i])
-                    reg_store[2]=i;
-                }
-                if(register_values[reg_store[0]]<register_values[reg_store[1]]){
-                    register_values[reg_store[2]]=1;
-                }
-                else{
-                     register_values[reg_store[2]]=0;
-                }
-                programCounter++;
-                return;
+                // Set the destination register to 1 if source register 1 < source register 2, otherwise set it to 0
+                registers[rd] = (registers[rs1] < registers[rs2]) ? 1 : 0;
+
+                pp[ppRow][0] = instruction;
+                execute_ins(ppRow, flag, latencies);
+                ppRow++;
+                pc += 1;
             }
-            if(current_instruction.substr(0,2)=="la"){ //las0array
-                for(int i=0;i<32;i++){
-                    if(current_instruction.substr(2,2)==REG[i]){
-                        register_values[i]=0; //MEM[0]=0;
-                        break;
+            else if (opcode == "j")
+            {
+                std::string label = parts[1]; // Target label
+                auto it = find(program.begin(), program.end(), label);
+                if (it != program.end())
+                {
+                    pc = distance(program.begin(), it) - 1;
+                }
+
+                pp[ppRow][0] = instruction;
+                execute_ins(ppRow, flag, latencies);
+                ppRow++;
+                pc += 1;
+            }
+            else if (opcode == "bne")
+            {
+                std::string rs1 = parts[1];
+                std::string rs2 = parts[2];
+                std::string label = parts[3];
+                if (registers[rs1] != registers[rs2])
+                {
+                    auto it = find(program.begin(), program.end(), label);
+                    if (it != program.end())
+                    {
+                        pc = distance(program.begin(), it) - 1;
                     }
                 }
-                programCounter++;
-                return;
+
+                pp[ppRow][0] = instruction;
+                execute_ins(ppRow, flag, latencies);
+                ppRow++;
+                pc += 1;
             }
-            if(current_instruction.substr(0,2)=="jr"){
-                programCounter++;
-                return;
+        }
+    }
+    // storing IF,ID etc..in pipeline
+    void store_pp(int x, int y, int iF, int id, int ex, int mem, int wb)
+    {
+        while (iF != 0)
+        {
+            if (pp[x][y] == "stall")
+            {
+                y++; // when it sees stall it moves to position after stall..
+            }
+            else
+            {
+                pp[x][y] = "stall";
+                y++;
+                iF--;
+            }
+        }
+        while (pp[x][y] == "stall")
+        {
+            y++;
+        }
+
+        pp[x][y] = "IF"; // fills the location with IF
+        y++;
+        while (id != 0)
+        {
+            if (pp[x][y] == "stall")
+            {
+                y++;
+            }
+            else
+            {
+                pp[x][y] = "stall";
+                y++;
+                id--;
+            }
+        }
+        while (pp[x][y] == "stall")
+        {
+            y++;
+        }
+        pp[x][y] = "ID";
+        y++;
+        while (ex != 0)
+        {
+            if (pp[x][y] == "stall")
+            {
+                y++;
+            }
+            else
+            {
+                pp[x][y] = "stall";
+                y++;
+                ex--;
+            }
+        }
+        while (pp[x][y] == "stall")
+        {
+            y++;
+        }
+        pp[x][y] = "EX";
+        y++;
+        while (mem != 0)
+        {
+            if (pp[x][y] == "stall")
+            {
+                y++;
+            }
+            else
+            {
+                pp[x][y] = "stall";
+                y++;
+                mem--;
+            }
+        }
+        while (pp[x][y] == "stall")
+        {
+            y++;
+        }
+        pp[x][y] = "memory";
+        y++;
+        while (wb != 0)
+        {
+            if (pp[x][y] == "stall")
+            {
+                y++;
+            }
+            else
+            {
+                pp[x][y] = "stall";
+                y++;
+                wb--;
+            }
+        }
+        while (pp[x][y] == "stall")
+        {
+            y++;
+        }
+        pp[x][y] = "WB";
+    }
+    // function for storing arithmetic instructions in pipeline based on latencies..
+    void fillarith(int x, int y, int iF, int id, int ex, int mem, int wb, int latency_val)
+    {
+        while (iF != 0)
+        {
+            if (pp[x][y] == "stall")
+            {
+                y++;
+            }
+            else
+            {
+                pp[x][y] = "stall";
+                y++;
+                iF--;
             }
         }
 
-        void fill(int x,int y,int iF, int id, int ex, int mem, int wb){
-            while(iF!=0){
-                if(pipeline[x][y]=="stall"){
-                    y++;
-                }
-                else{
-                    pipeline[x][y]="stall";
-                    y++;
-                    iF--;
-                }
-            }
-            while(pipeline[x][y]=="stall"){
-                y++;
-            }
-
-            pipeline[x][y]="IF";
+        while (pp[x][y] == "stall")
+        {
             y++;
-            while(id!=0){
-                if(pipeline[x][y]=="stall"){
-                    y++;
-                }
-                else{
-                    pipeline[x][y]="stall";
-                    y++;
-                    id--;
-                }
-            }
-            while(pipeline[x][y]=="stall"){
-                y++;
-            }
-            pipeline[x][y]="ID";
-            y++;
-            while(ex!=0){
-                if(pipeline[x][y]=="stall"){
-                    y++;
-                }
-                else{
-                    pipeline[x][y]="stall";
-                    y++;
-                    ex--;
-                }
-            }
-            while(pipeline[x][y]=="stall"){
-                y++;
-            }
-            pipeline[x][y]="EX";
-            y++;
-            while(mem!=0){
-                if(pipeline[x][y]=="stall"){
-                    y++;
-                }
-                else{
-                    pipeline[x][y]="stall";
-                    y++;
-                    mem--;
-                }
-            }
-            while(pipeline[x][y]=="stall"){
-                y++;
-            }
-            if(pipeline[x][0].substr(0,2)=="lw" || pipeline[x][0].substr(0,2)=="sw"){
-                if(miss_arr[x]==0){//miss=?
-                    int temp_time=accessLatency1;
-                    while(temp_time!=0){
-                        pipeline[x][y]="MEM";
-                        y++;
-                        temp_time--;
-                    }
-                }
-                else if(miss_arr[x]==1){
-                    int temp_time=accessLatency1+accessLatency2;
-                    while(temp_time!=0){
-                        pipeline[x][y]="MEM";
-                        y++;
-                        temp_time--;
-                    }
-                }
-                else{
-                    int temp_time=accessLatency1+accessLatency2+memTime;
-                    while(temp_time!=0){
-                        pipeline[x][y]="MEM";
-                        y++;
-                        temp_time--;
-                    }
-                }
-            }
-            else{
-            pipeline[x][y]="MEM";
-            y++;
-            }
-            while(wb!=0){
-                if(pipeline[x][y]=="stall"){
-                    y++;
-                }
-                else{
-                    pipeline[x][y]="stall";
-                    y++;
-                    wb--;
-                }
-            }
-            while(pipeline[x][y]=="stall"){
-                y++;
-            }
-            pipeline[x][y]="WB";
-        }
-      
-        string hazard(string ins){
-            if(ins.substr(0,4)=="addi"){
-                return ins.substr(4,2);
-            }
-            if(ins.substr(0,3)=="add" && (ins.substr(3,1)!="i")){
-                return ins.substr(3,2);
-            }
-            if(ins.substr(0,3)=="sub"){
-                return ins.substr(3,2);
-            }
-            if(ins.substr(0,3)=="mul"){
-                return ins.substr(3,2);
-            }
-            if(ins.substr(0,3)=="div"){
-                return ins.substr(3,2);
-            }
-            if(ins.substr(0,3)=="slt"){
-                return ins.substr(3,2);
-            }
-            if(ins.substr(0,2)=="lw"){
-                return ins.substr(2,2);
-            }
-            if(ins.substr(0,2)=="sw"){
-                return ins.substr(2,2);
-            }
-
-            return "null";
-            //if ..... other functions
         }
 
-        bool branchhazard(string ins){
-            bool flag=false;
-             if(ins.substr(0,3)=="beq"||ins.substr(0,3)=="bne"||(ins.substr(0,1)=="j"&&ins.substr(1,1)!="r")){
-                flag=true;
+        pp[x][y] = "IF";
+        y++;
+
+        while (id != 0)
+        {
+            if (pp[x][y] == "stall")
+            {
+                y++;
             }
-            return flag;
+            else
+            {
+                pp[x][y] = "stall";
+                y++;
+                id--;
+            }
         }
-      
-        int memory_hazard(int ins_row){
-           int result=0;
-           if(pipeline[ins_row][0].substr(0,2)=="lw"||pipeline[ins_row][0].substr(0,2)=="sw"){
-               int temp_miss=miss_arr[ins_row];
+
+        while (pp[x][y] == "stall")
+        {
+            y++;
+        }
+
+        pp[x][y] = "ID";
+        y++;
+
+        while (ex != 0)
+        {
+            if (pp[x][y] == "stall")
+            {
+                y++;
+            }
+            else
+            {
+                pp[x][y] = "stall";
+                y++;
+                ex--;
+            }
+        }
+
+        while (pp[x][y] == "stall")
+        {
+            y++;
+        }
+
+        pp[x][y] = "EX";
+        y++;
+
+        // Add latency for the EX stage based on the instruction type
+        for (int i = 0; i < latency_val; ++i)
+        {
+            pp[x][y] = "stall";
+            y++;
+        }
+
+        while (mem != 0)
+        {
+            if (pp[x][y] == "stall")
+            {
+                y++;
+            }
+            else
+            {
+                pp[x][y] = "stall";
+                y++;
+                mem--;
+            }
+        }
+
+        while (pp[x][y] == "stall")
+        {
+            y++;
+        }
+
+        pp[x][y] = "memory";
+        y++;
+
+        while (wb != 0)
+        {
+            if (pp[x][y] == "stall")
+            {
+                y++;
+            }
+            else
+            {
+                pp[x][y] = "stall";
+                y++;
+                wb--;
+            }
+        }
+
+        while (pp[x][y] == "stall")
+        {
+            y++;
+        }
+
+        pp[x][y] = "WB";
+    }
+    int memory_hazard(int ins_row) {
+     int result=0;
+           if(pp[ins_row][0].substr(0,2)=="lw"||pp[ins_row][0].substr(0,2)=="sw"){
+               int temp_miss=missarr[ins_row];
                if(temp_miss==0){
-                  result=accessLatency1-1;
+                  result=accesslatency1-1;
                }
                else if(temp_miss==1){
-                   result=accessLatency1+accessLatency2-1;
+                   result=accesslatency1+accesslatency2-1;
                }
                else{
-                   result=accessLatency1+accessLatency2+memTime-1;
+                   result=accesslatency1+accesslatency2+memtime-1;
                }
                return result;
            }
            else{
                return result;
            }
-       }
-        
-        void stalls_hazard(int ins_row){
-            int IF,ID,EX,MEM;
-            int clk_len=0;
-            for(int j=1;j<1000;j++){
-                if(pipeline[ins_row][j]=="WB")
-                  clk_len=j;
-            }
-            for(int j=1;j<clk_len;j++){
-              if(pipeline[ins_row][j]=="IF")
-              IF=j;
-               if(pipeline[ins_row][j]=="ID")
-              ID=j;
-               if(pipeline[ins_row][j]=="EX")
-              EX=j;
-               if(pipeline[ins_row][j]=="MEM")
-              MEM=j;
-            }
-            for(int j=IF+1;j<ID;j++){
-                if(pipeline[ins_row][j]=="stall"){
+}
+    // checkHazard fn returns destination register...
+    std::string checkHazard(std::string ins)
+    {
 
-                  pipeline[ins_row+1][j]="stall";
-
-
-                }
-            }
-            for(int j=ID+1;j<EX;j++){
-                if(pipeline[ins_row][j]=="stall"){
-                  pipeline[ins_row+1][j]="stall";
-                }
-            }
-            for(int j=EX+1;j<MEM;j++){
-                if(pipeline[ins_row][j]=="stall"){
-                  //fill(ins_row+1,i,0,0,0,1,0);
-
-                  pipeline[ins_row+1][j]="stall";
-                }
-            }
-            for(int j=MEM+1;j<clk_len;j++){
-                if(pipeline[ins_row][j]=="stall"){
-                  //fill(ins_row+1,i,0,0,0,0,1);
-                  pipeline[ins_row+1][j]="stall";
-                }
-            }
-
+        if (ins.substr(0, 4) == "addi")
+        {
+            return ins.substr(5, 2);
+        }
+        if (ins.substr(0, 3) == "add" && (ins.substr(3, 1) != "i"))
+        {
+            return ins.substr(4, 2);
+        }
+        if (ins.substr(0, 3) == "sub")
+        {
+            return ins.substr(4, 2);
+        }
+        if (ins.substr(0, 3) == "mul")
+        {
+            return ins.substr(4, 2);
+        }
+        if (ins.substr(0, 3) == "div")
+        {
+            return ins.substr(4, 2);
+        }
+        if (ins.substr(0, 3) == "slt")
+        {
+            return ins.substr(4, 2);
+        }
+        if (ins.substr(0, 2) == "lw")
+        {
+            return ins.substr(2, 2);
+        }
+        if (ins.substr(0, 2) == "sw")
+        {
+            return ins.substr(3, 2);
         }
 
-        void fillPipeline(int numb_rows,int flagForwdg){
-            int clock1=1;
-            int j=0;
-            for(int i=0; i<numb_rows; i++){
-                j=clock1;
+        return "false";
+        // if ..... other functions
+    }
+    // prdict fn checks if its a branch instruction and it assumes it as always taken..
+    bool predict(std::string ins)
+    {
+        bool flag = false;
+        // if it is branch instruction..then it always returns true.
+        if (ins.substr(0, 3) == "beq" || ins.substr(0, 3) == "bne" || (ins.substr(0, 1) == "j" && ins.substr(1, 1) != "r"))
+        {
+            flag = true;
+        }
+        return flag;
+    }
+    // if prev instructions have stalls it transforms all those stalls downwards to present instruction..
+    void fill_stalls(int ins_row)
+    {
+        int IF, ID, EX, memory;
+        int clk_len = 0;
+        for (int j = 1; j < 10000; j++)
+        {
 
-                if(pipeline[i][0].substr(0,4)=="addi"){
-                     //no of cycles-1 if it is a lw or sw
-                    if(i!=0 && pipeline[i][0].substr(6,2) == hazard(pipeline[i-1][0])){
-                       //if its a lw or sw..then it returns time 
-                       int res=memory_hazard(i-1);
-                         if(flagForwdg==0){//no forwarding
-                            stalls_hazard(i-1);
-                            if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
-                                if(res!=0){//suppose 4 cycles res=3
-                                   fill(i,j,1,0,res+2,0,0);
+            if (pp[ins_row][j] == "WB")
+            {
+                clk_len = j;
+            }
+        }
+        for (int j = 1; j < clk_len; j++)
+        {
+            if (pp[ins_row][j] == "IF")
+                IF = j;
+            if (pp[ins_row][j] == "ID")
+                ID = j;
+            if (pp[ins_row][j] == "EX")
+                EX = j;
+            if (pp[ins_row][j] == "memory")
+                memory = j;
+        }
+        for (int j = IF + 1; j < ID; j++)
+        {
+            if (pp[ins_row][j] == "stall")
+            {
+
+                pp[ins_row + 1][j] = "stall";
+            }
+        }
+        for (int j = ID + 1; j < EX; j++)
+        {
+            if (pp[ins_row][j] == "stall")
+            {
+                pp[ins_row + 1][j] = "stall";
+            }
+        }
+        for (int j = EX + 1; j < memory; j++)
+        {
+            if (pp[ins_row][j] == "stall")
+            {
+                pp[ins_row + 1][j] = "stall";
+            }
+        }
+        for (int j = memory + 1; j < clk_len; j++)
+        {
+            if (pp[ins_row][j] == "stall")
+            {
+                pp[ins_row + 1][j] = "stall";
+            }
+        }
+    }
+
+    void execute_ins(int i, int flag, std::map<std::string, int> latencies)
+    {
+        // cout<<numb_rows<<endl;
+        int j = clockk;
+        if (pp[i][0].substr(0, 4) == "addi")
+        {
+            if (i != 0 && pp[i][0].substr(5, 2) == checkHazard(pp[i - 1][0]))
+            {
+                int temp=memory_hazard(i-1);
+                if (flag == 0)
+                { // no forwarding
+                    fill_stalls(i - 1);
+                    // check if previous instruction is branch instruction..
+                    if (predict(pp[i - 1][0]) && flag1 == 1)
+                    {
+                       if(temp!=0){//suppose 4 cycles temp=3
+                                   store_pp(i,j,1,0,temp+2,0,0);
                                 }
                                 else{
-                                    fill(i,j,1,0,2,0,0);
+                                    store_pp(i,j,1,0,2,0,0);
                                 }
-                           }
-                            else{
-                            if(res!=-1){
-                                   fill(i,j,0,0,res+2,0,0);
-                                }
-                                else{
-                                    fill(i,j,0,0,2,0,0);
-                                }
-                            }     
-                        }
-                        //doubtful in case of forwarding
-                        else{//with forwarding
-                            stalls_hazard(i-1);
-                            if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
-                             if(res!=0){
-                                   fill(i,j,1,0,res,0,0);
-                                }
-                                else{
-                                    fill(i,j,1,0,0,0,0);
-                                }
-                            }
-                            else{
-                             if(res!=-1){
-                                   fill(i,j,0,0,res,0,0);
-                                }
-                                else{
-                                    fill(i,j,0,0,0,0,0);
-                                }
-                            }
-                        }
                     }
-                    else if(i==0){
-                        fill(i,j,0,0,0,0,0);
-                    }
-                    else{   //i!=0 and no hazard in previous instruction
-                    int res=memory_hazard(i-1);
-                         stalls_hazard(i-1);
-                        if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
-                            if(res!=-1){
-                                   fill(i,j,0,0,res,0,0);
+                    else
+                    {
+                        if(temp!=-1){
+                                   store_pp(i,j,0,0,temp+2,0,0);
                                 }
                                 else{
-                                    fill(i,j,0,0,res,0,0);
+                                    store_pp(i,j,0,0,2,0,0);
                                 }
-                        }
-                        else{
-                             if(res!=-1){
-                                   fill(i,j,0,0,res,0,0);
-                                }
-                                else{
-                                    fill(i,j,0,0,res,0,0);
-                                }
-                        }
-                       
                     }
                 }
-                if(pipeline[i][0].substr(0,3)=="add" && pipeline[i][0].substr(3,1)!="i"){
-                    int res=memory_hazard(i-1);
-                    if(pipeline[i][0].substr(5,2) == hazard(pipeline[i-1][0]) || pipeline[i][0].substr(7,2) == hazard(pipeline[i-1][0])){
-                        if(flagForwdg==0){//no forwarding
-                         stalls_hazard(i-1);
-                            if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
-                            if(res!=0){
-                                   fill(i,j,1,0,res+2,0,0);
+                else
+                { // with forwarding
+
+                    fill_stalls(i - 1);
+                    if (predict(pp[i - 1][0]) && flag1 == 1)
+                    {
+                        if(temp!=0){
+                                   store_pp(i,j,1,0,temp,0,0);
                                 }
                                 else{
-                                    fill(i,j,1,0,2,0,0);
+                                    store_pp(i,j,1,0,0,0,0);
                                 }
-                            }
-                            else{
-                                if(res!=0){
-                                   fill(i,j,0,0,res+2,0,0);
-                                }
-                                else{
-                                    fill(i,j,0,0,2,0,0);
-                                }
-                            }
-                           
-                            
-                        }
-                        else{//with forwarding
-                         stalls_hazard(i-1);
-                             if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
-                                   if(res!=0){
-                                   fill(i,j,1,0,res,0,0);
-                                }
-                                else{
-                                    fill(i,j,1,0,0,0,0);
-                                }
-                             }
-                           
-                            else{
-                                if(res!=-1){
-                                   fill(i,j,0,0,res,0,0);
-                                }
-                                else{
-                                    fill(i,j,0,0,0,0,0);
-                                }
-                            }
-                           
-                        }
-                       
                     }
-                    else{
-                        stalls_hazard(i-1);
-                        if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
-                            // fill(i,j,1,0,0,0,0);
-                             if(res!=0){
-                                   fill(i,j,1,0,res,0,0);
+                    else
+                    {
+                        if(temp!=-1){
+                                   store_pp(i,j,0,0,temp,0,0);
                                 }
                                 else{
-                                    fill(i,j,1,0,0,0,0);
+                                    store_pp(i,j,0,0,0,0,0);
                                 }
-                         }
-                            
-                        else{
-                            //fill(i,j,0,0,0,0,0);
-                            if(res!=0){
-                                   fill(i,j,0,0,res,0,0);
-                                }
-                                else{
-                                    fill(i,j,0,0,0,0,0);
-                                }
-                        }
-                       
                     }
                 }
+            }
 
-                if(pipeline[i][0].substr(0,3)=="sub"){
-                    int res=memory_hazard(i-1);
-                    if(pipeline[i][0].substr(5,2) == hazard(pipeline[i-1][0]) || pipeline[i][0].substr(7,2) == hazard(pipeline[i-1][0])){
-                        if(flagForwdg==0){//no forwarding
-                         stalls_hazard(i-1);
-                            if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
-                            if(res!=0){
-                                   fill(i,j,1,0,res+2,0,0);
+            else if (i == 0)
+            {
+                store_pp(i, j, 0, 0, 0, 0, 0);
+            }
+            else
+            { // i!=0 and no checkHazard in previous instruction
+                int temp=memory_hazard(i-1);
+                fill_stalls(i - 1);
+                if (predict(pp[i - 1][0]) && flag1 == 1)
+                {
+                    if(temp!=-1){
+                                   store_pp(i,j,0,0,temp,0,0);
                                 }
                                 else{
-                                    fill(i,j,1,0,2,0,0);
+                                    store_pp(i,j,0,0,temp,0,0);
                                 }
-                            }
-                            else{
-                                if(res!=0){
-                                   fill(i,j,0,0,res+2,0,0);
-                                }
-                                else{
-                                    fill(i,j,0,0,2,0,0);
-                                }
-                            }
-                        }
-                        else{//with forwarding
-                            stalls_hazard(i-1);
-                             if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
-                                 if(res!=0){
-                                   fill(i,j,1,0,res,0,0);
+                }
+                else
+                {
+                    if(temp!=-1){
+                                   store_pp(i,j,0,0,temp,0,0);
                                 }
                                 else{
-                                    fill(i,j,1,0,0,0,0);
+                                    store_pp(i,j,0,0,temp,0,0);
                                 }
-                             }
-                           
-                            else{
-                                if(res!=-1){
-                                   fill(i,j,0,0,res,0,0);
-                                }
-                                else{
-                                    fill(i,j,0,0,0,0,0);
-                                }
-                            }
-                           
-                        }
-                      
+                }
+            }
+        }
+        else if (pp[i][0].substr(0, 3) == "bgt")
+        {
+            // Extracting the registers involved in the bgt instruction
+            // cout<<"bgt"<<endl;
+            std::string reg1 = pp[i][0].substr(3, 2);
+            std::string reg2 = pp[i][0].substr(6, 2);
+             int temp = memory_hazard(i - 1);
+
+            // Check for hazards with the previous instruction
+            if (i != 0 && (reg1 == checkHazard(pp[i - 1][0]) || reg2 == checkHazard(pp[i - 1][0])))
+            {
+                if (flag == 0)
+                { // No forwarding
+                    fill_stalls(i - 1);
+                    if (predict(pp[i - 1][0]) && flag1 == 1)
+                    {
+                        if (temp != 0) {
+                    store_pp(i, j, 1, 0, temp + 2, 0, 0); // With branch hazard
+                } else {
+                    store_pp(i, j, 1, 0, 2, 0, 0); // With branch hazard, no memory hazard
+                }
                     }
-                    else{
-                         stalls_hazard(i-1);
-                        if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
-                            // fill(i,j,1,0,0,0,0);
-                             if(res!=0){
-                                   fill(i,j,1,0,res,0,0);
-                                }
-                                else{
-                                    fill(i,j,1,0,0,0,0);
-                                }
-                         }
-                            
-                        else{
-                            //fill(i,j,0,0,0,0,0);
-                            if(res!=0){
-                                   fill(i,j,0,0,res,0,0);
-                                }
-                                else{
-                                    fill(i,j,0,0,0,0,0);
-                                }
-                        }
+                    else
+                    {
+                        if (temp != -1) {
+                    store_pp(i, j, 0, 0, temp + 2, 0, 0); // Without branch hazard
+                } else {
+                    store_pp(i, j, 0, 0, 2, 0, 0); // Without branch hazard, no memory hazard
+                }
                     }
                 }
-
-                if(pipeline[i][0].substr(0,3)=="mul"){
-                    int res=memory_hazard(i-1);
-                    if(pipeline[i][0].substr(5,2) == hazard(pipeline[i-1][0]) || pipeline[i][0].substr(7,2) == hazard(pipeline[i-1][0])){
-                        if(flagForwdg==0){//no forwarding
-                         stalls_hazard(i-1);
-                           if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
-                                fill(i,j,1,0,2,0,0);
-                           }
-                           
-                            else{
-                                fill(i,j,0,0,2,0,0);
-                            }
-                        }
-                        else{//with forwarding
-                           stalls_hazard(i-1);
-                             if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
-                                 if(res!=0){
-                                   fill(i,j,1,0,res,0,0);
-                                }
-                                else{
-                                    fill(i,j,1,0,0,0,0);
-                                }
-                             }
-                           
-                            else{
-                                if(res!=-1){
-                                   fill(i,j,0,0,res,0,0);
-                                }
-                                else{
-                                    fill(i,j,0,0,0,0,0);
-                                }
-                            }
-                           
-                        } 
+                else
+                { // With forwarding
+                    fill_stalls(i - 1);
+                    if (predict(pp[i - 1][0]) && flag1 == 1)
+                    {
+                         if (temp != 0) {
+                    store_pp(i, j, 1, 0, temp, 0, 0); // With branch hazard
+                } else {
+                    store_pp(i, j, 1, 0, 0, 0, 0); // With branch hazard, no memory hazard
+                }
                     }
-                    else{
-                         stalls_hazard(i-1);
-                        if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
-                            // fill(i,j,1,0,0,0,0);
-                             if(res!=0){
-                                   fill(i,j,1,0,res,0,0);
+                    else
+                    {
+                        if (temp != -1) {
+                    store_pp(i, j, 0, 0, temp, 0, 0); // Without branch hazard
+                } else {
+                    store_pp(i, j, 0, 0, 0, 0, 0); // Without branch hazard, no memory hazard
+                }
+                    }
+                }
+            }
+            else if (i == 0) {
+        store_pp(i, j, 0, 0, 0, 0, 0); // No hazard in the first instruction
+    }
+            else
+            {
+                fill_stalls(i - 1);
+                if (predict(pp[i - 1][0]) && flag1 == 1)
+                {
+                     if (temp != -1) {
+                store_pp(i, j, 0, 0, temp, 0, 0); // With branch hazard
+            } else {
+                store_pp(i, j, 0, 0, temp, 0, 0); // With branch hazard, no memory hazard
+            }
+                }
+                else
+                {
+                   if (temp != -1) {
+                store_pp(i, j, 0, 0, temp, 0, 0); // Without branch hazard
+            } else {
+                store_pp(i, j, 0, 0, 0, 0, 0); // Without branch hazard, no memory hazard
+            }
+                }
+            }
+        }
+        else if (pp[i][0].substr(0, 4) == "subi")
+        {
+            std::string reg1 = pp[i][0].substr(4, 2);
+              int temp = memory_hazard(i - 1);
+            // Check for hazards with the previous instruction
+            //(it checks if destination reg of prev is same as that of before ins..)
+            if (i != 0 && reg1 == checkHazard(pp[i - 1][0]))
+            {
+                if (flag == 0)
+                { // No forwarding
+                    fill_stalls(i - 1);
+                    if (predict(pp[i - 1][0]) && flag1 == 1)
+                    {
+                        if (temp != 0) {
+                    store_pp(i, j, 1, 0, temp + 2, 0, 0); // With branch hazard
+                } else {
+                    store_pp(i, j, 1, 0, 2, 0, 0); // With branch hazard, no memory hazard
+                }
+                    }
+                    else
+                    {
+                        if (temp != -1) {
+                    store_pp(i, j, 0, 0, temp + 2, 0, 0); // Without branch hazard
+                } else {
+                    store_pp(i, j, 0, 0, 2, 0, 0); // Without branch hazard, no memory hazard
+                }
+                    }
+                }
+                else
+                { // With forwarding
+                    fill_stalls(i - 1);
+                    if (predict(pp[i - 1][0]) && flag1 == 1)
+                    {
+                        if (temp != 0) {
+                    store_pp(i, j, 1, 0, temp, 0, 0); // With branch hazard
+                } else {
+                    store_pp(i, j, 1, 0, 0, 0, 0); // With branch hazard, no memory hazard
+                }
+                    }
+                    else
+                    {
+                        if (temp != -1) {
+                    store_pp(i, j, 0, 0, temp, 0, 0); // Without branch hazard
+                } else {
+                    store_pp(i, j, 0, 0, 0, 0, 0); // Without branch hazard, no memory hazard
+                }
+                    }
+                }
+            }
+             else if (i == 0) {
+        store_pp(i, j, 0, 0, 0, 0, 0); // No hazard in the first instruction
+    }
+            else
+            {
+                fill_stalls(i - 1);
+                if (predict(pp[i - 1][0]) && flag1 == 1)
+                {
+                   if (temp != -1) {
+                store_pp(i, j, 0, 0, temp, 0, 0); // With branch hazard
+            } else {
+                store_pp(i, j, 0, 0, temp, 0, 0); // With branch hazard, no memory hazard
+            }
+                }
+                else
+                {
+                   if (temp != -1) {
+                store_pp(i, j, 0, 0, temp, 0, 0); // Without branch hazard
+            } else {
+                store_pp(i, j, 0, 0, 0, 0, 0); // Without branch hazard, no memory hazard
+            }
+                }
+            }
+        }
+
+        else if (pp[i][0].substr(0, 3) == "add" && pp[i][0].substr(3, 1) != "i")
+        {
+               int temp=memory_hazard(i-1);
+
+            int latency_val = latencies["add"];
+            if (pp[i][0].substr(5, 2) == checkHazard(pp[i - 1][0]) || pp[i][0].substr(7, 2) == checkHazard(pp[i - 1][0]))
+            {
+                if (flag == 0)
+                { // no forwarding
+                    fill_stalls(i - 1);
+                    if (predict(pp[i - 1][0]) && flag1 == 1)
+                    {
+                        if(temp!=0){
+                                   fillarith(i,j,1,0,temp+2,0,0,latency_val);
                                 }
                                 else{
-                                    fill(i,j,1,0,0,0,0);
+                                    fillarith(i,j,1,0,2,0,0,latency_val);
                                 }
-                         }
-                            
-                        else{
-                            //fill(i,j,0,0,0,0,0);
-                            if(res!=0){
-                                   fill(i,j,0,0,res,0,0);
+                    }
+                    else
+                    {
+                        if(temp!=0){
+                                   fillarith(i,j,0,0,temp+2,0,0,latency_val);
                                 }
                                 else{
-                                    fill(i,j,0,0,0,0,0);
+                                    fillarith(i,j,0,0,2,0,0,latency_val);
                                 }
-                        }
+                    }
+                }
+                else
+                { // with forwarding
+                    fill_stalls(i - 1);
+                    if (predict(pp[i - 1][0]) && flag1 == 1)
+                    {
+                        if(temp!=0){
+                                   fillarith(i,j,1,0,temp,0,0,latency_val);
+                                }
+                                else{
+                                    fillarith(i,j,1,0,0,0,0,latency_val);
+                                }
+                    }
+
+                    else
+                    {
+                         if(temp!=-1){
+                                   fillarith(i,j,0,0,temp,0,0,latency_val);
+                                }
+                                else{
+                                    fillarith(i,j,0,0,0,0,0,latency_val);
+                                }
                         
                     }
                 }
-
-                if(pipeline[i][0].substr(0,3)=="div"){
-                    int res=memory_hazard(i-1);
-                    if(pipeline[i][0].substr(5,2) == hazard(pipeline[i-1][0]) || pipeline[i][0].substr(7,2) == hazard(pipeline[i-1][0])){
-                        if(flagForwdg==0){//no forwarding
-                          stalls_hazard(i-1);
-                             if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
-                                 if(res!=0){
-                                   fill(i,j,1,0,res+2,0,0);
+            }
+            else
+            {
+                fill_stalls(i - 1);
+                if (predict(pp[i - 1][0]) && flag1 == 1)
+                {
+                   if(temp!=0){
+                                   fillarith(i,j,1,0,temp,0,0,latency_val);
                                 }
                                 else{
-                                    fill(i,j,1,0,2,0,0);
+                                    fillarith(i,j,1,0,0,0,0,latency_val);
                                 }
-                             }
-                           
-                            else{
-                                if(res!=-1){
-                                   fill(i,j,0,0,res+2,0,0);
-                                }
-                                else{
-                                    fill(i,j,0,0,2,0,0);
-                                }
-                            }
-                           
-                        }
-                        else{//with forwarding
-                             stalls_hazard(i-1);
-                             if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
-                                 if(res!=0){
-                                   fill(i,j,1,0,res,0,0);
-                                }
-                                else{
-                                    fill(i,j,1,0,0,0,0);
-                                }
-                             }
-                           
-                            else{
-                                if(res!=-1){
-                                   fill(i,j,0,0,res,0,0);
-                                }
-                                else{
-                                    fill(i,j,0,0,0,0,0);
-                                }
-                            }
-                             
-                      }
-                }
-                    else{
-                        stalls_hazard(i-1);
-                        if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
-                            // fill(i,j,1,0,0,0,0);
-                             if(res!=0){
-                                   fill(i,j,1,0,res,0,0);
-                                }
-                                else{
-                                    fill(i,j,1,0,0,0,0);
-                                }
-                         }
-                            
-                        else{
-                            //fill(i,j,0,0,0,0,0);
-                            if(res!=0){
-                                   fill(i,j,0,0,res,0,0);
-                                }
-                                else{
-                                    fill(i,j,0,0,0,0,0);
-                                }
-                        }
-                       
-                    }
                 }
 
-                if(pipeline[i][0].substr(0,3)=="slt"){
-                    int res=memory_hazard(i-1);
-                   if(pipeline[i][0].substr(5,2) == hazard(pipeline[i-1][0]) || pipeline[i][0].substr(7,2) == hazard(pipeline[i-1][0])){
-                        if(flagForwdg==0){//no forwarding
-                            stalls_hazard(i-1);
-                             if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
-                                 if(res!=0){
-                                   fill(i,j,1,0,res+2,0,0);
+                else
+                {
+                    if(temp!=0){
+                                   fillarith(i,j,0,0,temp,0,0,latency_val);
                                 }
                                 else{
-                                    fill(i,j,1,0,2,0,0);
+                                    fillarith(i,j,0,0,0,0,0,latency_val);
                                 }
-                             }
-                           
-                            else{
-                                if(res!=-1){
-                                   fill(i,j,0,0,res+2,0,0);
-                                }
-                                else{
-                                    fill(i,j,0,0,2,0,0);
-                                }
-                            }
-                        }
-                        else{//with forwarding
-                           stalls_hazard(i-1);
-                             if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
-                                 if(res!=0){
-                                   fill(i,j,1,0,res,0,0);
-                                }
-                                else{
-                                    fill(i,j,1,0,0,0,0);
-                                }
-                             }
-                           
-                            else{
-                                if(res!=-1){
-                                   fill(i,j,0,0,res,0,0);
+                }
+            }
+        }
+
+        else if (pp[i][0].substr(0, 3) == "sub")
+        {
+            int latency_val = latencies["sub"];
+             int temp=memory_hazard(i-1);
+            // cout<<"sub"<<endl;
+            if (pp[i][0].substr(5, 2) == checkHazard(pp[i - 1][0]) || pp[i][0].substr(7, 2) == checkHazard(pp[i - 1][0]))
+            {
+                if (flag == 0)
+                { // no forwarding
+                    fill_stalls(i - 1);
+                    if (predict(pp[i - 1][0]) && flag1 == 1)
+                    {
+                         if(temp!=0){
+                                   fillarith(i,j,1,0,temp+2,0,0,latency_val);
                                 }
                                 else{
-                                    fill(i,j,0,0,0,0,0);
+                                    fillarith(i,j,1,0,2,0,0,latency_val);
                                 }
-                            }
-                        }
-                       
                     }
-                    else{
-                        stalls_hazard(i-1);
-                        if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
-                            // fill(i,j,1,0,0,0,0);
-                             if(res!=0){
-                                   fill(i,j,1,0,res,0,0);
+
+                    else
+                    {
+                        if(temp!=0){
+                                   fillarith(i,j,0,0,temp+2,0,0,latency_val);
                                 }
                                 else{
-                                    fill(i,j,1,0,0,0,0);
+                                    fillarith(i,j,0,0,2,0,0,latency_val);
                                 }
-                         }
-                            
-                        else{
-                            //fill(i,j,0,0,0,0,0);
-                            if(res!=0){
-                                   fill(i,j,0,0,res,0,0);
+                    }
+
+                    // fill_stalls(i-1);
+                }
+                else
+                { // with forwarding
+                    fill_stalls(i - 1);
+                    if (predict(pp[i - 1][0]) && flag1 == 1)
+                    {
+                        if(temp!=0){
+                                   fillarith(i,j,1,0,temp,0,0,latency_val);
                                 }
                                 else{
-                                    fill(i,j,0,0,0,0,0);
+                                    fillarith(i,j,1,0,0,0,0,latency_val);
                                 }
-                        }
-                       
-                       
+                    }
+
+                    else
+                    {
+                        if(temp!=-1){
+                                   fillarith(i,j,0,0,temp,0,0,latency_val);
+                                }
+                                else{
+                                    fillarith(i,j,0,0,0,0,0,latency_val);
+                                }
                     }
                 }
-                if(pipeline[i][0].substr(0,3)=="beq"){
-                     int pc;
-                     int res=memory_hazard(i-1);
-                     branch_flag=0;
-                     for(int j=0;j<Input_ins.size();j++){
-                        if(pipeline[i][0]==Input_ins[j]){
-                        pc=j;
-                        }
-                                                    
-                     }
-                     if(pipeline[i+1][0]!=Input_ins[pc+1])
-                     branch_flag=1;
-                     else
-                     branch_flag=0;
-                    if(pipeline[i][0].substr(3,2) == hazard(pipeline[i-1][0]) || pipeline[i][0].substr(5,2) == hazard(pipeline[i-1][0])){
-                        if(flagForwdg==0){//no forwarding
-                            stalls_hazard(i-1);
-                             if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
-                                 if(res!=0){
-                                   fill(i,j,1,0,res+2,0,0);
+            }
+            else
+            {
+                fill_stalls(i - 1);
+                if (predict(pp[i - 1][0]) && flag1 == 1)
+                {
+                     if(temp!=0){
+                                   fillarith(i,j,1,0,temp,0,0,latency_val);
                                 }
                                 else{
-                                    fill(i,j,1,0,2,0,0);
+                                    fillarith(i,j,1,0,0,0,0,latency_val);
                                 }
-                             }
-                           
-                            else{
-                                if(res!=-1){
-                                   fill(i,j,0,0,res+2,0,0);
-                                }
-                                else{
-                                    fill(i,j,0,0,2,0,0);
-                                }
-                            }
-                        }
-                        else{//with forwarding
-                            stalls_hazard(i-1);
-                             if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
-                                 if(res!=0){
-                                   fill(i,j,1,0,res,0,0);
+                }
+
+                else
+                {
+                     if(temp!=0){
+                                   fillarith(i,j,0,0,temp,0,0,latency_val);
                                 }
                                 else{
-                                    fill(i,j,1,0,0,0,0);
+                                    fillarith(i,j,0,0,0,0,0,latency_val);
                                 }
-                             }
-                           
-                            else{
-                                if(res!=-1){
-                                   fill(i,j,0,0,res,0,0);
-                                }
-                                else{
-                                    fill(i,j,0,0,0,0,0);
-                                }
-                            }
-                        }
-                       
+                }
+            }
+        }
+
+        else if (pp[i][0].substr(0, 3) == "mul")
+        {
+            int latency_val = latencies["mul"];
+             int temp=memory_hazard(i-1);
+            if (pp[i][0].substr(5, 2) == checkHazard(pp[i - 1][0]) || pp[i][0].substr(7, 2) == checkHazard(pp[i - 1][0]))
+            {
+                if (flag == 0)
+                { // no forwarding
+                    fill_stalls(i - 1);
+                    if (predict(pp[i - 1][0]) && flag1 == 1)
+                    {
+                        fillarith(i, j, 1, 0, 2, 0, 0, latency_val);
                     }
-                    else{
-                        stalls_hazard(i-1);
-                        if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
-                            // fill(i,j,1,0,0,0,0);
-                             if(res!=0){
-                                   fill(i,j,1,0,res,0,0);
+
+                    else
+                    {
+                        fillarith(i, j, 0, 0, 2, 0, 0, latency_val);
+                    }
+                }
+                else
+                { // with forwarding
+                    fill_stalls(i - 1);
+                    if (predict(pp[i - 1][0]) && flag1 == 1)
+                    {
+                      if(temp!=0){
+                                   fillarith(i,j,1,0,temp,0,0,latency_val);
                                 }
                                 else{
-                                    fill(i,j,1,0,0,0,0);
+                                    fillarith(i,j,1,0,0,0,0,latency_val);
                                 }
-                         }
-                            
-                        else{
-                            //fill(i,j,0,0,0,0,0);
-                            if(res!=0){
-                                   fill(i,j,0,0,res,0,0);
+                    }
+
+                    else
+                    {
+                        if(temp!=-1){
+                                   fillarith(i,j,0,0,temp,0,0,latency_val);
                                 }
                                 else{
-                                    fill(i,j,0,0,0,0,0);
+                                    fillarith(i,j,0,0,0,0,0,latency_val);
                                 }
-                        }
-                        
-                        
+                    }
+                }
+            }
+            else
+            {
+                fill_stalls(i - 1);
+                if (predict(pp[i - 1][0]) && flag1 == 1)
+                {
+                    if(temp!=0){
+                                   fillarith(i,j,1,0,temp,0,0,latency_val);
+                                }
+                                else{
+                                    fillarith(i,j,1,0,0,0,0,latency_val);
+                                }
+                }
+
+                else
+                {
+                   if(temp!=0){
+                                   fillarith(i,j,0,0,temp,0,0,latency_val);
+                                }
+                                else{
+                                    fillarith(i,j,0,0,0,0,0,latency_val);
+                                }
+                }
+            }
+        }
+
+        else if (pp[i][0].substr(0, 3) == "div")
+        {
+              int temp=memory_hazard(i-1);
+            int latency_val = latencies["div"];
+            if (pp[i][0].substr(5, 2) == checkHazard(pp[i - 1][0]) || pp[i][0].substr(7, 2) == checkHazard(pp[i - 1][0]))
+            {
+                if (flag == 0)
+                { // no forwarding
+                    fill_stalls(i - 1);
+                    if (predict(pp[i - 1][0]) && flag1 == 1)
+                    {
+                        if(temp!=0){
+                                   fillarith(i,j,1,0,temp+2,0,0,latency_val);
+                                }
+                                else{
+                                    fillarith(i,j,1,0,2,0,0,latency_val);
+                                }
+                    }
+
+                    else
+                    {
+                        if(temp!=-1){
+                                   fillarith(i,j,0,0,temp+2,0,0,latency_val);
+                                }
+                                else{
+                                    fillarith(i,j,0,0,2,0,0,latency_val);
+                                }
+                    }
+                }
+                else
+                { // with forwarding
+                    fill_stalls(i - 1);
+                    if (predict(pp[i - 1][0]) && flag1 == 1)
+                    {
+                        if(temp!=0){
+                                   fillarith(i,j,1,0,temp,0,0,latency_val);
+                                }
+                                else{
+                                    fillarith(i,j,1,0,0,0,0,latency_val);
+                                }
+                    }
+
+                    else
+                    {
+                         if(temp!=-1){
+                                   fillarith(i,j,0,0,temp,0,0,latency_val);
+                                }
+                                else{
+                                    fillarith(i,j,0,0,0,0,0,latency_val);
+                                }
+                    }
+                }
+            }
+            else
+            {
+                fill_stalls(i - 1);
+                if (predict(pp[i - 1][0]) && flag1 == 1)
+                {
+                    if(temp!=0){
+                                   fillarith(i,j,1,0,temp,0,0,latency_val);
+                                }
+                                else{
+                                    fillarith(i,j,1,0,0,0,0,latency_val);
+                                }
+                }
+                else
+                {
+                    if(temp!=0){
+                                   fillarith(i,j,0,0,temp,0,0,latency_val);
+                                }
+                                else{
+                                    fillarith(i,j,0,0,0,0,0,latency_val);
+                                }
+                }
+            }
+        }
+
+        else if (pp[i][0].substr(0, 3) == "slt")
+        {
+            // cout<<"slt"<<" ";
+              int temp=memory_hazard(i-1);
+            if (pp[i][0].substr(5, 2) == checkHazard(pp[i - 1][0]) || pp[i][0].substr(7, 2) == checkHazard(pp[i - 1][0]))
+            {
+                if (flag == 0)
+                { // no forwarding
+                    fill_stalls(i - 1);
+                    if (predict(pp[i - 1][0]) && flag1 == 1)
+                    {
+                        if(temp!=0){
+                                   store_pp(i,j,1,0,temp+2,0,0);
+                                }
+                                else{
+                                    store_pp(i,j,1,0,2,0,0);
+                                }
+                    }
+
+                    else
+                    {
+                        if(temp!=-1){
+                                   store_pp(i,j,0,0,temp+2,0,0);
+                                }
+                                else{
+                                    store_pp(i,j,0,0,2,0,0);
+                                }
+                    }
+                }
+                else
+                { // with forwarding
+                    fill_stalls(i - 1);
+                    if (predict(pp[i - 1][0]) && flag1 == 1)
+                    {
+                      if(temp!=0){
+                                   store_pp(i,j,1,0,temp,0,0);
+                                }
+                                else{
+                                    store_pp(i,j,1,0,0,0,0);
+                                }
+                    }
+                    else
+                    {
+                        if(temp!=-1){
+                                   store_pp(i,j,0,0,temp,0,0);
+                                }
+                                else{
+                                    store_pp(i,j,0,0,0,0,0);
+                                }
+                    }
+                }
+            }
+            else
+            {
+                fill_stalls(i - 1);
+                if (predict(pp[i - 1][0]) && flag1 == 1)
+                {
+                     if(temp!=0){
+                                   store_pp(i,j,1,0,temp,0,0);
+                                }
+                                else{
+                                    store_pp(i,j,1,0,0,0,0);
+                                }
+                }
+
+                else
+                {
+                    if(temp!=0){
+                                   store_pp(i,j,0,0,temp,0,0);
+                                }
+                                else{
+                                    store_pp(i,j,0,0,0,0,0);
+                                }
+                }
+            }
+        }
+        else if (pp[i][0].substr(0, 3) == "beq")
+        {
+            //  cout<<"beq"<<endl;
+            int pc;
+            flag1 = 0;
+            int temp=memory_hazard(i-1);
+            for (int j = 0; j < program.size(); j++)
+            {
+                if (pp[i][0] == program[j])
+                {
+                    pc = j;
+                }
+            }
+            if (pp[i + 1][0] != program[pc + 1])
+                flag1 = 1;
+            else
+                flag1 = 0;
+            if (pp[i][0].substr(3, 2) == checkHazard(pp[i - 1][0]) || pp[i][0].substr(5, 2) == checkHazard(pp[i - 1][0]))
+            {
+                if (flag == 0)
+                { // no forwarding
+                    fill_stalls(i - 1);
+                    if (predict(pp[i - 1][0]) && flag1 == 1)
+                    {
+                       if(temp!=0){
+                                   store_pp(i,j,1,0,temp+2,0,0);
+                                }
+                                else{
+                                    store_pp(i,j,1,0,2,0,0);
+                                }
+                    }
+
+                    else
+                    {
+                        if(temp!=-1){
+                                   store_pp(i,j,0,0,temp+2,0,0);
+                                }
+                                else{
+                                    store_pp(i,j,0,0,2,0,0);
+                                }
+                        // fill_stalls(i-1);
+                    }
+                }
+                else
+                { // with forwarding
+                    fill_stalls(i - 1);
+                    if (predict(pp[i - 1][0]) && flag1 == 1)
+                    {
+                         if(temp!=0){
+                                   store_pp(i,j,1,0,temp,0,0);
+                                }
+                                else{
+                                    store_pp(i,j,1,0,0,0,0);
+                                }
+                    }
+
+                    else
+                    {
+                       if(temp!=-1){
+                                   store_pp(i,j,0,0,temp,0,0);
+                                }
+                                else{
+                                    store_pp(i,j,0,0,0,0,0);
+                                }
+                    }
+                }
+            }
+            else
+            {
+                fill_stalls(i - 1);
+                if (predict(pp[i - 1][0]) && flag1 == 1)
+                {
+                     if(temp!=0){
+                                   store_pp(i,j,1,0,temp,0,0);
+                                }
+                                else{
+                                    store_pp(i,j,1,0,0,0,0);
+                                }
+                }
+
+                else
+                {
+                     if(temp!=0){
+                                   store_pp(i,j,0,0,temp,0,0);
+                                }
+                                else{
+                                    store_pp(i,j,0,0,0,0,0);
+                                }
+                }
+            }
+        }
+        else if (pp[i][0].substr(0, 3) == "bne")
+        {
+            // cout<<"bne"<<endl;
+            int pc;
+            int temp=memory_hazard(i-1);
+            flag1 = 0;
+            for (int j = 0; j < program.size(); j++)
+            {
+                if (pp[i][0] == program[j])
+                    pc = j;
+            }
+            if (pp[i + 1][0] != program[pc + 1])
+                flag1 = 1;
+            else
+                flag1 = 0;
+            if (pp[i][0].substr(3, 2) == checkHazard(pp[i - 1][0]) || pp[i][0].substr(5, 2) == checkHazard(pp[i - 1][0]))
+            {
+                if (flag == 0)
+                { // no forwarding
+                    fill_stalls(i - 1);
+                    if (predict(pp[i - 1][0]) && flag1 == 1)
+                    {
+                         if(temp!=0){
+                                   store_pp(i,j,1,0,temp+2,0,0);
+                                }
+                                else{
+                                    store_pp(i,j,1,0,2,0,0);
+                                }
+                    }
+
+                    else
+                    {
+                      if(temp!=-1){
+                                   store_pp(i,j,0,0,temp+2,0,0);
+                                }
+                                else{
+                                    store_pp(i,j,0,0,2,0,0);
+                                }
+                    }
+                }
+                else
+                { // with forwarding
+                    fill_stalls(i - 1);
+                    if (predict(pp[i - 1][0]) && flag1 == 1)
+                    {
+                         if(temp!=0){
+                                   store_pp(i,j,1,0,temp+2,0,0);
+                                }
+                                else{
+                                    store_pp(i,j,1,0,2,0,0);
+                                }
+                    }
+                    else
+                    {
+                        if(temp!=-1){
+                                   store_pp(i,j,0,0,temp+2,0,0);
+                                }
+                                else{
+                                    store_pp(i,j,0,0,2,0,0);
+                                }
+                    }
+                }
+            }
+            else
+            {
+                fill_stalls(i - 1);
+                if (predict(pp[i - 1][0]) && flag1 == 1)
+                {
+                     if(temp!=0){
+                                   store_pp(i,j,1,0,temp,0,0);
+                                }
+                                else{
+                                    store_pp(i,j,1,0,0,0,0);
+                                }
+                }
+
+                else
+                {
+                     if(temp!=0){
+                                   store_pp(i,j,0,0,temp,0,0);
+                                }
+                                else{
+                                    store_pp(i,j,0,0,0,0,0);
+                                }
+                }
+            }
+        }
+        else if (pp[i][0].substr(0, 1) == "j" && pp[i][0].substr(1, 1) != "r")
+        {
+            //   cout<<"j"<<endl;
+            int pc;
+            flag1 = 0;
+            int temp=memory_hazard(i-1);
+            for (int j = 0; j < program.size(); j++)
+            {
+                if (pp[i][0] == program[j])
+                    pc = j;
+            }
+            if (pp[i + 1][0] != program[pc + 1])
+                flag1 = 1;
+            else
+                flag1 = 0;
+
+            fill_stalls(i - 1);
+            if (predict(pp[i - 1][0]) && flag1 == 1)
+            {
+                if(temp!=0){
+                                   store_pp(i,j,1,0,temp,0,0);
+                                }
+                                else{
+                                    store_pp(i,j,1,0,0,0,0);
+                                }
+            }
+            else
+            {
+                 if(temp!=0){
+                                   store_pp(i,j,0,0,temp,0,0);
+                                }
+                                else{
+                                    store_pp(i,j,0,0,0,0,0);
+                                }
+            }
+        }
+        else if (pp[i][0].substr(0, 3) == "bge")
+        {
+            // cout<<"bge"<<endl;
+            int pc;
+            int temp = memory_hazard(i - 1);
+            flag1 = 0;
+            for (int j = 0; j < program.size(); j++)
+            {
+                if (pp[i][0] == program[j])
+                    pc = j;
+            }
+            if (pp[i + 1][0] != program[pc + 1])
+                flag1 = 1;
+            else
+                flag1 = 0;
+            if (pp[i][0].substr(3, 2) == checkHazard(pp[i - 1][0]) || pp[i][0].substr(5, 2) == checkHazard(pp[i - 1][0]))
+            {
+                if (flag == 0)
+                { // no forwarding
+                    fill_stalls(i - 1);
+                    if (predict(pp[i - 1][0]) && flag1 == 1)
+                    {
+                         if (temp != 0) {
+                    store_pp(i, j, 1, 0, temp + 2, 0, 0); // With branch hazard
+                } else {
+                    store_pp(i, j, 1, 0, 2, 0, 0); // With branch hazard, no memory hazard
+                }
+                    }
+
+                    else
+                    {
+                        if (temp != -1) {
+                    store_pp(i, j, 0, 0, temp + 2, 0, 0); // Without branch hazard
+                } else {
+                    store_pp(i, j, 0, 0, 2, 0, 0); // Without branch hazard, no memory hazard
+                }
+                    }
+                }
+                else
+                { // with forwarding
+                    fill_stalls(i - 1);
+                    if (predict(pp[i - 1][0]) && flag1 == 1)
+                    {
+                        if (temp != 0) {
+                    store_pp(i, j, 1, 0, temp, 0, 0); // With branch hazard
+                } else {
+                    store_pp(i, j, 1, 0, 0, 0, 0); // With branch hazard, no memory hazard
+                }
+                    }
+                    else
+                    {
+                        if (temp != -1) {
+                    store_pp(i, j, 0, 0, temp, 0, 0); // Without branch hazard
+                } else {
+                    store_pp(i, j, 0, 0, 0, 0, 0); // Without branch hazard, no memory hazard
+                }
+                    }
+                }
+            }
+            else if (i == 0) {
+        store_pp(i, j, 0, 0, 0, 0, 0); // No hazard in the first instruction
+    }
+            else
+            {
+                fill_stalls(i - 1);
+                if (predict(pp[i - 1][0]) && flag1 == 1)
+                {
+                    if (temp != -1) {
+                store_pp(i, j, 0, 0, temp, 0, 0); // With branch hazard
+            } else {
+                store_pp(i, j, 0, 0, temp, 0, 0); // With branch hazard, no memory hazard
+            }
+                }
+
+                else
+                {
+                    if (temp != -1) {
+                store_pp(i, j, 0, 0, temp, 0, 0); // Without branch hazard
+            } else {
+                store_pp(i, j, 0, 0, 0, 0, 0); // Without branch hazard, no memory hazard
+            }
+                }
+            }
+        }
+
+        else if (pp[i][0].substr(0, 2) == "lw")
+        {
+            //   cout<<"lw"<<endl;
+             int temp=memory_hazard(i-1);
+            if (i != 0 && pp[i][0].substr(pp[i][0].length() - 3, 2) == checkHazard(pp[i - 1][0]))
+            {
+                if (flag == 0)
+                { // no forwarding
+                    fill_stalls(i - 1);
+                    if (predict(pp[i - 1][0]) && flag1 == 1)
+                    {
+                        if(temp!=0){
+                                   store_pp(i,j,1,0,temp+2,0,0);
+                                }
+                                else{
+                                    store_pp(i,j,1,0,2,0,0);
+                                }
+                    }
+                    else
+                    {
+                       if(temp!=-1){
+                                   store_pp(i,j,0,0,temp+2,0,0);
+                                }
+                                else{
+                                    store_pp(i,j,0,0,2,0,0);
+                                }
+                    }
+                }
+                else
+                { // with forwarding
+                    fill_stalls(i - 1);
+                    if (predict(pp[i - 1][0]) && flag1 == 1)
+                    {
+                       if(temp!=0){
+                                   store_pp(i,j,1,0,temp,0,0);
+                                }
+                                else{
+                                    store_pp(i,j,1,0,0,0,0);
+                                }
+                    }
+                    else
+                    {
+                       if(temp!=-1){
+                                   store_pp(i,j,0,0,temp,0,0);
+                                }
+                                else{
+                                    store_pp(i,j,0,0,0,0,0);
+                                }
+                    }
+                }
+            }
+            else
+            {
+                fill_stalls(i - 1);
+                if (predict(pp[i - 1][0]) && flag1 == 1)
+                {
+                   if(temp!=0){
+                                   store_pp(i,j,1,0,temp,0,0);
+                                }
+                                else{
+                                    store_pp(i,j,1,0,0,0,0);
+                                }
+                }
+                else
+                {
+                     if(temp!=0){
+                                   store_pp(i,j,0,0,temp,0,0);
+                                }
+                                else{
+                                    store_pp(i,j,0,0,0,0,0);
+                                }
+                }
+            }
+        }
+
+        else if (pp[i][0].substr(0, 2) == "sw")
+        {
+            // cout<<"sw"<<endl;
+             int temp=memory_hazard(i-1);
+            if (i != 0 && pp[i][0].substr(pp[i][0].length() - 3, 2) == checkHazard(pp[i - 1][0]))
+            {
+                if (flag == 0)
+                { // no forwarding
+                    fill_stalls(i - 1);
+                    if (predict(pp[i - 1][0]) && flag1 == 1)
+                    {
+                                 if(temp!=0){
+                                   store_pp(i,j,1,0,temp+2,0,0);
+                                }
+                                else{
+                                    store_pp(i,j,1,0,2,0,0);
+                                }
                     }
                     
-
-                }
-                 if(pipeline[i][0].substr(0,3)=="bne"){
-                    int pc;
-                    int res=memory_hazard(i-1);
-                     branch_flag=0;
-                     for(int j=0;j<Input_ins.size();j++){
-                        if(pipeline[i][0]==Input_ins[j])
-                            pc=j;
-                     }
-                     if(pipeline[i+1][0]!=Input_ins[pc+1])
-                     branch_flag=1;
-                     else
-                     branch_flag=0;
-                     if(pipeline[i][0].substr(3,2) == hazard(pipeline[i-1][0]) || pipeline[i][0].substr(5,2) == hazard(pipeline[i-1][0])){
-                        if(flagForwdg==0){//no forwarding
-                           stalls_hazard(i-1);
-                             if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
-                                 if(res!=0){
-                                   fill(i,j,1,0,res+2,0,0);
+                    else
+                    {
+                         if(temp!=-1){
+                                   store_pp(i,j,0,0,temp+2,0,0);
                                 }
                                 else{
-                                    fill(i,j,1,0,2,0,0);
-                                }
-                             }
-                           
-                            else{
-                                if(res!=-1){
-                                   fill(i,j,0,0,res+2,0,0);
-                                }
-                                else{
-                                    fill(i,j,0,0,2,0,0);
-                                }
-                            }
-                        }
-                        else{//with forwarding
-                           stalls_hazard(i-1);
-                             if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
-                                 if(res!=0){
-                                   fill(i,j,1,0,res+2,0,0);
-                                }
-                                else{
-                                    fill(i,j,1,0,2,0,0);
-                                }
-                             }
-                           
-                            else{
-                                if(res!=-1){
-                                   fill(i,j,0,0,res+2,0,0);
-                                }
-                                else{
-                                    fill(i,j,0,0,2,0,0);
-                                }
-                            }
-                        }
-                       
-                    }
-                    else{
-                        stalls_hazard(i-1);
-                        if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
-                            // fill(i,j,1,0,0,0,0);
-                             if(res!=0){
-                                   fill(i,j,1,0,res,0,0);
-                                }
-                                else{
-                                    fill(i,j,1,0,0,0,0);
-                                }
-                         }
-                            
-                        else{
-                            //fill(i,j,0,0,0,0,0);
-                            if(res!=0){
-                                   fill(i,j,0,0,res,0,0);
-                                }
-                                else{
-                                    fill(i,j,0,0,0,0,0);
-                                }
-                        }
-                        
-                        
-                    }
-                     
-
-                }
-                 if(pipeline[i][0].substr(0,1)=="j" && pipeline[i][0].substr(1,1)!="r"){
-                    int pc;
-                     branch_flag=0;
-                     for(int j=0;j<Input_ins.size();j++){
-                        if(pipeline[i][0]==Input_ins[j])
-                            pc=j;
-                     }
-                     if(pipeline[i+1][0]!=Input_ins[pc+1])
-                     branch_flag=1;
-                     else
-                     branch_flag=0;
-                     int res=memory_hazard(i-1);
-                    stalls_hazard(i-1);
-                    if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
-                        //fill(i,j,1,0,0,0,0);
-                         if(res!=0){
-                                   fill(i,j,1,0,res,0,0);
-                                }
-                                else{
-                                    fill(i,j,1,0,0,0,0);
-                                }
-
-                    }
-                    else{
-                        //fill(i,j,0,0,0,0,0);
-                         if(res!=0){
-                                   fill(i,j,0,0,res,0,0);
-                                }
-                                else{
-                                    fill(i,j,0,0,0,0,0);
+                                    store_pp(i,j,0,0,2,0,0);
                                 }
                     }
                 }
-                  if(pipeline[i][0].substr(0,2)=="lw"){
-                      int res=memory_hazard(i-1);
-                    if(i!=0 && pipeline[i][0].substr(pipeline[i][0].length()-3,2) == hazard(pipeline[i-1][0])){
-                        if(flagForwdg==0){//no forwarding
-                            stalls_hazard(i-1);
-                             if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
-                                 if(res!=0){
-                                   fill(i,j,1,0,res+2,0,0);
+                else
+                { // with forwarding
+                    fill_stalls(i - 1);
+                    if (predict(pp[i - 1][0]) && flag1 == 1)
+                    {
+                         if(temp!=0){
+                                   store_pp(i,j,1,0,temp,0,0);
                                 }
                                 else{
-                                    fill(i,j,1,0,2,0,0);
+                                    store_pp(i,j,1,0,0,0,0);
                                 }
-                             }
-                           
-                            else{
-                                if(res!=-1){
-                                   fill(i,j,0,0,res+2,0,0);
-                                }
-                                else{
-                                    fill(i,j,0,0,2,0,0);
-                                }
-                            }
-                        }
-                        else{//with forwarding
-                              stalls_hazard(i-1);
-                             if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
-                                 if(res!=0){
-                                   fill(i,j,1,0,res,0,0);
-                                }
-                                else{
-                                    fill(i,j,1,0,0,0,0);
-                                }
-                             }
-                           
-                            else{
-                                if(res!=-1){
-                                   fill(i,j,0,0,res,0,0);
-                                }
-                                else{
-                                    fill(i,j,0,0,0,0,0);
-                                }
-                            }
-                        }
                     }
-                    else{
-                       stalls_hazard(i-1);
-                        if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
-                            // fill(i,j,1,0,0,0,0);
-                             if(res!=0){
-                                   fill(i,j,1,0,res,0,0);
+                    else
+                    {
+                         if(temp!=-1){
+                                   store_pp(i,j,0,0,temp,0,0);
                                 }
                                 else{
-                                    fill(i,j,1,0,0,0,0);
-                                }
-                         }
-                            
-                        else{
-                            //fill(i,j,0,0,0,0,0);
-                            if(res!=0){
-                                   fill(i,j,0,0,res,0,0);
-                                }
-                                else{
-                                    fill(i,j,0,0,0,0,0);
-                                }
-                        }
-                    }
-                }
-
-                if(pipeline[i][0].substr(0,2)=="sw"){
-                    int res=memory_hazard(i-1);
-                    if(i!=0 && pipeline[i][0].substr(pipeline[i][0].length()-3,2) == hazard(pipeline[i-1][0])){
-                        if(flagForwdg==0){//no forwarding
-                            stalls_hazard(i-1);
-                             if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
-                                 if(res!=0){
-                                   fill(i,j,1,0,res+2,0,0);
-                                }
-                                else{
-                                    fill(i,j,1,0,2,0,0);
-                                }
-                             }
-                           
-                            else{
-                                if(res!=-1){
-                                   fill(i,j,0,0,res+2,0,0);
-                                }
-                                else{
-                                    fill(i,j,0,0,2,0,0);
-                                }
-                            }
-                        }
-                        else{//with forwarding
-                           stalls_hazard(i-1);
-                             if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
-                                 if(res!=0){
-                                   fill(i,j,1,0,res,0,0);
-                                }
-                                else{
-                                    fill(i,j,1,0,0,0,0);
-                                }
-                             }
-                           
-                            else{
-                                if(res!=-1){
-                                   fill(i,j,0,0,res,0,0);
-                                }
-                                else{
-                                    fill(i,j,0,0,0,0,0);
-                                }
-                            }
-                        }
-                    }
-                    else{
-                        stalls_hazard(i-1);
-                        if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
-                            // fill(i,j,1,0,0,0,0);
-                             if(res!=0){
-                                   fill(i,j,1,0,res,0,0);
-                                }
-                                else{
-                                    fill(i,j,1,0,0,0,0);
-                                }
-                         }
-                            
-                        else{
-                            //fill(i,j,0,0,0,0,0);
-                            if(res!=0){
-                                   fill(i,j,0,0,res,0,0);
-                                }
-                                else{
-                                    fill(i,j,0,0,0,0,0);
-                                }
-                        }
-                       
-                       
-                    }
-                }
-
-
-                if(pipeline[i][0].substr(0,2)=="la"){   //data and structural hazards not possible in la
-                         int res=memory_hazard(i-1);
-                    stalls_hazard(i-1);
-                    if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
-                        //fill(i,j,1,0,0,0,0);
-                         if(res!=0){
-                                   fill(i,j,1,0,res,0,0);
-                                }
-                                else{
-                                    fill(i,j,1,0,0,0,0);
-                                }
-
-                    }
-                    else{
-                        //fill(i,j,0,0,0,0,0);
-                         if(res!=0){
-                                   fill(i,j,0,0,res,0,0);
-                                }
-                                else{
-                                    fill(i,j,0,0,0,0,0);
+                                    store_pp(i,j,0,0,0,0,0);
                                 }
                     }
                 }
-
-                if(pipeline[i][0].substr(0,2)=="jr"){
-                       //data and structural hazards not possible in jr
-                       int res=memory_hazard(i-1);
-                    stalls_hazard(i-1);
-                    if(branchhazard(pipeline[i-1][0]) && branch_flag==1){
-                        //fill(i,j,1,0,0,0,0);
-                         if(res!=0){
-                                   fill(i,j,1,0,res,0,0);
+            }
+            else
+            {
+                fill_stalls(i - 1);
+                if (predict(pp[i - 1][0]) && flag1 == 1)
+                {
+                     if(temp!=0){
+                                   store_pp(i,j,1,0,temp,0,0);
                                 }
                                 else{
-                                    fill(i,j,1,0,0,0,0);
+                                    store_pp(i,j,1,0,0,0,0);
                                 }
-
-                    }
-                    else{
-                        //fill(i,j,0,0,0,0,0);
-                         if(res!=0){
-                                   fill(i,j,0,0,res,0,0);
-                                }
-                                else{
-                                    fill(i,j,0,0,0,0,0);
-                                }
-                    }
+                
                 }
-
-                for(int q=1; q<1000; q++){
-                    if(pipeline[i][q]=="IF"){
-                            clock1=q+1;
-                    }
+                else
+                {
+                     if(temp!=0){
+                                   store_pp(i,j,0,0,temp,0,0);
+                                }
+                                else{
+                                    store_pp(i,j,0,0,0,0,0);
+                                }
                 }
             }
         }
 
-        void execute(int flag){
-            preprocess();
-            //int mainindex;
-            for(int i=1;i<=NumberOfInstructions-1;i++){
-                if(InputProgram[i]=="main:"){
-                mainindex=i;
-                break;
+        else if (pp[i][0].substr(0, 3) == "blt")
+        {
+            // Extracting the registers involved in the blt instruction
+            // cout<<"blt"<<endl;
+            std::string reg1 = pp[i][0].substr(3, 2);
+            std::string reg2 = pp[i][0].substr(6, 2);
+            int temp = memory_hazard(i - 1);
+
+            // Check for hazards with the previous instruction
+            if (i != 0 && (reg1 == checkHazard(pp[i - 1][0]) || reg2 == checkHazard(pp[i - 1][0])))
+            {
+                if (flag == 0)
+                { // No forwarding
+                    fill_stalls(i - 1);
+                    if (predict(pp[i - 1][0]) && flag1 == 1)
+                    {
+                       if (temp != 0) {
+                    store_pp(i, j, 1, 0, temp + 2, 0, 0); // With branch hazard
+                } else {
+                    store_pp(i, j, 1, 0, 2, 0, 0); // With branch hazard, no memory hazard
                 }
-            }
-            programCounter=mainindex+2;
-
-            int pipeRow = 0;
-            while(programCounter<=NumberOfInstructions){
-                string current_instruction = readInstruction(InputProgram[programCounter-1]);
-                miss=-1; 
-                processInstruction(current_instruction);//miss= 0 1 2
-                miss_arr[pipeRow]=miss;
-
-                //cout << current_instruction << endl;
-                pipeline[pipeRow][0]=current_instruction;
-                pipeRow++;
-            }
-
-            fillPipeline(pipeRow, flag);
-
-            int cnt=0;
-            for(int j=1;j<1000;j++){
-                if(pipeline[pipeRow-1][j] == "WB"){
-                    cout << "Total number of clock cycles: " << j << endl<<endl;
-                    cnt=j;
+                    }
+                    else
+                    {
+                       if (temp != -1) {
+                    store_pp(i, j, 0, 0, temp + 2, 0, 0); // Without branch hazard
+                } else {
+                    store_pp(i, j, 0, 0, 2, 0, 0); // Without branch hazard, no memory hazard
                 }
-            }
-
-            string stallInstruction[500];
-            int count=0;
-            int k=0;
-            for(int i=0; i<pipeRow ;i++){
-                for(int j=1;j<1000;j++){
-                    if(pipeline[i][j]=="stall"){
-                        count++;
-                        stallInstruction[k] = pipeline[i][0];
                     }
                 }
-                k++;
-            }
- 
-            cout << "Total number of stalls: " << count <<endl<<endl;
-            float ipc=(float)pipeRow/cnt;
-            cout<<"IPC(Instructions per cycle is) :"<<ipc<<endl<<endl;
-
-            cout << "List of instructions for which stalls occur: " << endl<<endl<<endl;
-
-            for(int i=0;i<k;i++){
-                if(stallInstruction[i]!=""){
-                    cout << stallInstruction[i] << endl;
+                else
+                { // With forwarding
+                    fill_stalls(i - 1);
+                    if (predict(pp[i - 1][0]) && flag1 == 1)
+                    {
+                         if (temp != 0) {
+                    store_pp(i, j, 1, 0, temp, 0, 0); // With branch hazard
+                } else {
+                    store_pp(i, j, 1, 0, 0, 0, 0); // With branch hazard, no memory hazard
                 }
-            }
-
-            cout << "Miss rate for cache L1: " << totalL1misses/accessesL1 << endl;
-            cout << "Miss rate for cache L2: " << totalL2misses/accessesL2 << endl;
-        
-            cout<<endl<<endl;
-             cout<<"MEMORY:"<<endl;
-                for(int i=0;i<1024;i++){
-                    if(MEM[i]!=0){
-                         cout<<MEM[i]<<" ";
+                    }
+                    else
+                    {
+                        if (temp != -1) {
+                    store_pp(i, j, 0, 0, temp, 0, 0); // Without branch hazard
+                } else {
+                    store_pp(i, j, 0, 0, 0, 0, 0); // Without branch hazard, no memory hazard
+                }
                     }
                 }
-                cout<<endl;
+            }
+             else if (i == 0) {
+        store_pp(i, j, 0, 0, 0, 0, 0); // No hazard in the first instruction
+    }
+            else
+            {
+                fill_stalls(i - 1);
+                if (predict(pp[i - 1][0]) && flag1 == 1)
+                {
+                    if (temp != -1) {
+                store_pp(i, j, 0, 0, temp, 0, 0); // With branch hazard
+            } else {
+                store_pp(i, j, 0, 0, temp, 0, 0); // With branch hazard, no memory hazard
+            }
+                }
+                else
+                {
+                     if (temp != -1) {
+                store_pp(i, j, 0, 0, temp, 0, 0); // Without branch hazard
+            } else {
+                store_pp(i, j, 0, 0, 0, 0, 0); // Without branch hazard, no memory hazard
+            }
+                }
+            }
+        }
+        else if (pp[i][0] == "exit")
+        {
             return;
         }
+        else if (pp[i][0].substr(0, 2) == "mv")
+        {
+            std::string reg1 = pp[i][0].substr(2, 2);
+            std::string reg2 = pp[i][0].substr(5, 2);
+             int temp = memory_hazard(i - 1);
+
+            // Check for hazards with the previous instruction
+            if (i != 0 && (reg1 == checkHazard(pp[i - 1][0]) || reg2 == checkHazard(pp[i - 1][0])))
+            {
+                if (flag == 0)
+                { // No forwarding
+                    fill_stalls(i - 1);
+                    if (predict(pp[i - 1][0]) && flag1 == 1)
+                    {
+                        if (temp != 0) {
+                    store_pp(i, j, 1, 0, temp + 2, 0, 0); // With branch hazard
+                } else {
+                    store_pp(i, j, 1, 0, 2, 0, 0); // With branch hazard, no memory hazard
+                }
+                    }
+                    else
+                    {
+                         if (temp != -1) {
+                    store_pp(i, j, 0, 0, temp + 2, 0, 0); // Without branch hazard
+                } else {
+                    store_pp(i, j, 0, 0, 2, 0, 0); // Without branch hazard, no memory hazard
+                }
+                    }
+                }
+                else
+                { // With forwarding
+                    fill_stalls(i - 1);
+                    if (predict(pp[i - 1][0]) && flag1 == 1)
+                    {
+                         if (temp != 0) {
+                    store_pp(i, j, 1, 0, temp, 0, 0); // With branch hazard
+                } else {
+                    store_pp(i, j, 1, 0, 0, 0, 0); // With branch hazard, no memory hazard
+                }
+                    }
+                    else
+                    {
+                        if (temp != -1) {
+                    store_pp(i, j, 0, 0, temp, 0, 0); // Without branch hazard
+                } else {
+                    store_pp(i, j, 0, 0, 0, 0, 0); // Without branch hazard, no memory hazard
+                }
+                    }
+                }
+            }
+            else if (i == 0) {
+        store_pp(i, j, 0, 0, 0, 0, 0); // No hazard in the first instruction
+    }
+            else
+            {
+                fill_stalls(i - 1);
+                if (predict(pp[i - 1][0]) && flag1 == 1)
+                {
+                     if (temp != -1) {
+                store_pp(i, j, 0, 0, temp, 0, 0); // With branch hazard
+            } else {
+                store_pp(i, j, 0, 0, temp, 0, 0); // With branch hazard, no memory hazard
+            }
+                }
+                else
+                {
+                     if (temp != -1) {
+                store_pp(i, j, 0, 0, temp, 0, 0); // Without branch hazard
+            } else {
+                store_pp(i, j, 0, 0, 0, 0, 0); // Without branch hazard, no memory hazard
+            }
+                }
+            }
+        }
+        else if (pp[i][0].substr(0, 2) == "la")
+        { // data and structural hazards not possible in la
+           int temp=memory_hazard(i-1);
+            fill_stalls(i - 1);
+            if (predict(pp[i - 1][0]) && flag1 == 1)
+            {
+              if(temp!=0){
+                                   store_pp(i,j,1,0,temp,0,0);
+                                }
+                                else{
+                                    store_pp(i,j,1,0,0,0,0);
+                                }
+
+
+            }
+            else
+            {
+                if(temp!=0){
+                                   store_pp(i,j,0,0,temp,0,0);
+                                }
+                                else{
+                                    store_pp(i,j,0,0,0,0,0);
+                                }
+            }
+        }
+
+        else if (pp[i][0].substr(0, 2) == "jr")
+        { // data and structural hazards not possible in jr
+           int temp=memory_hazard(i-1);
+            fill_stalls(i - 1);
+            if (predict(pp[i - 1][0]) && flag1 == 1)
+            {
+                 if(temp!=0){
+                                   store_pp(i,j,1,0,temp,0,0);
+                                }
+                                else{
+                                    store_pp(i,j,1,0,0,0,0);
+                                }
+
+            }
+            else
+            {
+                 if(temp!=0){
+                                   store_pp(i,j,0,0,temp,0,0);
+                                }
+                                else{
+                                    store_pp(i,j,0,0,0,0,0);
+                                }
+            }
+        }
+
+        for (int q = 1; q < 10000; q++)
+        {
+            if (pp[i][q] == "IF")
+            {
+                clockk = q + 1;
+            }
+        }
+
+        return;
+    }
+
+    void printval(int ppRow, int flag)
+    {
+        int cnt = 0;
+        for (int j = 1; j < 10000; j++)
+        {
+            if (pp[ppRow - 1][j] == "WB")
+            {
+                std::cout << "Total number of clock cycles: " << j << std::endl
+                          << std::endl;
+                cnt = j;
+            }
+        }
+
+        std::string stallInstruction[5000];
+        int count = 0;
+        int k = 0;
+        for (int i = 0; i < ppRow; i++)
+        {
+            for (int j = 1; j < 10000; j++)
+            {
+                if (pp[i][j] == "stall")
+                {
+                    count++;
+                    stallInstruction[k] = pp[i][0];
+                }
+            }
+            k++;
+        }
+
+        std::cout << "Total number of stalls: " << count << std::endl
+                  << std::endl;
+        std::cout << "Instructions: " << ppRow << std::endl
+                  << std::endl;
+        float ipc = (float)ppRow / cnt;
+        std::cout << "IPC(Instructions per cycle is) : " << ipc << std::endl
+                  << std::endl;
+       // std::cout<<"totalmisses"<<totalmisses<<std::endl;
+        std::cout << "Miss rate for cache L1: " << totalL1misses/accessesL1 <<std:: endl;
+            std::cout << "Miss rate for cache L2: " << totalL2misses/accessesL2 <<std:: endl;
+        return;
+    }
 };
-int main(){
-    cout<<"Welcome to Team dynamic MIPS SIMULATOR!!"<<endl;
+class Processor {
+public:
+   std:: vector<int> memory;
+   // int clock;
+    std::vector<Core> cores;
 
-    int Cache1Size, Cache2Size, Block1Size, Block2Size, AccessLatency1, AccessLatency2, MemTime, associativity;
+public:
+    Processor()
+    {
+        memory = std::vector<int>(4096, 0);
+       //clock = 0;
+       cores = std::vector<Core>(2);
+    }
+    void send(std::vector<std::string> & program,int coreval)
+    {
+       cores[coreval].program=program;
+    }
+    void run(int flag1, int flag2, std::map<std::string, int> latencies,int cache1Size,int cache2Size,int block1Size,int block2Size,int Associativity,int accessLatency1,int accessLatency2,int memTime) {
+        
+        int pipeRow;
+       // cores[0].core( flag1,  flag2,  latencies,int cacheSize,int blockSize,int Associativity,int accessLatency,int memTime)
+       cores[0].assignval(cache1Size,cache2Size,block1Size,block2Size,Associativity, accessLatency1,accessLatency2,memTime);
+        pipeRow = cores[0].execute(memory, flag1,latencies);
+        std::cout << "BUBBLE SORT: " << std::endl;
+        cores[0].printval(pipeRow, flag1);
+        cores[1].assignval(cache1Size,cache2Size, block1Size,block2Size,Associativity, accessLatency1,accessLatency2,memTime);
+        pipeRow = cores[1].execute(memory, flag2,latencies);
+          std::cout<<pipeRow<<std::endl;
+        std::cout << "SELECTION SORT: " << std::endl;
+        cores[1].printval(pipeRow, flag2);
+        return;
+    }
+    
+};
 
-    cout << "Enter the cache sizes of L1 and L2: " << endl;
-    cin >> Cache1Size >>  Cache2Size;
-    cout << "Enter the block sizes of L1 and L2: " << endl;
-    cin >> Block1Size >>  Block2Size;
-    cout << "Enter the accociativity: " << endl;
-    cin >> associativity;
-    cout << "Enter the access latencies of L1 and L2: " << endl;
-    cin >>  AccessLatency1 >> AccessLatency2;
-    cout << "Enter the memory access time: " << endl;
-    cin >> MemTime;
+int main()
+{
+    Processor sim;
+    std::ifstream bubble_input("bubblesort.asm");
+    if (!bubble_input.is_open()) {
+        std::cerr << "Failed to open bubblesort.asm" << std::endl;
+        return 1;
+    }
 
-    //mipsSimulator simulator("BubbleSort.asm");
-    mipsSimulator simulator("mipsBubblesort.asm",Cache1Size,Cache2Size,Block1Size,Block2Size,AccessLatency1,AccessLatency2,MemTime,associativity);
+    std::string bubble_line;
+    std::vector<std::string> bubble_asmLines;
+    //vector<string> temp;
+    std::vector<int> bubble_values;
+    bool dataSection1 = false;
 
-    int flagFrwd;
-    cout << "ENTER 1 for Forwarding and 0 for NO forwarding" << endl;
-    cin >> flagFrwd;
-    simulator.execute(flagFrwd);
+    while (getline(bubble_input, bubble_line)) {
+        if (!bubble_line.empty()) {
+            if (bubble_line == ".data" || bubble_line == ".text" || bubble_line == "main:") {
+               // temp.push_back(line);
+                continue;
+            } 
+            else if (bubble_line.find(".word") != std::string::npos) {
+                size_t pos = bubble_line.find(".word");
+                if (pos != std::string::npos) {
+                    // Extract the substring after ".word"
+                    std::string valuesStr = bubble_line.substr(pos + 6); // 6 is the length of ".word" plus a space
+
+                    // Create a string stream to parse the values
+                    std::istringstream iss(valuesStr);
+                    int value;
+
+                    // Read each value and store it in the vector
+                    while (iss >> value) {
+                        bubble_values.push_back(value);
+                    }
+                }
+            } else {
+                // Process other lines
+                size_t pos = bubble_line.find(":");
+                if (pos != std::string::npos) {
+                    // If a colon is found, extract the word before the colon
+                    std::string word = bubble_line.substr(0, pos);
+                    bubble_asmLines.push_back(word);
+                } else {
+                    // If no colon is found, simply add the line to asmLines
+                    bubble_asmLines.push_back(bubble_line);
+                }
+            }
+        }
+    }
+   // cout << endl;
+    bubble_input.close();
+    // for(int i=0;i<bubble_asmLines.size();i++)
+    // {
+    //     cout<<bubble_asmLines[i]<<endl;
+    // }
+    std::ifstream selection_input("selectionsort.asm");
+    if (!selection_input.is_open()) {
+        std::cerr << "Failed to open" << std::endl;
+        return 1;
+    }
+
+    std::string selection_line;
+    std::vector<std::string> selection_asmLines;
+    //vector<string> temp;
+   std:: vector<int> selection_values;
+    bool dataSection2 = false;
+
+    while (getline(selection_input,selection_line)) {
+        if (!selection_line.empty()) {
+            if (selection_line == ".data" || selection_line == ".text" || selection_line == "main:") {
+               // temp.push_back(line);
+                continue;
+            } 
+            else if (selection_line.find(".word") != std::string::npos) {
+                size_t pos = selection_line.find(".word");
+                if (pos != std::string::npos) {
+                    // Extract the substring after ".word"
+                    std::string valuesStr = selection_line.substr(pos + 6); // 6 is the length of ".word" plus a space
+
+                    // Create a string stream to parse the values
+                    std::istringstream iss(valuesStr);
+                    int value;
+
+                    // Read each value and store it in the vector
+                    while (iss >> value) {
+                        selection_values.push_back(value);
+                    }
+                }
+            } else {
+                // Process other lines
+                size_t pos = selection_line.find(":");
+                if (pos != std::string::npos) {
+                    // If a colon is found, extract the word before the colon
+                    std::string word =selection_line.substr(0, pos);
+                    selection_asmLines.push_back(word);
+                } else {
+                    // If no colon is found, simply add the line to asmLines
+                    selection_asmLines.push_back(selection_line);
+                }
+            }
+        }
+    }
+    selection_input.close();
+
+    for(int i=0;i<selection_values.size();i++)
+    {
+       sim.memory[i]=selection_values[i];
+    }
+    for(int i = 0; i < bubble_values.size(); i++) {
+    sim.memory[i + selection_values.size()] = bubble_values[i];
 }
+     sim.send(selection_asmLines, 1); // Load bubble sort program into core 0
+     sim.send(bubble_asmLines, 0);
+     int flag1;
+    int flag2;
+    std::cout << "enter 1 for forwarding 0 for non forwarding for bubble sort"
+              << " ";
+    std::cin >> flag1;
+    std::cout << "enter 1 for forwarding 0 for non forwarding for selection sort"
+              << " ";
+    std::cin >> flag2;
+    std::map<std::string, int> latencies;
+    std::cout << "Enter latencies for arithmetic operations:" << std::endl;
+    std::cout << "ADD: ";
+    int addLatency;
+    std::cin >> addLatency;
+    latencies["add"] = addLatency;
 
-/*
-TESTCASE:
+    std::cout << "SUB: ";
+    int subLatency;
+    std::cin >> subLatency;
+    latencies["sub"] = subLatency;
 
-Enter the cache sizes of L1 and L2:
-16 32
-Enter the block sizes of L1 and L2:
-8 8
-Enter the accociativity:
-2
-Enter the access latencies of L1 and L2:
-2 3
-Enter the memory access time:
-5
-ENTER 1 for Forwarding and 0 for NO forwarding
-0
+    std::cout << "MUL: ";
+    int mulLatency;
+    std::cin >> mulLatency;
+    latencies["mul"] = mulLatency;
 
-*/
+    std::cout << "DIV: ";
+    int divLatency;
+    std::cin >> divLatency;
+    latencies["div"] = divLatency;
+    int cache1Size, cache2Size, block1Size, block2Size, accessLatency1,accessLatency2,memTime, Associativity;
+
+    std::cout << "Enter the cache sizes for L1 and L2: " << std::endl;
+    std::cin >> cache1Size >> cache2Size;
+    std::cout << "Enter the block sizes for L1 and L2: " <<std:: endl;
+    std::cin >> block1Size >> block2Size;
+    std::cout << "Enter the accociativity: " <<std:: endl;
+    std::cin >> Associativity;
+    std::cout << "Enter the access latency for L1 and L2: " << std::endl;
+    std::cin >> accessLatency1 >> accessLatency2;
+    std::cout << "Enter the memory access time: " <<std:: endl;
+    std::cin >> memTime;
+    // std::cout<<"Select the Replacement Policy:"<<std::endl;
+    // std::cout<<"1.Least Recently Used POlicy(LRU)"<<std::endl;
+    // std::cout<<"2.Replacement POlicy 2"<<std::endl;
+    // std::cout<<"Enter 1 for REplacement POlicy 1 or Enter 2 for Replacement Policy 2:"<<std::endl;
+    // int n;
+    // std::cin>>n;
+    // if(n==1 || n==2){
+    // sim.run(flag1, flag2, latencies,cacheSize,blockSize,Associativity,accessLatency,memTime,n);
+    // }
+    // else{
+    //     std::cout<<"INVALID NUMBER ENTERED!";
+    //     return 0;
+    // }
+         sim.run(flag1, flag2, latencies,cache1Size,cache2Size,block1Size,block2Size,Associativity,accessLatency1,accessLatency2,memTime);
+    std::cout << "memory values:"
+              << " ";
+    for (int i = 0; i < 9; i++)
+    {
+        std::cout << sim.memory[i] << " ";
+    }
+    std::cout << std::endl;
+    std::cout << "selection Sort Result: ";
+    for (int i = 0; i < selection_values.size(); i++)
+    {
+        std::cout << sim.memory[i] << " ";
+    }
+    std::cout << std::endl;
+
+    // Print selection sort result
+    std::cout << "Bubble Sort Result: ";
+    for (int i = 0; i < bubble_values.size(); i++)
+    {
+        std::cout << sim.memory[i + selection_values.size()] << " ";
+    }
+    std::cout << std::endl;
+
+    return 0;
+
+}
+// TESTCASE:
+// cache size:32
+// block size:4
+// associativity:2
+// accesslatency:2
+// memory access time:5`
