@@ -33,7 +33,7 @@ public:
         double accessesL2=0;
         double totalL1misses=0;
         double totalL2misses=0;
-     //int temp;
+         int temp;
 public:
     Core()
     {
@@ -49,9 +49,9 @@ public:
         clockk = 1;
     }
     //assigning user input values 
-    void assignval(int cache1Size,int cache2Size, int block1Size,int block2Size,int Associativity, int accessLatency1,int accessLatency2,int memTime)
+    void assignval(int cache1Size,int cache2Size, int block1Size,int block2Size,int Associativity, int accessLatency1,int accessLatency2,int memTime,int n)
     {
-       // temp=n;
+        temp=n;
 
          cache1size=cache1Size;  
          cache2size=cache2Size;
@@ -151,6 +151,8 @@ public:
                 }
             }
             if(j==numblocks1){
+                if(temp==1)
+                {
                 //lru
                 //check with the counter in cache1, the least one will be pushed 
                 //to cache2(if full, we again apply lru for cache2) and then we put 
@@ -188,6 +190,42 @@ public:
                     cache2[k2] = tempInts1[m];
                     k2++;
                 }
+                }
+                else if(temp==2)
+                {
+                        j = rand() % numblocks1;
+
+                k1 = blockins1 * j;
+                k2 = blockins2 * i;
+
+        // Save the replaced block's content
+           int tempInts1[blockins1];
+        for (int m = 0; m < blockins1; m++) {
+            tempInts1[m] = cache1[k1];
+            k1++;
+        }
+
+        // Replace the block from L2 to L1
+        tag1[j] = tag2[i];
+        k1 = blockins1 * j;
+        k2 = blockins2 * i;
+        for (int k = 0; k < blockins1; k++) {
+            cache1[k1] = cache2[k2];
+            cache2[k2] = 0;
+            k1++;
+            k2++;
+        }
+        counter1[j] = counter2[i];
+        counter1[j]++;
+
+        // Put the replaced block's content into L2
+        tag2[i] = -1;
+        k2 = blockins2 * i;
+        for (int m = 0; m < blockins2; m++) {
+            cache2[k2] = tempInts1[m];
+            k2++;
+        }
+                }
             }
         }
 
@@ -208,6 +246,8 @@ public:
             }
             int i; //i for cache L2
             if(j==numblocks1){  //if L1 is full
+                if(temp==1)
+                {
                 //lru
                 int minIndex1 = min(counter1, numblocks1);
                 int tempcount1, temptag1, tempInts1[blockins1];
@@ -252,6 +292,51 @@ public:
                         cache2[k2] = tempInts1[m];
                         k2++;
                     }
+                }
+                }
+                else if(temp==2)
+                {
+                    j = rand() % numblocks1;
+
+        k1 = blockins1 * j;
+
+        // Save the replaced block's content from L1
+        int tempInts1[blockins1];
+        for (int m = 0; m < blockins1; m++) {
+            tempInts1[m] = cache1[k1];
+            k1++;
+        }
+
+        // Bring new block from memory and put it in L1
+        tag1[j] = findnear(addrs);
+        counter1[j] = 1;
+        for (int k = 0; k < blockins1; k++) {
+            cache1[k1] = memory[addrs];
+            k1++;
+            addrs++;
+        }
+
+        // Find an empty or replaceable block in L2
+        for (i = 0; i < numblocks2; i++) {
+            if (tag2[i] == -1) {
+                tag2[i] = findnear(addrs - blockins1); // Use the tag from the replaced block in L1
+                k2 = blockins2 * i;
+                for (int m = 0; m < blockins2; m++) {
+                    cache2[k2] = tempInts1[m];
+                    k2++;
+                }
+                break;
+            }
+        }
+        if (i == numblocks2) { // If L2 is full, apply random replacement for L2
+            i = rand() % numblocks2;
+            tag2[i] = findnear(addrs - blockins1); // Use the tag from the replaced block in L1
+            k2 = blockins2 * i;
+            for (int m = 0; m < blockins2; m++) {
+                cache2[k2] = tempInts1[m];
+                k2++;
+            }
+        }
                 }
             }
         }
@@ -2319,15 +2404,15 @@ public:
     {
        cores[coreval].program=program;
     }
-    void run(int flag1, int flag2, std::map<std::string, int> latencies,int cache1Size,int cache2Size,int block1Size,int block2Size,int Associativity,int accessLatency1,int accessLatency2,int memTime) {
+    void run(int flag1, int flag2, std::map<std::string, int> latencies,int cache1Size,int cache2Size,int block1Size,int block2Size,int Associativity,int accessLatency1,int accessLatency2,int memTime,int n) {
         
         int pipeRow;
        // cores[0].core( flag1,  flag2,  latencies,int cacheSize,int blockSize,int Associativity,int accessLatency,int memTime)
-       cores[0].assignval(cache1Size,cache2Size,block1Size,block2Size,Associativity, accessLatency1,accessLatency2,memTime);
+       cores[0].assignval(cache1Size,cache2Size,block1Size,block2Size,Associativity, accessLatency1,accessLatency2,memTime,n);
         pipeRow = cores[0].execute(memory, flag1,latencies);
         std::cout << "BUBBLE SORT: " << std::endl;
         cores[0].printval(pipeRow, flag1);
-        cores[1].assignval(cache1Size,cache2Size, block1Size,block2Size,Associativity, accessLatency1,accessLatency2,memTime);
+        cores[1].assignval(cache1Size,cache2Size, block1Size,block2Size,Associativity, accessLatency1,accessLatency2,memTime,n);
         pipeRow = cores[1].execute(memory, flag2,latencies);
           std::cout<<pipeRow<<std::endl;
         std::cout << "SELECTION SORT: " << std::endl;
@@ -2456,12 +2541,22 @@ int main()
     std::cout << "enter 1 for forwarding 0 for non forwarding for bubble sort"
               << " ";
     std::cin >> flag1;
+    if(flag1!=0 && flag1!=1)
+    {
+        std::cout<<"INVALID NUMBER"<<std::endl;
+        return 0;
+
+    }
     std::cout << "enter 1 for forwarding 0 for non forwarding for selection sort"
               << " ";
     std::cin >> flag2;
-    if(flag1>1 || flag2>1){
-        std::cout<<"INVALID ENTERED"<<std::endl;
+     if(flag2!=0 && flag2!=1)
+    {
+        std::cout<<"INVALID NUMBER"<<std::endl;
+        return 0;
+
     }
+    
     std::map<std::string, int> latencies;
     std::cout << "Enter latencies for arithmetic operations:" << std::endl;
     std::cout << "ADD: ";
@@ -2502,13 +2597,13 @@ int main()
     int n;
     std::cin>>n;
     if(n==1 || n==2){
-    sim.run(flag1, flag2, latencies,cache1Size,cache2Size,block1Size,block2Size,Associativity,accessLatency1,accessLatency2,memTime);
+ sim.run(flag1, flag2, latencies,cache1Size,cache2Size,block1Size,block2Size,Associativity,accessLatency1,accessLatency2,memTime,n);
     }
     else{
         std::cout<<"INVALID NUMBER ENTERED!";
         return 0;
     }
-         sim.run(flag1, flag2, latencies,cache1Size,cache2Size,block1Size,block2Size,Associativity,accessLatency1,accessLatency2,memTime);
+    //sim.run(flag1, flag2, latencies,cache1Size,cache2Size,block1Size,block2Size,Associativity,accessLatency1,accessLatency2,memTime);
     std::cout << "memory values:"
               << " ";
     for (int i = 0; i < 9; i++)
