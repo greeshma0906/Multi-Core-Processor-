@@ -12,20 +12,27 @@ public:
     int clockk; // after every ins clockk gets updated based on where IF is present in prev ins
     int missarr[500];
      int cache1[1024]={0};
-     int tag1[1024];
-     int cache2[1024]={0}; 
-     int tag2[1024];
-     int counter1[1024]={0};
-     int counter2[1024]={0};
-     int cachesize1,blocksize1,associativity1;
-     int cachesize2,blocksize2,associativity2;
-     int totalins1,blockins1,numblocks1;
-     int totalins2,blockins2,numblocks2;
-     int accesslatency1,memtime;
-     int accesstime2;
-     int miss=-1;
-     double totalmisses=0;
-     int memaccess=0;
+        int tag1[1024];
+        int cache2[1024]={0}; 
+        int tag2[1024];
+        int counter1[1024]={0};
+        int counter2[1024]={0};
+        int cache1size, cache2size, block1size, block2size;
+        int associativity;
+        int totalins1, totalins2;
+        int blockins1, blockins2;
+        int numblocks1, numblocks2;
+        int accesslatency1, accesslatency2; //inputed as number of cycles needed to go to L1 and L2
+        int memtime; //number of cycles needed to go to the main memory
+
+        int miss = -1; //this could take only three values
+        // miss=0 for a hit in cache l1
+        //miss=1 for a miss in l1 and hit in l2;
+        //miss=2 for a miss in l1 and l2
+        double accessesL1=0;
+        double accessesL2=0;
+        double totalL1misses=0;
+        double totalL2misses=0;
      int temp;
 public:
     Core()
@@ -42,20 +49,29 @@ public:
         clockk = 1;
     }
     //assigning user input values 
-    void assignval(int cacheSize, int blockSize,int Associativity, int accessLatency,int memTime,int n)
+    void assignval(int cache1Size,int cache2Size, int block1Size,int block2Size,int Associativity, int accessLatency1,int accessLatency2,int memTime,int n)
     {
         temp=n;
 
-         cachesize=cacheSize;  
-        blocksize=blockSize; 
+         cache1size=cache1Size;  
+         cache2size=cache2Size;
+        block1size=block1Size; 
+        block2size=block2Size;
         associativity=Associativity;
-        accesslatency=accessLatency; 
+        accesslatency1=accessLatency1;
+           accesslatency2=accessLatency2; 
         memtime=memTime;
-        totalins = cacheSize/4;
-        blockins=blockSize/4;
-        numblocks=cacheSize/blockSize;
-        for(int i=0;i<numblocks;i++){
-            tag[i]=-1;
+        totalins1 = cache1Size/4;
+        totalins2 = cache2Size/4;
+        blockins1=block1Size/4;
+         blockins2=block2Size/4;
+        numblocks1=cache1Size/block1Size;
+        numblocks2=cache2Size/block2Size;
+        for(int i=0;i<numblocks1;i++){
+            tag1[i]=-1;
+        }
+        for(int i=0;i<numblocks2;i++){
+            tag2[i]=-1;
         }
         for(int i=0; i<500; i++){
             missarr[i]=-1;
@@ -2414,4 +2430,4 @@ int main()
 // block size:4
 // associativity:2
 // accesslatency:2
-// memory access time:5
+// memory access time:5`
