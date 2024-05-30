@@ -1,4 +1,5 @@
 # Multi-Core-Processor-
+All phases done
 Date:11-05-2024
 
 We have added a two level Cache and modified the secong replacement policy from FIFO to Random Replacement POlicy
