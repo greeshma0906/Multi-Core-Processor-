@@ -2,7 +2,7 @@
 All phases done
 Date:11-05-2024
 
-We have added a two level Cache and modified the secong replacement policy from FIFO to Random Replacement POlicy
+We have added a two level Cache and modified the second replacement policy from FIFO to Random Replacement POlicy
 
 Date:10-05-2024
 
